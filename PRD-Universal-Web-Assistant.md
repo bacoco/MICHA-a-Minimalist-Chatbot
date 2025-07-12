@@ -1,65 +1,67 @@
 # Product Requirements Document (PRD)
-## Service Public Chatbot Integration Project
+## Universal Web Assistant - AI-Powered Contextual Help for Any Website
 
 ---
 
 ## 1. PROJECT OVERVIEW
 
 ### 1.1 Project Name
-Service Public Assistant - Chatbot Integration
+Universal Web Assistant - Browser Extension with AI
 
 ### 1.2 Project Objective
-Integrate an AI-powered chatbot assistant across all pages of the Service Public website (www.service-public.fr) to provide real-time assistance to French citizens accessing government services. The solution leverages Jina AI for intelligent page content extraction and Albert LLM (French government's language model) for contextual responses.
+Create a universal AI-powered web assistant that works on ANY website to provide real-time contextual help. The solution leverages Jina AI for intelligent page content extraction and Albert LLM for generating contextual responses based on the current webpage content.
 
 ### 1.3 Business Context
-- **Client**: French Government / Service Public
-- **Problem**: Citizens need contextual assistance while navigating government services
-- **Solution**: Floating chatbot powered by Jina AI + Albert LLM accessible on every Service Public page
-- **Impact**: Improved citizen experience with context-aware responses and reduced support burden
+- **Target Users**: Anyone browsing the web who needs contextual help
+- **Problem**: Users often need help understanding complex content, finding information, or navigating websites
+- **Solution**: Universal floating assistant powered by Jina AI + Albert LLM that works on any website
+- **Impact**: Enhanced browsing experience with instant AI-powered contextual assistance
 
 ### 1.4 Success Criteria
-- Chatbot appears on 100% of Service Public pages
+- Assistant works on any website without configuration
 - Zero interference with existing site functionality
-- < 2 second load time for chatbot initialization
+- < 2 second load time for assistant initialization
 - Mobile and desktop compatibility
-- Secure communication with chat backend
+- User can enable/disable per domain
+- Adapts responses based on website context
 
 ---
 
 ## 2. TECHNICAL CONSTRAINTS & CHALLENGES
 
-### 2.1 Primary Challenge: CORS Restrictions
-**Issue**: Service Public implements X-Frame-Options headers preventing iframe embedding
-**Impact**: Direct proxy/iframe approach is not feasible
-**Solution**: Client-side injection methods required
+### 2.1 Primary Challenge: Universal Compatibility
+**Issue**: Different websites have varying structures, security policies, and content types
+**Impact**: Need adaptive content extraction and injection methods
+**Solution**: Smart detection and flexible UI positioning
 
-### 2.2 No Backend Access
-**Constraint**: No access to Service Public's server-side code
-**Implication**: All solutions must be client-side or external
+### 2.2 Dynamic Content Handling
+**Constraint**: Modern websites use dynamic loading (React, Vue, Angular)
+**Implication**: Must handle content that loads after initial page load
+**Solution**: Mutation observers and smart content detection
 
-### 2.3 Government Security Requirements
-- Must comply with French government security standards
-- No data leakage to third parties
-- Secure communication protocols only
+### 2.3 Performance Considerations
+- Must not slow down website performance
+- Minimal memory footprint across multiple tabs
+- Efficient content extraction without affecting user experience
 
 ---
 
 ## 3. RECOMMENDED SOLUTION ARCHITECTURES
 
-## 3.1 PRIMARY SOLUTION: Browser Extension
+## 3.1 PRIMARY SOLUTION: Universal Browser Extension
 
 ### Architecture Overview
 ```
-User Browser → Chrome Extension → Service Public Pages → Chat Backend API → Jina AI + Albert LLM
+User Browser → Chrome Extension → Any Website → Backend API → Jina AI + Albert LLM
 ```
 
 ### Components:
-1. **Chrome Extension** (Manifest V3)
-2. **Content Script** (Injection logic)
-3. **Chat Widget** (UI Component)
-4. **Backend API** (Chat processing with Jina + Albert integration)
-5. **Jina AI Service** (Page content extraction to markdown)
-6. **Albert LLM** (French government's AI for contextual responses)
+1. **Chrome Extension** (Manifest V3 - works on all sites)
+2. **Content Script** (Universal injection with site detection)
+3. **Assistant Widget** (Adaptive UI Component)
+4. **Backend API** (Context-aware processing with Jina + Albert)
+5. **Jina AI Service** (Universal page content extraction)
+6. **Albert LLM** (Multi-language AI for contextual responses)
 
 ### Technical Specifications:
 
@@ -82,21 +84,22 @@ extension/
 ```json
 {
   "manifest_version": 3,
-  "name": "Assistant Service Public",
+  "name": "Universal Web Assistant",
   "version": "1.0.0",
-  "description": "Assistant IA pour Service Public",
+  "description": "AI-powered assistant for any website",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
-    "https://www.service-public.fr/*"
+    "<all_urls>"
   ],
   "content_scripts": [
     {
-      "matches": ["https://www.service-public.fr/*"],
+      "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "css": ["chatbot.css"],
+      "css": ["assistant.css"],
       "run_at": "document_end"
     }
   ],
@@ -105,7 +108,7 @@ extension/
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Assistant Service Public"
+    "default_title": "Universal Web Assistant"
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -117,29 +120,32 @@ extension/
 
 #### 3.1.3 Content Script Functionality
 ```javascript
-// Core injection logic
-- Detect Service Public pages
-- Inject chatbot HTML/CSS
-- Initialize chat functionality
+// Universal injection logic
+- Detect website type and language
+- Inject assistant HTML/CSS adaptively
+- Initialize context-aware chat
 - Handle message routing
-- Manage widget state
-- Context detection (current page/service)
+- Manage widget state per domain
+- Smart positioning to avoid content
+- Keyboard shortcuts support
 ```
 
-#### 3.1.4 Chat Widget Specifications
+#### 3.1.4 Assistant Widget Specifications
 
 **Visual Design:**
-- Floating button: 56px diameter, French government blue (#0070f3)
+- Floating button: 56px diameter, adaptive color based on site theme
 - Widget size: 350px × 450px (desktop), responsive on mobile
-- Position: Fixed bottom-right (20px margins)
+- Position: User-draggable, remembers position per domain
 - Z-index: 999999 (above all content)
+- Auto-hide on video fullscreen
 
 **Functional Requirements:**
 - Expandable/collapsible interface
-- Message history preservation
-- Typing indicators
-- Error handling
-- Offline message queuing
+- Conversation history per domain
+- Multi-language typing indicators
+- Smart error recovery
+- Keyboard shortcuts (Ctrl+Shift+A)
+- Export chat as markdown
 
 #### 3.1.5 Backend Integration
 
@@ -158,10 +164,17 @@ const API_ENDPOINT = 'https://chat-api.service-public.fr';
   "message": "User query",
   "context": {
     "url": "current_page_url",
-    "section": "detected_service_category",
+    "domain": "example.com",
+    "siteType": "ecommerce|news|educational|developer|general",
+    "language": "detected_language",
+    "title": "page_title",
     "userAgent": "browser_info"
   },
-  "sessionId": "unique_session_identifier"
+  "sessionId": "unique_session_identifier",
+  "preferences": {
+    "responseLength": "concise|detailed",
+    "tone": "formal|casual|auto"
+  }
 }
 
 // Backend will:
@@ -171,22 +184,23 @@ const API_ENDPOINT = 'https://chat-api.service-public.fr';
 ```
 
 **Backend Processing Flow:**
-1. Receive user message and page URL
+1. Receive user message, page URL, and detected site type
 2. Call Jina API: `https://r.jina.ai/{pageUrl}` to get markdown content
-3. Prepare Albert LLM prompt with:
+3. Prepare context-aware Albert LLM prompt with:
    - Extracted page content (markdown)
    - User's question
-   - Instruction to answer based on page context
+   - Website type and language
+   - Instruction to adapt tone and response style
 4. Call Albert API with configuration:
    - Endpoint: `https://albert.api.etalab.gouv.fr/v1`
    - Model: `albert-large`
-   - Include API key from environment
-5. Return Albert's response to user
+   - Dynamic temperature based on query type
+5. Return contextual response with relevant suggestions
 
 ## 3.2 ALTERNATIVE SOLUTION: Bookmarklet
 
 ### Use Case
-For users who cannot install extensions or as a fallback option.
+For users who want to try the assistant without installing an extension.
 
 ### Implementation
 - Single JavaScript file that users add to bookmarks
@@ -269,49 +283,86 @@ mkdir icons
   'use strict';
 
   // Prevent multiple injections
-  if (window.servicePublicChatbotInjected) return;
-  window.servicePublicChatbotInjected = true;
+  if (window.universalAssistantInjected) return;
+  window.universalAssistantInjected = true;
 
   // Configuration
   const CONFIG = {
-    API_ENDPOINT: 'https://chat-api.service-public.fr/api/chat',
-    WIDGET_ID: 'sp-chatbot-widget',
-    BUTTON_ID: 'sp-chatbot-button'
+    API_ENDPOINT: process.env.API_URL || 'http://localhost:3001/api/assist',
+    WIDGET_ID: 'ua-assistant-widget',
+    BUTTON_ID: 'ua-assistant-button',
+    STORAGE_KEY: 'ua_preferences'
   };
 
-  // Create chatbot HTML structure
-  const createChatbotHTML = () => `
-    <div id="${CONFIG.WIDGET_ID}" class="sp-chatbot-container">
-      <div id="${CONFIG.BUTTON_ID}" class="sp-chatbot-button" role="button" tabindex="0">
+  // Detect website type for context
+  const detectWebsiteType = () => {
+    const domain = window.location.hostname;
+    const path = window.location.pathname;
+    
+    if (domain.includes('github.com') || domain.includes('gitlab')) return 'developer';
+    if (domain.includes('wikipedia.org') || domain.includes('.edu')) return 'educational';
+    if (domain.includes('amazon') || domain.includes('ebay') || domain.includes('shop')) return 'ecommerce';
+    if (domain.includes('news') || domain.includes('medium.com') || domain.includes('blog')) return 'article';
+    if (domain.includes('youtube') || domain.includes('vimeo')) return 'video';
+    if (domain.includes('twitter') || domain.includes('facebook') || domain.includes('linkedin')) return 'social';
+    return 'general';
+  };
+
+  // Get contextual greeting based on site type
+  const getGreeting = () => {
+    const siteType = detectWebsiteType();
+    const greetings = {
+      developer: "Hi! I can help you understand this code, documentation, or technical concepts.",
+      educational: "Hello! Need help understanding this content or finding specific information?",
+      ecommerce: "Hi! I can help you find product details, compare items, or understand policies.",
+      article: "Hello! I can summarize this article, explain concepts, or answer questions about it.",
+      video: "Hi! I can help explain video content or find specific moments you're looking for.",
+      social: "Hello! I can help you understand posts, find information, or navigate this platform.",
+      general: "Hi! I'm your AI assistant. Ask me anything about this page!"
+    };
+    return greetings[siteType] || greetings.general;
+  };
+
+  // Detect page language
+  const detectLanguage = () => {
+    return document.documentElement.lang || navigator.language || 'en';
+  };
+
+  // Create assistant HTML structure
+  const createAssistantHTML = () => `
+    <div id="${CONFIG.WIDGET_ID}" class="ua-assistant-container">
+      <div id="${CONFIG.BUTTON_ID}" class="ua-assistant-button" role="button" tabindex="0" title="AI Assistant (Ctrl+Shift+A)">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path>
         </svg>
       </div>
-      <div class="sp-chatbot-widget" id="sp-widget-panel" style="display: none;">
-        <div class="sp-header">
-          <div class="sp-header-content">
-            <span class="sp-title">Assistant Service Public</span>
-            <div class="sp-status">🟢 En ligne</div>
+      <div class="ua-assistant-widget" id="ua-widget-panel" style="display: none;">
+        <div class="ua-header">
+          <div class="ua-header-content">
+            <span class="ua-title">AI Assistant</span>
+            <div class="ua-status">🟢 Ready</div>
           </div>
-          <button class="sp-close-btn" id="sp-close-btn" aria-label="Fermer">×</button>
+          <button class="ua-minimize-btn" id="ua-minimize-btn" aria-label="Minimize">_</button>
+          <button class="ua-close-btn" id="ua-close-btn" aria-label="Close">×</button>
         </div>
-        <div class="sp-messages" id="sp-messages">
-          <div class="sp-message sp-bot-message">
-            <div class="sp-message-content">
-              Bonjour ! Je suis votre assistant Service Public. Comment puis-je vous aider aujourd'hui ?
+        <div class="ua-messages" id="ua-messages">
+          <div class="ua-message ua-bot-message">
+            <div class="ua-message-content">
+              ${getGreeting()}
             </div>
-            <div class="sp-timestamp">${new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</div>
+            <div class="ua-timestamp">${new Date().toLocaleTimeString()}</div>
           </div>
         </div>
-        <div class="sp-typing" id="sp-typing" style="display: none;">
-          <div class="sp-typing-indicator">
+        <div class="ua-typing" id="ua-typing" style="display: none;">
+          <div class="ua-typing-indicator">
             <span></span><span></span><span></span>
           </div>
-          <span>Assistant écrit...</span>
+          <span>AI is thinking...</span>
         </div>
-        <div class="sp-input-area">
-          <input type="text" id="sp-input" placeholder="Tapez votre question..." maxlength="500" />
-          <button id="sp-send-btn" aria-label="Envoyer">
+        <div class="ua-input-area">
+          <input type="text" id="ua-input" placeholder="Ask anything about this page..." maxlength="500" />
+          <button id="ua-send-btn" aria-label="Send">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="22" y1="2" x2="11" y2="13"></line>
               <polygon points="22,2 15,22 11,13 2,9"></polygon>
@@ -322,20 +373,25 @@ mkdir icons
     </div>
   `;
 
-  // Initialize chatbot
-  const initChatbot = () => {
+  // Initialize assistant
+  const initAssistant = () => {
+    // Check if site is blacklisted
+    const blacklist = JSON.parse(localStorage.getItem('ua_blacklist') || '[]');
+    if (blacklist.includes(window.location.hostname)) return;
+
     // Inject HTML
     const container = document.createElement('div');
-    container.innerHTML = createChatbotHTML();
+    container.innerHTML = createAssistantHTML();
     document.body.appendChild(container);
 
     // Get DOM elements
     const button = document.getElementById(CONFIG.BUTTON_ID);
-    const widget = document.getElementById('sp-widget-panel');
-    const closeBtn = document.getElementById('sp-close-btn');
-    const input = document.getElementById('sp-input');
-    const sendBtn = document.getElementById('sp-send-btn');
-    const messages = document.getElementById('sp-messages');
+    const widget = document.getElementById('ua-widget-panel');
+    const closeBtn = document.getElementById('ua-close-btn');
+    const minimizeBtn = document.getElementById('ua-minimize-btn');
+    const input = document.getElementById('ua-input');
+    const sendBtn = document.getElementById('ua-send-btn');
+    const messages = document.getElementById('ua-messages');
 
     // State management
     let isOpen = false;
@@ -405,17 +461,17 @@ mkdir icons
 
     const addMessage = (content, sender) => {
       const messageDiv = document.createElement('div');
-      messageDiv.className = `sp-message sp-${sender}-message`;
+      messageDiv.className = `ua-message ua-${sender}-message`;
       messageDiv.innerHTML = `
-        <div class="sp-message-content">${content}</div>
-        <div class="sp-timestamp">${new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</div>
+        <div class="ua-message-content">${content}</div>
+        <div class="ua-timestamp">${new Date().toLocaleTimeString()}</div>
       `;
       messages.appendChild(messageDiv);
       messages.scrollTop = messages.scrollHeight;
     };
 
     const showTyping = (show) => {
-      const typing = document.getElementById('sp-typing');
+      const typing = document.getElementById('ua-typing');
       typing.style.display = show ? 'flex' : 'none';
       if (show) {
         messages.scrollTop = messages.scrollHeight;
@@ -425,23 +481,17 @@ mkdir icons
     const getPageContext = () => {
       return {
         url: window.location.href,
+        domain: window.location.hostname,
         title: document.title,
-        section: detectServiceSection(),
+        siteType: detectWebsiteType(),
+        language: detectLanguage(),
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString()
       };
     };
 
-    const detectServiceSection = () => {
-      const url = window.location.pathname;
-      if (url.includes('/particuliers')) return 'particuliers';
-      if (url.includes('/entreprises')) return 'entreprises';
-      if (url.includes('/associations')) return 'associations';
-      return 'general';
-    };
-
     const generateSessionId = () => {
-      return 'sp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      return 'ua_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     };
 
     const trackEvent = (eventName) => {
@@ -460,23 +510,31 @@ mkdir icons
       if (e.key === 'Enter') sendMessage();
     });
 
+    // Keyboard shortcut support
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        toggleWidget();
+      }
+    });
+
     // Initialize
-    console.log('Service Public Chatbot initialized');
+    console.log('Universal Web Assistant initialized for', window.location.hostname);
   };
 
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initChatbot);
+    document.addEventListener('DOMContentLoaded', initAssistant);
   } else {
-    initChatbot();
+    initAssistant();
   }
 })();
 ```
 
-#### C. Chatbot.css (Styling)
+#### C. assistant.css (Styling)
 ```css
-/* Service Public Chatbot Styles */
-.sp-chatbot-container {
+/* Universal Assistant Styles */
+.ua-assistant-container {
   position: fixed !important;
   bottom: 20px !important;
   right: 20px !important;
@@ -486,7 +544,12 @@ mkdir icons
   line-height: 1.4 !important;
 }
 
-.sp-chatbot-button {
+/* Make widget draggable */
+.ua-assistant-container.dragging {
+  cursor: move !important;
+}
+
+.ua-assistant-button {
   width: 56px !important;
   height: 56px !important;
   background: #0070f3 !important;
@@ -502,17 +565,17 @@ mkdir icons
   outline: none !important;
 }
 
-.sp-chatbot-button:hover {
+.ua-assistant-button:hover {
   transform: scale(1.1) !important;
   box-shadow: 0 6px 25px rgba(0, 112, 243, 0.4) !important;
 }
 
-.sp-chatbot-button:focus {
+.ua-assistant-button:focus {
   outline: 2px solid #0070f3 !important;
   outline-offset: 2px !important;
 }
 
-.sp-chatbot-widget {
+.ua-assistant-widget {
   position: absolute !important;
   bottom: 70px !important;
   right: 0 !important;
@@ -527,7 +590,7 @@ mkdir icons
   overflow: hidden !important;
 }
 
-.sp-header {
+.ua-header {
   background: #0070f3 !important;
   color: white !important;
   padding: 16px !important;
@@ -536,23 +599,23 @@ mkdir icons
   align-items: center !important;
 }
 
-.sp-header-content {
+.ua-header-content {
   display: flex !important;
   flex-direction: column !important;
   gap: 4px !important;
 }
 
-.sp-title {
+.ua-title {
   font-weight: 600 !important;
   font-size: 16px !important;
 }
 
-.sp-status {
+.ua-status {
   font-size: 12px !important;
   opacity: 0.9 !important;
 }
 
-.sp-close-btn {
+.ua-close-btn {
   background: none !important;
   border: none !important;
   color: white !important;
@@ -567,11 +630,11 @@ mkdir icons
   border-radius: 4px !important;
 }
 
-.sp-close-btn:hover {
+.ua-close-btn:hover {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
-.sp-messages {
+.ua-messages {
   flex: 1 !important;
   padding: 16px !important;
   overflow-y: auto !important;
@@ -580,49 +643,49 @@ mkdir icons
   gap: 16px !important;
 }
 
-.sp-message {
+.ua-message {
   display: flex !important;
   flex-direction: column !important;
   max-width: 85% !important;
 }
 
-.sp-user-message {
+.ua-user-message {
   align-self: flex-end !important;
 }
 
-.sp-bot-message {
+.ua-bot-message {
   align-self: flex-start !important;
 }
 
-.sp-message-content {
+.ua-message-content {
   padding: 12px 16px !important;
   border-radius: 18px !important;
   line-height: 1.4 !important;
   word-wrap: break-word !important;
 }
 
-.sp-user-message .sp-message-content {
+.ua-user-message .ua-message-content {
   background: #0070f3 !important;
   color: white !important;
 }
 
-.sp-bot-message .sp-message-content {
+.ua-bot-message .ua-message-content {
   background: #f1f3f4 !important;
   color: #333 !important;
 }
 
-.sp-timestamp {
+.ua-timestamp {
   font-size: 11px !important;
   color: #666 !important;
   margin-top: 4px !important;
   text-align: right !important;
 }
 
-.sp-bot-message .sp-timestamp {
+.ua-bot-message .ua-timestamp {
   text-align: left !important;
 }
 
-.sp-typing {
+.ua-typing {
   padding: 16px !important;
   display: flex !important;
   align-items: center !important;
@@ -632,28 +695,28 @@ mkdir icons
   border-top: 1px solid #e1e5e9 !important;
 }
 
-.sp-typing-indicator {
+.ua-typing-indicator {
   display: flex !important;
   gap: 2px !important;
 }
 
-.sp-typing-indicator span {
+.ua-typing-indicator span {
   width: 4px !important;
   height: 4px !important;
   background: #666 !important;
   border-radius: 50% !important;
-  animation: sp-typing-animation 1.4s infinite ease-in-out !important;
+  animation: ua-typing-animation 1.4s infinite ease-in-out !important;
 }
 
-.sp-typing-indicator span:nth-child(1) {
+.ua-typing-indicator span:nth-child(1) {
   animation-delay: -0.32s !important;
 }
 
-.sp-typing-indicator span:nth-child(2) {
+.ua-typing-indicator span:nth-child(2) {
   animation-delay: -0.16s !important;
 }
 
-@keyframes sp-typing-animation {
+@keyframes ua-typing-animation {
   0%, 80%, 100% {
     transform: scale(0) !important;
   }
@@ -662,7 +725,7 @@ mkdir icons
   }
 }
 
-.sp-input-area {
+.ua-input-area {
   padding: 16px !important;
   border-top: 1px solid #e1e5e9 !important;
   display: flex !important;
@@ -670,7 +733,7 @@ mkdir icons
   background: white !important;
 }
 
-.sp-input-area input {
+.ua-input-area input {
   flex: 1 !important;
   padding: 12px 16px !important;
   border: 1px solid #e1e5e9 !important;
@@ -680,12 +743,12 @@ mkdir icons
   font-family: inherit !important;
 }
 
-.sp-input-area input:focus {
+.ua-input-area input:focus {
   border-color: #0070f3 !important;
   box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1) !important;
 }
 
-.sp-input-area button {
+.ua-input-area button {
   background: #0070f3 !important;
   color: white !important;
   border: none !important;
@@ -700,24 +763,24 @@ mkdir icons
   transition: background-color 0.2s ease !important;
 }
 
-.sp-input-area button:hover {
+.ua-input-area button:hover {
   background: #0051cc !important;
 }
 
-.sp-input-area button:disabled {
+.ua-input-area button:disabled {
   background: #ccc !important;
   cursor: not-allowed !important;
 }
 
 /* Mobile responsiveness */
 @media (max-width: 480px) {
-  .sp-chatbot-widget {
+  .ua-assistant-widget {
     width: calc(100vw - 40px) !important;
     height: 70vh !important;
     max-height: 500px !important;
   }
   
-  .sp-chatbot-container {
+  .ua-assistant-container {
     bottom: 10px !important;
     right: 10px !important;
   }
@@ -725,26 +788,26 @@ mkdir icons
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .sp-chatbot-button {
+  .ua-assistant-button {
     border: 2px solid white !important;
   }
   
-  .sp-chatbot-widget {
+  .ua-assistant-widget {
     border: 2px solid #000 !important;
   }
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .sp-chatbot-button {
+  .ua-assistant-button {
     transition: none !important;
   }
   
-  .sp-chatbot-button:hover {
+  .ua-assistant-button:hover {
     transform: none !important;
   }
   
-  .sp-typing-indicator span {
+  .ua-typing-indicator span {
     animation: none !important;
   }
 }
@@ -754,14 +817,43 @@ mkdir icons
 ```javascript
 // background.js - Service worker for extension
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Service Public Assistant installed');
+  console.log('Universal Web Assistant installed');
+  
+  // Initialize default settings
+  chrome.storage.sync.set({
+    enabled: true,
+    blacklist: [],
+    preferences: {
+      position: 'bottom-right',
+      shortcuts: true,
+      autoHide: false
+    }
+  });
 });
 
 // Handle messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'trackEvent') {
-    // Handle analytics or logging
     console.log('Event tracked:', request.event);
+  }
+  
+  if (request.action === 'toggleBlacklist') {
+    // Toggle domain in blacklist
+    chrome.storage.sync.get(['blacklist'], (result) => {
+      const blacklist = result.blacklist || [];
+      const domain = request.domain;
+      const index = blacklist.indexOf(domain);
+      
+      if (index > -1) {
+        blacklist.splice(index, 1);
+      } else {
+        blacklist.push(domain);
+      }
+      
+      chrome.storage.sync.set({ blacklist });
+      sendResponse({ blacklisted: index === -1 });
+    });
+    return true;
   }
 });
 ```
@@ -795,10 +887,45 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       border-radius: 50%;
       background: #00ff00;
     }
-    .settings {
+    .current-site {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 15px 0;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    .toggle input {
+      margin-right: 8px;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+      padding: 15px 0;
       border-top: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-label {
+      display: block;
+      font-size: 12px;
+      color: #666;
+    }
+    .stat-value {
+      display: block;
+      font-size: 24px;
+      font-weight: bold;
+      color: #0070f3;
+    }
+    .settings {
       padding-top: 15px;
-      margin-top: 15px;
     }
     button {
       width: 100%;
@@ -817,19 +944,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 </head>
 <body>
   <div class="header">
-    <h3>Assistant Service Public</h3>
+    <h3>Universal Web Assistant</h3>
   </div>
   
   <div class="status">
     <div class="status-indicator"></div>
-    <span>Extension active</span>
+    <span id="status-text">Extension active</span>
   </div>
   
-  <p>L'assistant apparaît automatiquement sur les pages Service Public.</p>
+  <div class="current-site">
+    <strong>Current site:</strong> <span id="current-domain">Loading...</span>
+    <label class="toggle">
+      <input type="checkbox" id="site-toggle" checked>
+      <span>Enable on this site</span>
+    </label>
+  </div>
+  
+  <div class="stats">
+    <div class="stat-item">
+      <span class="stat-label">Active sites:</span>
+      <span class="stat-value" id="active-sites">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Questions asked:</span>
+      <span class="stat-value" id="questions-count">0</span>
+    </div>
+  </div>
   
   <div class="settings">
-    <button id="testBtn">Tester sur Service Public</button>
-    <button id="settingsBtn">Paramètres</button>
+    <button id="manageBtn">Manage Sites</button>
+    <button id="shortcutsBtn">Keyboard Shortcuts</button>
+    <button id="clearBtn">Clear History</button>
   </div>
   
   <script src="popup.js"></script>
@@ -839,13 +984,56 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 ```javascript
 // popup.js
-document.getElementById('testBtn').addEventListener('click', () => {
-  chrome.tabs.create({ url: 'https://www.service-public.fr' });
-});
-
-document.getElementById('settingsBtn').addEventListener('click', () => {
-  // Open settings page or show configuration options
-  console.log('Settings clicked');
+document.addEventListener('DOMContentLoaded', async () => {
+  // Get current tab info
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const domain = new URL(tab.url).hostname;
+  
+  // Update UI with current domain
+  document.getElementById('current-domain').textContent = domain;
+  
+  // Load settings and update UI
+  chrome.storage.sync.get(['blacklist', 'stats'], (result) => {
+    const blacklist = result.blacklist || [];
+    const stats = result.stats || { activeSites: 0, questionsCount: 0 };
+    
+    // Update toggle based on blacklist
+    const siteToggle = document.getElementById('site-toggle');
+    siteToggle.checked = !blacklist.includes(domain);
+    
+    // Update stats
+    document.getElementById('active-sites').textContent = stats.activeSites;
+    document.getElementById('questions-count').textContent = stats.questionsCount;
+  });
+  
+  // Handle site toggle
+  document.getElementById('site-toggle').addEventListener('change', (e) => {
+    chrome.runtime.sendMessage({
+      action: 'toggleBlacklist',
+      domain: domain
+    }, (response) => {
+      // Update status
+      const statusText = document.getElementById('status-text');
+      statusText.textContent = response.blacklisted ? 'Disabled on this site' : 'Extension active';
+    });
+  });
+  
+  // Handle buttons
+  document.getElementById('manageBtn').addEventListener('click', () => {
+    chrome.tabs.create({ url: 'chrome://extensions/?id=' + chrome.runtime.id });
+  });
+  
+  document.getElementById('shortcutsBtn').addEventListener('click', () => {
+    chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+  });
+  
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    if (confirm('Clear all conversation history?')) {
+      chrome.storage.local.clear(() => {
+        document.getElementById('questions-count').textContent = '0';
+      });
+    }
+  });
 });
 ```
 
@@ -864,14 +1052,16 @@ document.getElementById('settingsBtn').addEventListener('click', () => {
 
 ### Step 2: Test Cases
 ```
-✓ Extension loads on Service Public pages
-✓ Chatbot button appears in correct position
-✓ Widget opens/closes properly
-✓ Messages send and receive
-✓ Mobile responsiveness works
-✓ No conflicts with existing page content
-✓ Performance impact is minimal
-✓ Error handling works correctly
+✓ Extension loads on any website
+✓ Assistant button appears in correct position
+✓ Widget opens/closes properly with keyboard shortcuts
+✓ Messages send and receive with context awareness
+✓ Mobile responsiveness works across different sites
+✓ No conflicts with various page layouts
+✓ Performance impact is minimal on heavy sites
+✓ Site blacklist/whitelist functions correctly
+✓ Drag and drop widget positioning works
+✓ Language detection adapts responses
 ```
 
 ### Step 3: Cross-browser Testing
@@ -996,25 +1186,43 @@ async function extractPageContent(jinaUrl) {
 
 // Build prompt for Albert
 function buildPrompt(userMessage, pageContent, context) {
-  const prompt = `Tu es un assistant pour le site Service Public français. Tu dois aider les citoyens à naviguer et comprendre les services gouvernementaux.
+  const siteType = context.siteType || 'general';
+  const language = context.language || 'en';
+  
+  // Dynamic instructions based on site type
+  const siteInstructions = {
+    developer: 'Focus on technical accuracy and provide code examples when relevant.',
+    educational: 'Explain concepts clearly and provide learning resources.',
+    ecommerce: 'Help with product information, comparisons, and shopping guidance.',
+    article: 'Summarize key points and provide insights on the content.',
+    video: 'Help understand video content and find specific information.',
+    social: 'Assist with platform navigation and content understanding.',
+    general: 'Provide helpful, contextual assistance based on the page content.'
+  };
+  
+  const prompt = `You are a helpful AI assistant analyzing web content. Adapt your personality and response style based on the website type.
 
-Context de la page actuelle:
-URL: ${context.url}
-Section: ${context.section}
+Current page context:
+- URL: ${context.url}
+- Domain: ${context.domain}
+- Type: ${siteType}
+- Language: ${language}
+- Title: ${context.title}
 
-Contenu de la page (extrait par Jina):
-${pageContent ? pageContent.substring(0, 3000) : 'Contenu non disponible'}
+Page content (extracted by Jina):
+${pageContent ? pageContent.substring(0, 4000) : 'Content not available'}
 
-Question de l'utilisateur: ${userMessage}
+User question: ${userMessage}
 
 Instructions:
-1. Réponds en français de manière claire et concise
-2. Base ta réponse sur le contenu de la page actuelle
-3. Si l'information n'est pas sur la page, indique-le poliment
-4. Suggère des liens pertinents si nécessaire
-5. Reste professionnel et factuel
+1. Answer in the detected language (${language}) unless the user asks in a different language
+2. Base your response on the actual page content
+3. ${siteInstructions[siteType] || siteInstructions.general}
+4. If information isn't on the page, say so politely and suggest where to find it
+5. Be concise but thorough
+6. Adapt your tone to match the website type (professional for business, casual for social, etc.)
 
-Réponse:`;
+Response:`;
 
   return prompt;
 }
@@ -1065,29 +1273,50 @@ function processAlbertResponse(albertResponse, pageContent) {
   return { reply, suggestions, links };
 }
 
-// Generate follow-up suggestions
-function generateSuggestions(response) {
-  // Basic implementation - can be enhanced with NLP
+// Generate follow-up suggestions based on context
+function generateSuggestions(response, siteType) {
   const suggestions = [];
   
-  if (response.includes('entreprise')) {
-    suggestions.push('Quelles sont les étapes détaillées ?');
-    suggestions.push('Quels documents sont nécessaires ?');
+  // Site-specific suggestions
+  const siteTypeSuggestions = {
+    developer: [
+      'Show me code examples',
+      'What are the best practices?',
+      'Are there any alternatives?'
+    ],
+    educational: [
+      'Can you explain this in simpler terms?',
+      'What are the key concepts?',
+      'Do you have more examples?'
+    ],
+    ecommerce: [
+      'Compare with similar products',
+      'What are the specifications?',
+      'Check availability and shipping'
+    ],
+    article: [
+      'Summarize the main points',
+      'What is the author\'s perspective?',
+      'Related articles on this topic?'
+    ],
+    general: [
+      'Tell me more about this',
+      'Where can I find more information?',
+      'What should I do next?'
+    ]
+  };
+  
+  // Add site-specific suggestions
+  const defaultSuggestions = siteTypeSuggestions[siteType] || siteTypeSuggestions.general;
+  suggestions.push(...defaultSuggestions);
+  
+  // Add context-based suggestions
+  if (response.toLowerCase().includes('step') || response.toLowerCase().includes('process')) {
+    suggestions.push('What\'s the next step?');
   }
   
-  if (response.includes('délai') || response.includes('temps')) {
-    suggestions.push('Combien de temps cela prend-il ?');
-  }
-  
-  if (response.includes('coût') || response.includes('prix')) {
-    suggestions.push('Quels sont les coûts associés ?');
-  }
-  
-  // Default suggestions
-  if (suggestions.length === 0) {
-    suggestions.push('Puis-je avoir plus de détails ?');
-    suggestions.push('Où trouver cette information ?');
-    suggestions.push('Qui contacter pour de l'aide ?');
+  if (response.toLowerCase().includes('error') || response.toLowerCase().includes('problem')) {
+    suggestions.push('How do I fix this?');
   }
   
   return suggestions.slice(0, 3);
