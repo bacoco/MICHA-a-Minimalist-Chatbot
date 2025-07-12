@@ -1,0 +1,348 @@
+/* Universal Web Assistant - Widget Styles */
+
+.uwa-widget {
+  position: fixed;
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Position classes */
+.uwa-widget.bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+.uwa-widget.bottom-left {
+  bottom: 20px;
+  left: 20px;
+}
+
+.uwa-widget.top-right {
+  top: 20px;
+  right: 20px;
+}
+
+.uwa-widget.top-left {
+  top: 20px;
+  left: 20px;
+}
+
+/* Toggle button */
+.uwa-toggle {
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  background: #4F46E5;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.uwa-toggle:hover {
+  background: #4338CA;
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.uwa-widget.expanded .uwa-toggle {
+  display: none;
+}
+
+/* Panel */
+.uwa-panel {
+  position: absolute;
+  width: 360px;
+  height: 500px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.uwa-widget.bottom-right .uwa-panel,
+.uwa-widget.bottom-left .uwa-panel {
+  bottom: 0;
+}
+
+.uwa-widget.top-right .uwa-panel,
+.uwa-widget.top-left .uwa-panel {
+  top: 0;
+}
+
+.uwa-widget.bottom-right .uwa-panel,
+.uwa-widget.top-right .uwa-panel {
+  right: 0;
+}
+
+.uwa-widget.bottom-left .uwa-panel,
+.uwa-widget.top-left .uwa-panel {
+  left: 0;
+}
+
+/* Header */
+.uwa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #4F46E5;
+  color: white;
+}
+
+.uwa-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.uwa-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.uwa-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Messages area */
+.uwa-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #F9FAFB;
+}
+
+.uwa-message {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.uwa-message.user {
+  background: #4F46E5;
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+.uwa-message.assistant {
+  background: white;
+  color: #111827;
+  border: 1px solid #E5E7EB;
+  border-bottom-left-radius: 4px;
+}
+
+.uwa-message.loading {
+  color: #6B7280;
+  font-style: italic;
+}
+
+/* Suggestions */
+.uwa-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.uwa-suggestion {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #4F46E5;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uwa-suggestion:hover {
+  background: #F3F4F6;
+  border-color: #4F46E5;
+}
+
+/* Input area */
+.uwa-input-container {
+  display: flex;
+  padding: 12px;
+  background: white;
+  border-top: 1px solid #E5E7EB;
+  gap: 8px;
+}
+
+.uwa-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.uwa-input:focus {
+  border-color: #4F46E5;
+}
+
+.uwa-send {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #4F46E5;
+  color: white;
+  border-radius: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.uwa-send:hover {
+  background: #4338CA;
+  transform: scale(1.05);
+}
+
+.uwa-send:active {
+  transform: scale(0.95);
+}
+
+/* Dark theme */
+.uwa-widget[data-theme="dark"] .uwa-panel {
+  background: #1F2937;
+  color: #F9FAFB;
+}
+
+.uwa-widget[data-theme="dark"] .uwa-messages {
+  background: #111827;
+}
+
+.uwa-widget[data-theme="dark"] .uwa-message.assistant {
+  background: #1F2937;
+  color: #F9FAFB;
+  border-color: #374151;
+}
+
+.uwa-widget[data-theme="dark"] .uwa-input-container {
+  background: #1F2937;
+  border-top-color: #374151;
+}
+
+.uwa-widget[data-theme="dark"] .uwa-input {
+  background: #111827;
+  color: #F9FAFB;
+  border-color: #374151;
+}
+
+.uwa-widget[data-theme="dark"] .uwa-input:focus {
+  border-color: #4F46E5;
+}
+
+.uwa-widget[data-theme="dark"] .uwa-suggestion {
+  background: #1F2937;
+  color: #818CF8;
+  border-color: #374151;
+}
+
+.uwa-widget[data-theme="dark"] .uwa-suggestion:hover {
+  background: #374151;
+}
+
+/* Auto theme - follows system preference */
+@media (prefers-color-scheme: dark) {
+  .uwa-widget[data-theme="auto"] .uwa-panel {
+    background: #1F2937;
+    color: #F9FAFB;
+  }
+  
+  .uwa-widget[data-theme="auto"] .uwa-messages {
+    background: #111827;
+  }
+  
+  .uwa-widget[data-theme="auto"] .uwa-message.assistant {
+    background: #1F2937;
+    color: #F9FAFB;
+    border-color: #374151;
+  }
+  
+  .uwa-widget[data-theme="auto"] .uwa-input-container {
+    background: #1F2937;
+    border-top-color: #374151;
+  }
+  
+  .uwa-widget[data-theme="auto"] .uwa-input {
+    background: #111827;
+    color: #F9FAFB;
+    border-color: #374151;
+  }
+  
+  .uwa-widget[data-theme="auto"] .uwa-input:focus {
+    border-color: #4F46E5;
+  }
+  
+  .uwa-widget[data-theme="auto"] .uwa-suggestion {
+    background: #1F2937;
+    color: #818CF8;
+    border-color: #374151;
+  }
+  
+  .uwa-widget[data-theme="auto"] .uwa-suggestion:hover {
+    background: #374151;
+  }
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.uwa-panel {
+  animation: slideIn 0.3s ease;
+}
+
+/* Scrollbar styling */
+.uwa-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.uwa-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.uwa-messages::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+
+.uwa-messages::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
