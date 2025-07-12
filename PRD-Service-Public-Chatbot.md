@@ -9,13 +9,13 @@
 Service Public Assistant - Chatbot Integration
 
 ### 1.2 Project Objective
-Integrate an AI-powered chatbot assistant across all pages of the Service Public website (www.service-public.fr) to provide real-time assistance to French citizens accessing government services.
+Integrate an AI-powered chatbot assistant across all pages of the Service Public website (www.service-public.fr) to provide real-time assistance to French citizens accessing government services. The solution leverages Jina AI for intelligent page content extraction and Albert LLM (French government's language model) for contextual responses.
 
 ### 1.3 Business Context
 - **Client**: French Government / Service Public
 - **Problem**: Citizens need contextual assistance while navigating government services
-- **Solution**: Floating chatbot accessible on every Service Public page
-- **Impact**: Improved citizen experience and reduced support burden
+- **Solution**: Floating chatbot powered by Jina AI + Albert LLM accessible on every Service Public page
+- **Impact**: Improved citizen experience with context-aware responses and reduced support burden
 
 ### 1.4 Success Criteria
 - Chatbot appears on 100% of Service Public pages
@@ -50,14 +50,16 @@ Integrate an AI-powered chatbot assistant across all pages of the Service Public
 
 ### Architecture Overview
 ```
-User Browser → Chrome Extension → Service Public Pages → Chat Backend API
+User Browser → Chrome Extension → Service Public Pages → Chat Backend API → Jina AI + Albert LLM
 ```
 
 ### Components:
 1. **Chrome Extension** (Manifest V3)
 2. **Content Script** (Injection logic)
 3. **Chat Widget** (UI Component)
-4. **Backend API** (Chat processing)
+4. **Backend API** (Chat processing with Jina + Albert integration)
+5. **Jina AI Service** (Page content extraction to markdown)
+6. **Albert LLM** (French government's AI for contextual responses)
 
 ### Technical Specifications:
 
@@ -140,11 +142,18 @@ extension/
 - Offline message queuing
 
 #### 3.1.5 Backend Integration
+
+**Architecture with Jina + Albert LLM:**
+```
+User Message → Extension → Backend API → Jina (Page Context) → Albert LLM → Response
+```
+
+**API Communication:**
 ```javascript
-// API Communication
+// API Endpoint
 const API_ENDPOINT = 'https://chat-api.service-public.fr';
 
-// Message structure
+// Message structure sent from extension
 {
   "message": "User query",
   "context": {
@@ -154,7 +163,25 @@ const API_ENDPOINT = 'https://chat-api.service-public.fr';
   },
   "sessionId": "unique_session_identifier"
 }
+
+// Backend will:
+// 1. Use Jina to extract page content: https://r.jina.ai/{context.url}
+// 2. Send to Albert LLM with page context + user query
+// 3. Return contextual response
 ```
+
+**Backend Processing Flow:**
+1. Receive user message and page URL
+2. Call Jina API: `https://r.jina.ai/{pageUrl}` to get markdown content
+3. Prepare Albert LLM prompt with:
+   - Extracted page content (markdown)
+   - User's question
+   - Instruction to answer based on page context
+4. Call Albert API with configuration:
+   - Endpoint: `https://albert.api.etalab.gouv.fr/v1`
+   - Model: `albert-large`
+   - Include API key from environment
+5. Return Albert's response to user
 
 ## 3.2 ALTERNATIVE SOLUTION: Bookmarklet
 
@@ -853,7 +880,12 @@ document.getElementById('settingsBtn').addEventListener('click', () => {
 - Edge (Chromium-based, should work)
 - Safari (WebKit, may need adjustments)
 
-## 4.3 Phase 3: Backend Integration
+## 4.3 Phase 3: Backend Integration with Jina + Albert LLM
+
+### API Architecture
+```
+Extension → Backend API → Jina (Page Extraction) → Albert LLM → Response
+```
 
 ### API Endpoint Specification
 ```javascript
@@ -887,13 +919,239 @@ document.getElementById('settingsBtn').addEventListener('click', () => {
 }
 ```
 
+### Backend Implementation (Node.js/Express)
+```javascript
+// server.js
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Configuration
+const config = {
+  jina: {
+    baseUrl: 'https://r.jina.ai'
+  },
+  albert: {
+    endpoint: process.env.SERVER_URL_ALBERT || 'https://albert.api.etalab.gouv.fr/v1',
+    apiKey: process.env.API_KEY_ALBERT,
+    model: process.env.MODEL_ALBERT || 'albert-large'
+  }
+};
+
+// Chat endpoint
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message, context, sessionId } = req.body;
+    
+    // Step 1: Extract page content using Jina
+    const jinaUrl = `${config.jina.baseUrl}/${encodeURIComponent(context.url)}`;
+    const pageContent = await extractPageContent(jinaUrl);
+    
+    // Step 2: Prepare prompt for Albert
+    const prompt = buildPrompt(message, pageContent, context);
+    
+    // Step 3: Call Albert LLM
+    const albertResponse = await callAlbertLLM(prompt);
+    
+    // Step 4: Extract suggestions and links from response
+    const { reply, suggestions, links } = processAlbertResponse(albertResponse, pageContent);
+    
+    // Step 5: Return response
+    res.json({
+      message: reply,
+      suggestions: suggestions,
+      links: links,
+      sessionId: sessionId
+    });
+    
+  } catch (error) {
+    console.error('Chat API Error:', error);
+    res.status(500).json({
+      message: 'Désolé, je rencontre des difficultés techniques. Veuillez réessayer.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Extract page content using Jina
+async function extractPageContent(jinaUrl) {
+  try {
+    const response = await axios.get(jinaUrl, {
+      headers: {
+        'Accept': 'text/markdown'
+      },
+      timeout: 10000
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Jina extraction error:', error);
+    return null;
+  }
+}
+
+// Build prompt for Albert
+function buildPrompt(userMessage, pageContent, context) {
+  const prompt = `Tu es un assistant pour le site Service Public français. Tu dois aider les citoyens à naviguer et comprendre les services gouvernementaux.
+
+Context de la page actuelle:
+URL: ${context.url}
+Section: ${context.section}
+
+Contenu de la page (extrait par Jina):
+${pageContent ? pageContent.substring(0, 3000) : 'Contenu non disponible'}
+
+Question de l'utilisateur: ${userMessage}
+
+Instructions:
+1. Réponds en français de manière claire et concise
+2. Base ta réponse sur le contenu de la page actuelle
+3. Si l'information n'est pas sur la page, indique-le poliment
+4. Suggère des liens pertinents si nécessaire
+5. Reste professionnel et factuel
+
+Réponse:`;
+
+  return prompt;
+}
+
+// Call Albert LLM
+async function callAlbertLLM(prompt) {
+  try {
+    const response = await axios.post(
+      `${config.albert.endpoint}/chat/completions`,
+      {
+        model: config.albert.model,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${config.albert.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      }
+    );
+    
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error('Albert LLM error:', error);
+    throw error;
+  }
+}
+
+// Process Albert response to extract suggestions and links
+function processAlbertResponse(albertResponse, pageContent) {
+  // Extract main reply
+  const reply = albertResponse;
+  
+  // Generate smart suggestions based on response
+  const suggestions = generateSuggestions(albertResponse);
+  
+  // Extract relevant links from page content
+  const links = extractRelevantLinks(pageContent, albertResponse);
+  
+  return { reply, suggestions, links };
+}
+
+// Generate follow-up suggestions
+function generateSuggestions(response) {
+  // Basic implementation - can be enhanced with NLP
+  const suggestions = [];
+  
+  if (response.includes('entreprise')) {
+    suggestions.push('Quelles sont les étapes détaillées ?');
+    suggestions.push('Quels documents sont nécessaires ?');
+  }
+  
+  if (response.includes('délai') || response.includes('temps')) {
+    suggestions.push('Combien de temps cela prend-il ?');
+  }
+  
+  if (response.includes('coût') || response.includes('prix')) {
+    suggestions.push('Quels sont les coûts associés ?');
+  }
+  
+  // Default suggestions
+  if (suggestions.length === 0) {
+    suggestions.push('Puis-je avoir plus de détails ?');
+    suggestions.push('Où trouver cette information ?');
+    suggestions.push('Qui contacter pour de l'aide ?');
+  }
+  
+  return suggestions.slice(0, 3);
+}
+
+// Extract relevant links from page content
+function extractRelevantLinks(pageContent, response) {
+  const links = [];
+  
+  if (!pageContent) return links;
+  
+  // Simple link extraction - can be enhanced
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let match;
+  
+  while ((match = linkRegex.exec(pageContent)) !== null) {
+    const title = match[1];
+    const url = match[2];
+    
+    // Check if link is relevant to the response
+    if (response.toLowerCase().includes(title.toLowerCase()) || 
+        title.toLowerCase().includes('guide') ||
+        title.toLowerCase().includes('formulaire')) {
+      links.push({ title, url });
+    }
+  }
+  
+  return links.slice(0, 3);
+}
+
+// Start server
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Chat API server running on port ${PORT}`);
+  console.log(`Using Albert LLM at: ${config.albert.endpoint}`);
+});
+```
+
+### Environment Configuration (.env)
+```env
+# Server Configuration
+PORT=3001
+
+# Albert LLM Configuration (from French government)
+SERVER_URL_ALBERT=https://albert.api.etalab.gouv.fr/v1
+API_KEY_ALBERT=your_albert_api_key_here  # Request from Etalab
+MODEL_ALBERT=albert-large
+USED_ALBERT=true
+
+# Other settings
+NODE_ENV=production
+
+# Note: Albert API keys must be requested from the French government's Etalab
+# See: https://albert.api.etalab.gouv.fr for access request
+```
+
 ### Backend Requirements
-- Node.js/Python/PHP API server
-- Authentication & rate limiting
-- Chat AI integration (OpenAI, Claude, etc.)
+- Node.js with Express framework
+- Integration with Jina AI for page extraction
+- Albert LLM for French language processing
 - Session management
+- Rate limiting for API protection
 - Analytics tracking
-- Error logging
+- Error logging and monitoring
 
 ## 4.4 Phase 4: Deployment
 
@@ -1061,8 +1319,8 @@ trackEvent('suggestion_clicked', { suggestion: suggestionText });
 ### 9.1 Development Timeline
 ```
 Week 1-2: Extension core development
-Week 3: Backend API development  
-Week 4: Testing & bug fixes
+Week 3: Backend API with Jina + Albert integration
+Week 4: Testing & bug fixes (especially French language responses)
 Week 5: Chrome Web Store submission
 Week 6: Deployment & monitoring setup
 Total: 6 weeks for MVP
@@ -1125,7 +1383,17 @@ Total: 6 weeks for MVP
 
 ## 12. CONCLUSION
 
-This PRD provides a comprehensive roadmap for implementing a chatbot assistant across all Service Public pages. The recommended browser extension approach offers the best balance of functionality, security, and user experience while circumventing the technical limitations of iframe-based solutions.
+This PRD provides a comprehensive roadmap for implementing a chatbot assistant across all Service Public pages. The solution uniquely combines:
+
+1. **Browser Extension** for seamless integration without backend access
+2. **Jina AI** for intelligent extraction of page content to markdown format
+3. **Albert LLM** - the French government's own language model for accurate, context-aware responses in French
+
+This architecture ensures:
+- **Contextual Understanding**: Jina extracts the exact page content users are viewing
+- **Accurate Responses**: Albert LLM provides responses based on actual page content
+- **Government Compliance**: Using France's own Albert LLM ensures data sovereignty
+- **Scalability**: The stateless architecture can handle high user volumes
 
 The phased implementation approach ensures controlled deployment with proper testing and validation at each stage. Alternative solutions provide fallback options for different deployment scenarios and user requirements.
 
