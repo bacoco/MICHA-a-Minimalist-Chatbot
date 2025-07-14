@@ -165,22 +165,28 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
+  padding: 8px 0;
 }
 
 .uwa-suggestion {
-  padding: 6px 12px;
+  padding: 8px 14px;
   background: white;
   border: 1px solid #E5E7EB;
-  border-radius: 16px;
+  border-radius: 18px;
   font-size: 13px;
   color: #4F46E5;
   cursor: pointer;
   transition: all 0.2s;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .uwa-suggestion:hover {
-  background: #F3F4F6;
+  background: #4F46E5;
+  color: white;
   border-color: #4F46E5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
 }
 
 /* Input area */
