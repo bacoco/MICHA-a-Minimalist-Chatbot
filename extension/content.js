@@ -172,7 +172,7 @@
       
       if (!response.success) {
         const errorMessage = response.error === 'API key not configured. Please set it in extension options.' 
-          ? 'Please configure your API key in the extension settings.'
+          ? '⚠️ API key not configured!\n\n1. Right-click the extension icon\n2. Select "Options"\n3. Get your free API key from albert.api.etalab.gouv.fr\n4. Save it in the extension settings\n\nThis takes just 2 minutes!'
           : 'Sorry, I encountered an error. Please try again.';
         addMessage(errorMessage, 'assistant');
       } else {

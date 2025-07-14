@@ -8,6 +8,7 @@ const themeSelect = document.getElementById('themeSelect');
 const blacklistInput = document.getElementById('blacklistInput');
 const addBlacklistButton = document.getElementById('addBlacklistButton');
 const blacklistItems = document.getElementById('blacklistItems');
+const configureApiKeyButton = document.getElementById('configureApiKey');
 
 // Storage keys
 const SETTINGS_KEY = 'universalAssistantSettings';
@@ -15,7 +16,17 @@ const BLACKLIST_KEY = 'blacklist';
 
 // Load settings on popup open
 async function loadSettings() {
-  const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY]);
+  const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey']);
+  
+  // Check if API key is configured
+  const apiKeySection = document.querySelector('.section[style*="background: #FEF3C7"]');
+  if (data.apiKey) {
+    // Hide API key warning if configured
+    apiKeySection.style.display = 'none';
+  } else {
+    // Show API key warning if not configured
+    apiKeySection.style.display = 'block';
+  }
   
   // Load preferences
   const settings = data[SETTINGS_KEY] || {
@@ -174,12 +185,19 @@ blacklistInput.addEventListener('keypress', (e) => {
   }
 });
 
-// Add context menu for current site
-document.addEventListener('contextmenu', (e) => {
-  e.preventDefault();
-  addCurrentSite();
-  return false;
-});
+// Add context menu for current site (removed to avoid conflicts)
+// document.addEventListener('contextmenu', (e) => {
+//   e.preventDefault();
+//   addCurrentSite();
+//   return false;
+// });
+
+// Configure API Key button handler
+if (configureApiKeyButton) {
+  configureApiKeyButton.addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
+}
 
 // Initialize
 loadSettings();
