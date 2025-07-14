@@ -266,7 +266,9 @@ try {
   function buildPrompt(userMessage, pageContent, context) {
     const { siteType = 'general', language = 'en', title = '' } = context || {};
     
-    const languageInstruction = language !== 'en' 
+    const languageInstruction = (language === 'fr' || language === 'fr-FR' || language.startsWith('fr'))
+      ? 'Répondez en français.' 
+      : language !== 'en' 
       ? `Please respond in ${language} language.` 
       : '';
     
@@ -280,7 +282,19 @@ try {
       general: 'Help the user with their query about this webpage.'
     };
     
-    const siteContext = siteContexts[siteType] || siteContexts.general;
+    const siteContextsFr = {
+      developer: 'Ceci est un site de développement/programmation. Concentrez-vous sur les aspects techniques.',
+      educational: 'Ceci est un site éducatif. Aidez à l\'apprentissage.',
+      ecommerce: 'Ceci est un site e-commerce. Assistez pour les achats.',
+      article: 'Ceci est un article ou blog. Aidez à comprendre le contenu.',
+      video: 'Ceci est une plateforme vidéo. Assistez avec le contenu vidéo.',
+      social: 'Ceci est un réseau social. Aidez à découvrir le contenu.',
+      general: 'Aidez l\'utilisateur avec sa question sur cette page web.'
+    };
+    
+    const isFrenchLanguage = language === 'fr' || language === 'fr-FR' || language.startsWith('fr');
+    const contextMap = isFrenchLanguage ? siteContextsFr : siteContexts;
+    const siteContext = contextMap[siteType] || contextMap.general;
     
     let prompt = `You are a helpful AI assistant integrated into a web browser. ${languageInstruction}
 
@@ -296,6 +310,16 @@ User Message: "${userMessage}"`;
     
     prompt += '\n\nProvide a helpful, concise response.';
     
+    // Add instruction for follow-up questions in French
+    if (isFrenchLanguage) {
+      prompt += `\n\nIMPORTANT: À la fin de votre réponse, ajoutez une section "Questions suggérées:" et proposez exactement 4 nouvelles questions pertinentes que l'utilisateur pourrait poser. Ces questions doivent:
+- Être directement liées au contenu de la page
+- Être en rapport avec la question de l'utilisateur
+- Permettre d'approfondir différents aspects du sujet
+- Être formulées en français
+Format: Liste numérotée de 1 à 4.`;
+    }
+    
     return prompt;
   }
 
@@ -305,25 +329,25 @@ User Message: "${userMessage}"`;
     
     let systemPrompt = 'You are a helpful AI assistant in a browser extension.';
     
-    if (language === 'fr') {
-      systemPrompt = 'Vous êtes un assistant IA utile dans une extension de navigateur.';
+    if (language === 'fr' || language === 'fr-FR') {
+      systemPrompt = 'Vous êtes un assistant IA utile dans une extension de navigateur. Répondez toujours en français. Vous aidez les utilisateurs à comprendre et analyser le contenu des pages web qu\'ils visitent.';
     }
     
     return systemPrompt;
   }
 
-  // Generate suggestions
+  // Generate suggestions - French only
   function generateSuggestions(context) {
     const { siteType = 'general' } = context || {};
     
     const suggestionSets = {
-      developer: ['Explain this code', 'How do I debug this?', 'Best practices?'],
-      educational: ['Summarize this topic', 'Explain simply', 'Key concepts?'],
-      ecommerce: ['Compare products', 'Is this a good deal?', 'Reviews summary?'],
-      article: ['Summarize article', 'Main points?', 'Fact check?'],
-      video: ['Summarize video', 'Key timestamps?', 'Similar videos?'],
-      social: ['What is trending?', 'Summarize comments', 'Related posts?'],
-      general: ['Summarize page', 'What is this about?', 'Key information?']
+      developer: ['Expliquer ce code', 'Comment déboguer?', 'Meilleures pratiques?'],
+      educational: ['Résumer ce sujet', 'Expliquer simplement', 'Concepts clés?'],
+      ecommerce: ['Comparer les produits', 'Bonne affaire?', 'Résumé des avis?'],
+      article: ['Résumer l\'article', 'Points principaux?', 'Vérifier les faits?'],
+      video: ['Résumer la vidéo', 'Moments clés?', 'Vidéos similaires?'],
+      social: ['Tendances actuelles?', 'Résumer commentaires', 'Posts connexes?'],
+      general: ['Résumer la page', 'De quoi s\'agit-il?', 'Informations clés?']
     };
     
     return suggestionSets[siteType] || suggestionSets.general;

@@ -253,53 +253,24 @@
   // Show initial suggestions based on site type
   function showInitialSuggestions() {
     const siteType = detectWebsiteType();
-    const language = detectLanguage();
     
-    // Welcome message
-    const welcomeMessages = {
-      fr: 'Bonjour! Je suis votre assistant IA. Comment puis-je vous aider avec cette page?',
-      en: 'Hello! I\'m your AI assistant. How can I help you with this page?'
-    };
-    
-    const welcome = welcomeMessages[language] || welcomeMessages.en;
+    // Welcome message - French only
+    const welcome = 'Bonjour! Je suis votre assistant IA. Comment puis-je vous aider avec cette page?';
     addMessage(welcome, 'assistant');
     
-    // Context-aware suggestions
+    // Context-aware suggestions - French only
     const suggestionSets = {
-      developer: {
-        fr: ['Expliquer ce code', 'Comment déboguer ceci?', 'Quelles sont les meilleures pratiques?'],
-        en: ['Explain this code', 'How do I debug this?', 'What are the best practices here?']
-      },
-      educational: {
-        fr: ['Résumer ce sujet', 'Expliquer simplement', 'Quels sont les concepts clés?'],
-        en: ['Summarize this topic', 'Explain in simple terms', 'What are the key concepts?']
-      },
-      ecommerce: {
-        fr: ['Comparer les produits similaires', 'Est-ce une bonne affaire?', 'Que disent les avis?'],
-        en: ['Compare similar products', 'Is this a good deal?', 'What are the reviews saying?']
-      },
-      article: {
-        fr: ['Résumer cet article', 'Points principaux?', 'Vérifier cette affirmation'],
-        en: ['Summarize this article', 'What are the main points?', 'Fact-check this claim']
-      },
-      video: {
-        fr: ['Résumer cette vidéo', 'Moments clés?', 'Vidéos similaires?'],
-        en: ['Summarize this video', 'Key timestamps?', 'Similar videos?']
-      },
-      social: {
-        fr: ['Qu\'est-ce qui est tendance?', 'Résumer les commentaires', 'Discussions connexes?'],
-        en: ['What is trending?', 'Summarize comments', 'Related discussions?']
-      },
-      general: {
-        fr: ['Résumer cette page', 'Points clés en bullet points', 'De quoi s\'agit-il?', 'Aidez-moi à comprendre'],
-        en: ['Summarize this page', 'Key points as bullet points', 'What is this about?', 'Help me understand']
-      }
+      developer: ['Expliquer ce code', 'Comment déboguer ceci?', 'Quelles sont les meilleures pratiques?', 'Analyser la complexité'],
+      educational: ['Résumer ce sujet', 'Expliquer simplement', 'Quels sont les concepts clés?', 'Donner des exemples'],
+      ecommerce: ['Comparer les produits similaires', 'Est-ce une bonne affaire?', 'Que disent les avis?', 'Analyser le rapport qualité-prix'],
+      article: ['Résumer cet article', 'Points principaux?', 'Vérifier cette affirmation', 'Quelle est la thèse principale?'],
+      video: ['Résumer cette vidéo', 'Moments clés?', 'Vidéos similaires?', 'Quel est le message principal?'],
+      social: ['Qu\'est-ce qui est tendance?', 'Résumer les commentaires', 'Discussions connexes?', 'Analyser le sentiment général'],
+      general: ['Résumer cette page', 'Points clés en bullet points', 'De quoi s\'agit-il?', 'Expliquer le contexte']
     };
     
     const suggestions = suggestionSets[siteType] || suggestionSets.general;
-    const localizedSuggestions = suggestions[language] || suggestions.en;
-    
-    addSuggestions(localizedSuggestions);
+    addSuggestions(suggestions);
   }
   
   // Load settings from storage
