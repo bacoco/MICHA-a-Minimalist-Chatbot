@@ -92,9 +92,3 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     });
   }
 });
-
-// Handle extension icon click
-chrome.action.onClicked.addListener((tab) => {
-  // Toggle the assistant on the current tab
-  chrome.tabs.sendMessage(tab.id, { type: 'toggle' });
-});

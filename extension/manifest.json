@@ -5,7 +5,9 @@
   "description": "AI-powered assistant that provides contextual help on any website",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "contextMenus",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"

@@ -221,6 +221,11 @@
   
   // Load settings from storage
   async function loadSettings() {
+    if (typeof chrome === 'undefined' || !chrome.storage) {
+      console.warn('Chrome storage API not available');
+      return;
+    }
+    
     return new Promise((resolve) => {
       chrome.storage.sync.get(STORAGE_KEY, (result) => {
         if (result[STORAGE_KEY]) {
@@ -233,6 +238,10 @@
   
   // Check if site is blacklisted
   async function isBlacklisted() {
+    if (typeof chrome === 'undefined' || !chrome.storage) {
+      return false;
+    }
+    
     return new Promise((resolve) => {
       chrome.storage.sync.get('blacklist', (result) => {
         const blacklist = result.blacklist || [];
@@ -257,14 +266,18 @@
       injectWidget();
       
       // Send init message with context
-      chrome.runtime.sendMessage({
-        type: 'pageLoad',
-        context: {
-          url: window.location.href,
-          siteType: detectWebsiteType(),
-          language: detectLanguage()
-        }
-      });
+      if (chrome.runtime) {
+        chrome.runtime.sendMessage({
+          type: 'pageLoad',
+          context: {
+            url: window.location.href,
+            siteType: detectWebsiteType(),
+            language: detectLanguage()
+          }
+        }).catch(() => {
+          // Extension context invalidated, ignore
+        });
+      }
     }
   }
   
@@ -276,17 +289,19 @@
   }
   
   // Listen for settings changes
-  chrome.storage.onChanged.addListener((changes) => {
-    if (changes[STORAGE_KEY]) {
-      settings = { ...settings, ...changes[STORAGE_KEY].newValue };
-      
-      // Re-initialize if needed
-      if (settings.enabled && !widget) {
-        init();
-      } else if (!settings.enabled && widget) {
-        widget.remove();
-        widget = null;
+  if (chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes) => {
+      if (changes[STORAGE_KEY]) {
+        settings = { ...settings, ...changes[STORAGE_KEY].newValue };
+        
+        // Re-initialize if needed
+        if (settings.enabled && !widget) {
+          init();
+        } else if (!settings.enabled && widget) {
+          widget.remove();
+          widget = null;
+        }
       }
-    }
-  });
+    });
+  }
 })();
