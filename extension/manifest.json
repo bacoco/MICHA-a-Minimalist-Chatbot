@@ -10,10 +10,11 @@
     "tabs"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://r.jina.ai/*",
+    "https://albert.api.etalab.gouv.fr/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "service-worker.js"
   },
   "content_scripts": [
     {
@@ -26,6 +27,7 @@
   "action": {
     "default_popup": "popup.html"
   },
+  "options_page": "options.html",
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }

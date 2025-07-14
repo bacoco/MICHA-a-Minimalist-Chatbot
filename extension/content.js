@@ -1,7 +1,6 @@
 // Universal Web Assistant - Content Script
 (() => {
   // Constants
-  const BACKEND_URL = 'http://localhost:3001/api/assist';
   const WIDGET_ID = 'universal-assistant-widget';
   const STORAGE_KEY = 'universalAssistantSettings';
   
@@ -138,7 +137,7 @@
     }
   }
   
-  // Send message to backend
+  // Send message to service worker
   async function sendMessage() {
     const input = widget.querySelector('.uwa-input');
     const message = input.value.trim();
@@ -153,12 +152,10 @@
     const loadingId = addMessage('Thinking...', 'assistant', true);
     
     try {
-      const response = await fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Send message to service worker
+      const response = await chrome.runtime.sendMessage({
+        action: 'assist',
+        data: {
           message,
           url: window.location.href,
           context: {
@@ -167,18 +164,30 @@
             domain: window.location.hostname,
             title: document.title
           }
-        })
+        }
       });
-      
-      const data = await response.json();
       
       // Remove loading message
       removeMessage(loadingId);
       
-      if (data.error) {
-        addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+      if (!response.success) {
+        const errorMessage = response.error === 'API key not configured. Please set it in extension options.' 
+          ? 'Please configure your API key in the extension settings.'
+          : 'Sorry, I encountered an error. Please try again.';
+        addMessage(errorMessage, 'assistant');
       } else {
-        addMessage(data.response, 'assistant');
+        const data = response.data;
+        
+        // Process the response to ensure it's properly formatted
+        let assistantResponse = data.response;
+        
+        // If the response looks like it should be a bullet list but isn't formatted
+        if (assistantResponse.includes(' - ') && !assistantResponse.includes('\n')) {
+          // Convert inline bullet points to proper list
+          assistantResponse = assistantResponse.replace(/ - /g, '\n- ');
+        }
+        
+        addMessage(assistantResponse, 'assistant');
         
         // Add suggestions if available
         if (data.suggestions && data.suggestions.length > 0) {
@@ -187,7 +196,8 @@
       }
     } catch (error) {
       removeMessage(loadingId);
-      addMessage('Failed to connect to the assistant. Please check your connection.', 'assistant');
+      console.error('Error communicating with service worker:', error);
+      addMessage('Failed to connect to the assistant. Please reload the extension.', 'assistant');
     }
   }
   
@@ -199,7 +209,13 @@
     
     messageEl.id = messageId;
     messageEl.className = `uwa-message ${sender}${isLoading ? ' loading' : ''}`;
-    messageEl.textContent = text;
+    
+    // Format message content
+    if (sender === 'assistant' && !isLoading) {
+      messageEl.innerHTML = formatAssistantMessage(text);
+    } else {
+      messageEl.textContent = text;
+    }
     
     messages.appendChild(messageEl);
     messages.scrollTop = messages.scrollHeight;
@@ -241,8 +257,8 @@
     
     // Welcome message
     const welcomeMessages = {
-      fr: '👋 Bonjour! Je suis votre assistant IA. Comment puis-je vous aider avec cette page?',
-      en: '👋 Hello! I\'m your AI assistant. How can I help you with this page?'
+      fr: 'Bonjour! Je suis votre assistant IA. Comment puis-je vous aider avec cette page?',
+      en: 'Hello! I\'m your AI assistant. How can I help you with this page?'
     };
     
     const welcome = welcomeMessages[language] || welcomeMessages.en;
@@ -316,6 +332,56 @@
         resolve(blacklist.includes(domain));
       });
     });
+  }
+  
+  // Format assistant messages with bullet points and links
+  function formatAssistantMessage(text) {
+    // Convert markdown-style links to HTML
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    
+    // Convert bullet points that start with - or * into proper lists
+    const lines = text.split('\n');
+    let inList = false;
+    let formattedLines = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      const isBullet = line.startsWith('- ') || line.startsWith('* ') || line.startsWith('• ');
+      
+      if (isBullet && !inList) {
+        formattedLines.push('<ul>');
+        inList = true;
+      } else if (!isBullet && inList && line === '') {
+        formattedLines.push('</ul>');
+        inList = false;
+      }
+      
+      if (isBullet) {
+        const content = line.substring(2).trim();
+        formattedLines.push(`<li>${content}</li>`);
+      } else if (line !== '' || !inList) {
+        if (inList && line !== '') {
+          formattedLines.push('</ul>');
+          inList = false;
+        }
+        formattedLines.push(line);
+      }
+    }
+    
+    if (inList) {
+      formattedLines.push('</ul>');
+    }
+    
+    // Join lines and convert double line breaks to paragraphs
+    let html = formattedLines.join('\n');
+    html = html.replace(/\n\n+/g, '<br><br>');
+    html = html.replace(/\n/g, ' ');
+    
+    // Convert **bold** and *italic*
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    
+    return html;
   }
   
   // Initialize

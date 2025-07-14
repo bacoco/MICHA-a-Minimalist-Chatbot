@@ -129,7 +129,7 @@ User Message: "${userMessage}"`;
     prompt += `\n\nPage Content Summary:\n${truncatedContent}${pageContent.length > 3000 ? '...' : ''}`;
   }
   
-  prompt += '\n\nProvide a helpful, concise response that is relevant to the page context.';
+  prompt += '\n\nProvide a helpful, concise response that is relevant to the page context. When listing multiple points or key information, use bullet points (with - or •) for better readability. Format links as [text](url) when referencing external resources.';
   
   return prompt;
 }
