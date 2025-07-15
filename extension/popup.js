@@ -106,7 +106,7 @@ async function addDomain() {
   
   // Basic domain validation
   if (!domain.includes('.') || domain.startsWith('.') || domain.endsWith('.')) {
-    alert('Please enter a valid domain (e.g., example.com)');
+    alert('Veuillez entrer un domaine valide (par exemple, example.com)');
     return;
   }
   
@@ -114,7 +114,7 @@ async function addDomain() {
   const blacklist = data[BLACKLIST_KEY] || [];
   
   if (blacklist.includes(domain)) {
-    alert('This domain is already blacklisted');
+    alert('Ce domaine est déjà dans la liste noire');
     return;
   }
   
@@ -211,7 +211,7 @@ if (saveApiKeyButton) {
     const apiKey = quickApiKey.value.trim();
     
     if (!apiKey) {
-      alert('Please enter an API key');
+      alert('Veuillez entrer une clé API');
       return;
     }
     
@@ -239,7 +239,7 @@ if (saveApiKeyButton) {
       });
       
     } catch (error) {
-      alert('Failed to save API key: ' + error.message);
+      alert('Échec de la sauvegarde de la clé API: ' + error.message);
     }
   });
 }

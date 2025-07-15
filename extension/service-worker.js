@@ -212,7 +212,7 @@ try {
           config.endpoint = DEFAULT_CONFIG.endpoint;
           config.model = DEFAULT_CONFIG.model;
         } else {
-          throw new Error('API key not configured. Please set it in extension options.');
+          throw new Error('Clé API non configurée. Veuillez la définir dans les options de l\'extension.');
         }
       }
       
@@ -359,9 +359,9 @@ try {
     if (!response.ok) {
       const error = await response.text();
       if (response.status === 401) {
-        throw new Error('Invalid API key. Please check your configuration.');
+        throw new Error('Clé API invalide. Veuillez vérifier votre configuration.');
       } else if (response.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again later.');
+        throw new Error('Limite de débit dépassée. Veuillez réessayer plus tard.');
       }
       throw new Error(`${provider} API error: ${error}`);
     }

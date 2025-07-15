@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   elements.testButton.addEventListener('click', async () => {
     const apiKey = elements.apiKey.value.trim();
     if (!apiKey) {
-      showError('Please enter an API key first');
+      showError('Veuillez d\'abord entrer une clé API');
       return;
     }
     
@@ -184,12 +184,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const isValid = await testApiKey();
       if (isValid) {
-        showSuccess('Connection successful! API key is valid.');
+        showSuccess('Connexion réussie! La clé API est valide.');
       } else {
-        showError('Connection failed. Please check your API key and settings.');
+        showError('Connexion échouée. Veuillez vérifier votre clé API et vos paramètres.');
       }
     } catch (error) {
-      showError('Test failed: ' + error.message);
+      showError('Test échoué: ' + error.message);
     } finally {
       elements.testButton.disabled = false;
       elements.testButton.textContent = 'Test Connection';
@@ -206,12 +206,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     
     if (!modelConfig.apiKey) {
-      showError('Please enter an API key');
+      showError('Veuillez entrer une clé API');
       return;
     }
     
     if (!modelConfig.endpoint) {
-      showError('Please enter an API endpoint');
+      showError('Veuillez entrer un point de terminaison API');
       return;
     }
     
@@ -226,10 +226,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         apiKey: modelConfig.apiKey
       });
       
-      showSuccess('Model configuration saved successfully!');
+      showSuccess('Configuration du modèle sauvegardée avec succès!');
       updateApiKeyStatus(true);
     } catch (error) {
-      showError('Failed to save settings: ' + error.message);
+      showError('Échec de la sauvegarde des paramètres: ' + error.message);
     } finally {
       elements.saveButton.disabled = false;
       elements.saveButton.textContent = 'Save Settings';
@@ -238,14 +238,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Clear credentials button
   elements.clearButton.addEventListener('click', async () => {
-    if (confirm('Are you sure you want to clear all credentials? This cannot be undone.')) {
+    if (confirm('Êtes-vous sûr de vouloir effacer toutes les informations d\'identification ? Cette action ne peut pas être annulée.')) {
       try {
         await chrome.storage.sync.remove(['modelConfig', 'apiKey']);
         elements.apiKey.value = '';
         updateApiKeyStatus(false);
-        showSuccess('Credentials cleared successfully');
+        showSuccess('Informations d\'identification effacées avec succès');
       } catch (error) {
-        showError('Failed to clear credentials: ' + error.message);
+        showError('Échec de l\'effacement des informations d\'identification: ' + error.message);
       }
     }
   });
@@ -269,9 +269,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         universalAssistantSettings: updatedPreferences // Backward compatibility
       });
       
-      showSuccess('Appearance settings saved successfully!');
+      showSuccess('Paramètres d\'apparence sauvegardés avec succès!');
     } catch (error) {
-      showError('Failed to save appearance settings: ' + error.message);
+      showError('Échec de la sauvegarde des paramètres d\'apparence: ' + error.message);
     }
   });
   
@@ -297,9 +297,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         universalAssistantSettings: updatedPreferences // Backward compatibility
       });
       
-      showSuccess('Keyboard shortcuts saved successfully!');
+      showSuccess('Raccourcis clavier sauvegardés avec succès!');
     } catch (error) {
-      showError('Failed to save shortcuts: ' + error.message);
+      showError('Échec de la sauvegarde des raccourcis: ' + error.message);
     }
   });
   

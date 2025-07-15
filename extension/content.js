@@ -413,8 +413,8 @@
       
       if (!response.success) {
         const errorMessage = response.error === 'API key not configured. Please set it in extension options.' 
-          ? '⚠️ API key not configured!\n\n1. Right-click the extension icon\n2. Select "Options"\n3. Get your free API key from albert.api.etalab.gouv.fr\n4. Save it in the extension settings\n\nThis takes just 2 minutes!'
-          : 'Sorry, I encountered an error. Please try again.';
+          ? '⚠️ Clé API non configurée!\n\n1. Cliquez droit sur l\'icône de l\'extension\n2. Sélectionnez "Options"\n3. Obtenez votre clé API gratuite sur albert.api.etalab.gouv.fr\n4. Enregistrez-la dans les paramètres de l\'extension\n\nCela ne prend que 2 minutes!'
+          : 'Désolé, j\'ai rencontré une erreur. Veuillez réessayer.';
         addMessage(errorMessage, 'assistant');
       } else {
         const data = response.data;
@@ -438,7 +438,7 @@
     } catch (error) {
       removeMessage(loadingId);
       console.error('Error communicating with service worker:', error);
-      addMessage('Failed to connect to the assistant. Please reload the extension.', 'assistant');
+      addMessage('Impossible de se connecter à l\'assistant. Veuillez recharger l\'extension.', 'assistant');
     }
   }
   

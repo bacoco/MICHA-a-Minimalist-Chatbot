@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const apiKey = apiKeyInput.value.trim();
     
     if (!apiKey) {
-      showError('Please enter an API key');
+      showError('Veuillez entrer une clé API');
       return;
     }
     
@@ -37,13 +37,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Save to storage
         await chrome.storage.sync.set({ apiKey });
         
-        showSuccess('API key saved successfully!');
+        showSuccess('Clé API sauvegardée avec succès!');
         updateApiKeyStatus(true);
       } else {
-        showError('Invalid API key. Please check and try again.');
+        showError('Clé API invalide. Veuillez vérifier et réessayer.');
       }
     } catch (error) {
-      showError('Failed to save settings. Please try again.');
+      showError('Échec de la sauvegarde des paramètres. Veuillez réessayer.');
       console.error('Save error:', error);
     } finally {
       saveButton.disabled = false;
