@@ -28,8 +28,8 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 ### Step 1: Clone & Install Extension
 ```bash
 # Clone the repository
-git clone https://github.com/bacoco/Chat_service_public.git
-cd chat-service-public
+git clone https://github.com/bacoco/Universal_Web_Assistant.git
+cd Universal_Web_Assistant
 ```
 
 ### Step 2: Install Chrome Extension
@@ -129,15 +129,19 @@ No backend server needed! The extension directly calls external APIs.
 
 ### Project Structure
 ```
-chat-service-public/
+Universal_Web_Assistant/
 ├── extension/                # Chrome extension (serverless)
 │   ├── manifest.json        # Extension config
 │   ├── content.js          # Main injection script
 │   ├── service-worker.js   # Background script (API calls)
 │   ├── popup.html/js       # Settings UI
 │   ├── options.html/js     # API key configuration
-│   └── styles.css          # Widget styling
-└── README.md               # Documentation
+│   ├── styles.css          # Widget styling
+│   ├── crypto-utils.js     # Encryption utilities
+│   └── supabase-utils.js   # Database utilities
+├── build-extension.js      # Build script
+├── CLAUDE.md              # AI assistant guidance
+└── README.md              # Documentation
 ```
 
 ### Running in Development
@@ -162,9 +166,9 @@ node build-extension.js
 # Build extension with default config (if available)
 node build-extension.js
 
-# Create extension ZIP
+# Create extension ZIP for distribution
 cd extension
-zip -r ../universal-assistant.zip .
+zip -r universal-assistant.zip .
 ```
 
 ## 🐛 Troubleshooting
@@ -230,9 +234,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 </p>
 
 <p align="center">
-  <a href="https://github.com/bacoco/Chat_service_public/issues">Report Bug</a>
+  <a href="https://github.com/bacoco/Universal_Web_Assistant/issues">Report Bug</a>
   ·
-  <a href="https://github.com/bacoco/Chat_service_public/issues">Request Feature</a>
+  <a href="https://github.com/bacoco/Universal_Web_Assistant/issues">Request Feature</a>
   ·
-  <a href="https://github.com/bacoco/Chat_service_public/discussions">Discussions</a>
+  <a href="https://github.com/bacoco/Universal_Web_Assistant/discussions">Discussions</a>
 </p>
