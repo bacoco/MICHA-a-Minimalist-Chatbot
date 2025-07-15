@@ -9,6 +9,11 @@ const blacklistInput = document.getElementById('blacklistInput');
 const addBlacklistButton = document.getElementById('addBlacklistButton');
 const blacklistItems = document.getElementById('blacklistItems');
 const configureApiKeyButton = document.getElementById('configureApiKey');
+const quickConfig = document.getElementById('quickConfig');
+const quickApiKey = document.getElementById('quickApiKey');
+const saveApiKeyButton = document.getElementById('saveApiKey');
+const advancedConfigButton = document.getElementById('advancedConfig');
+const apiKeySection = document.getElementById('apiKeySection');
 
 // Storage keys
 const SETTINGS_KEY = 'universalAssistantSettings';
@@ -19,7 +24,6 @@ async function loadSettings() {
   const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey']);
   
   // Check if API key is configured
-  const apiKeySection = document.querySelector('.section[style*="background: #FEF3C7"]');
   if (data.apiKey) {
     // Hide API key warning if configured
     apiKeySection.style.display = 'none';
@@ -192,10 +196,77 @@ blacklistInput.addEventListener('keypress', (e) => {
 //   return false;
 // });
 
-// Configure API Key button handler
+// Configure API Key button handler - show quick config
 if (configureApiKeyButton) {
   configureApiKeyButton.addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
+    configureApiKeyButton.style.display = 'none';
+    quickConfig.style.display = 'block';
+    quickApiKey.focus();
+  });
+}
+
+// Save API key directly from popup
+if (saveApiKeyButton) {
+  saveApiKeyButton.addEventListener('click', async () => {
+    const apiKey = quickApiKey.value.trim();
+    
+    if (!apiKey) {
+      alert('Please enter an API key');
+      return;
+    }
+    
+    try {
+      // Save API key with default Albert configuration
+      await chrome.storage.sync.set({ 
+        apiKey: apiKey,
+        modelConfig: {
+          provider: 'albert',
+          endpoint: 'https://albert.api.etalab.gouv.fr/v1',
+          model: 'albert-large',
+          apiKey: apiKey
+        }
+      });
+      
+      // Hide the API key section
+      apiKeySection.style.display = 'none';
+      
+      // Notify content scripts
+      const tabs = await chrome.tabs.query({});
+      tabs.forEach(tab => {
+        chrome.tabs.sendMessage(tab.id, { 
+          type: 'apiKeyConfigured' 
+        }).catch(() => {});
+      });
+      
+    } catch (error) {
+      alert('Failed to save API key: ' + error.message);
+    }
+  });
+}
+
+// Advanced configuration button
+if (advancedConfigButton) {
+  advancedConfigButton.addEventListener('click', () => {
+    // Open options page in a popup window for better UX
+    chrome.windows.create({
+      url: chrome.runtime.getURL('options.html'),
+      type: 'popup',
+      width: 800,
+      height: 700,
+      left: Math.round((screen.width - 800) / 2),
+      top: Math.round((screen.height - 700) / 2)
+    });
+    // Close the extension popup
+    window.close();
+  });
+}
+
+// Enter key on API key input
+if (quickApiKey) {
+  quickApiKey.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      saveApiKeyButton.click();
+    }
   });
 }
 

@@ -47,6 +47,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabs: document.querySelectorAll('.tab'),
     tabContents: document.querySelectorAll('.tab-content'),
     
+    // Close button
+    closeButton: document.getElementById('closeButton'),
+    
     // Model Configuration
     provider: document.getElementById('provider'),
     apiEndpoint: document.getElementById('apiEndpoint'),
@@ -281,6 +284,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       showError('Failed to save shortcuts: ' + error.message);
     }
   });
+  
+  // Close button handler
+  if (elements.closeButton) {
+    elements.closeButton.addEventListener('click', () => {
+      // Check if opened as popup window
+      chrome.windows.getCurrent((window) => {
+        if (window.type === 'popup') {
+          // Close the popup window
+          chrome.windows.remove(window.id);
+        } else {
+          // If opened as tab, close the tab
+          window.close();
+        }
+      });
+    });
+  }
   
   // Load existing settings
   async function loadSettings() {

@@ -274,11 +274,20 @@
     <div class="blacklist-items" id="blacklistItems"></div>
   </div>
   
-  <div class="section" style="background: #FEF3C7; border: 1px solid #FDE68A;">
+  <div class="section" id="apiKeySection" style="background: #FEF3C7; border: 1px solid #FDE68A;">
     <h2 style="color: #92400E;">⚠️ API Key Required</h2>
     <p style="margin: 0 0 12px 0; font-size: 13px; color: #78350F;">
       Configure your Albert API key to use the assistant.
     </p>
+    
+    <div id="quickConfig" style="display: none;">
+      <input type="password" class="blacklist-input" id="quickApiKey" placeholder="Enter your Albert API key" style="width: 100%; margin-bottom: 8px;">
+      <div style="display: flex; gap: 8px;">
+        <button class="add-button" id="saveApiKey" style="flex: 1;">Save</button>
+        <button class="add-button" id="advancedConfig" style="flex: 1; background: #6B7280;">Advanced</button>
+      </div>
+    </div>
+    
     <button class="add-button" id="configureApiKey" style="width: 100%;">
       Configure API Key
     </button>

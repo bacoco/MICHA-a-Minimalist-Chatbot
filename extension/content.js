@@ -14,7 +14,7 @@
   let startHeight = 0;
   let settings = {
     enabled: true,
-    position: 'top-left',
+    position: 'bottom-right',
     theme: 'auto',
     shortcuts: true,
     panelWidth: 380,
@@ -119,6 +119,12 @@
     
     widget = document.getElementById(WIDGET_ID);
     attachEventListeners();
+    
+    // If panel mode is already enabled, apply webpage transformation
+    if (settings.panelMode) {
+      document.documentElement.classList.add('uwa-panel-active');
+      document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
+    }
   }
   
   // Attach event listeners
@@ -605,14 +611,21 @@
     // Skip if already initialized
     if (widget) return;
     
+    console.log('Universal Assistant: Initializing...');
+    
     // Load settings
     await loadSettings();
+    
+    console.log('Universal Assistant: Settings loaded', settings);
     
     // Check if enabled and not blacklisted
     const blacklisted = await isBlacklisted();
     
+    console.log('Universal Assistant: Enabled:', settings.enabled, 'Blacklisted:', blacklisted);
+    
     if (settings.enabled && !blacklisted) {
       injectWidget();
+      console.log('Universal Assistant: Widget injected');
       
       // Send init message with context
       if (chrome.runtime) {
