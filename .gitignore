@@ -11,6 +11,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Generated files
+extension/default-config.js
+
 # Build output
 dist/
 build/

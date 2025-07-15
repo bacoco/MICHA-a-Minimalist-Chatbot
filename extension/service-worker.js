@@ -1,6 +1,9 @@
 // Service Worker for Universal Web Assistant
 // Fixed version with proper error handling
 
+// Import default config and crypto utils
+importScripts('default-config.js', 'crypto-utils.js');
+
 // Wrap everything in try-catch to prevent registration failures
 try {
   console.log('Service Worker: Starting initialization...');
@@ -201,7 +204,16 @@ try {
       };
       
       if (!config.apiKey) {
-        throw new Error('API key not configured. Please set it in extension options.');
+        // Use default encrypted API key if none configured
+        if (DEFAULT_CONFIG && DEFAULT_CONFIG.encryptedApiKey) {
+          console.log('Using default API key');
+          config.apiKey = decrypt(DEFAULT_CONFIG.encryptedApiKey);
+          config.provider = DEFAULT_CONFIG.provider;
+          config.endpoint = DEFAULT_CONFIG.endpoint;
+          config.model = DEFAULT_CONFIG.model;
+        } else {
+          throw new Error('API key not configured. Please set it in extension options.');
+        }
       }
       
       // Fetch page content using Jina

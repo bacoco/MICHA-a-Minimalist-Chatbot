@@ -147,9 +147,22 @@ chat-service-public/
 # Click reload button in chrome://extensions/
 ```
 
+### Building with Default API Key (for maintainers)
+If you have access to the `.env` file with the Albert API key:
+```bash
+# Build extension with encrypted default key
+node build-extension.js
+
+# This generates extension/default-config.js with encrypted API key
+# Users can still override with their own key in settings
+```
+
 ### Building for Production
 ```bash
-# Build extension ZIP
+# Build extension with default config (if available)
+node build-extension.js
+
+# Create extension ZIP
 cd extension
 zip -r ../universal-assistant.zip .
 ```

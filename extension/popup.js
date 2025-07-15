@@ -24,8 +24,8 @@ async function loadSettings() {
   const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey']);
   
   // Check if API key is configured
-  if (data.apiKey) {
-    // Hide API key warning if configured
+  if (data.apiKey || (typeof DEFAULT_CONFIG !== 'undefined' && DEFAULT_CONFIG.encryptedApiKey)) {
+    // Hide API key warning if configured or default is available
     apiKeySection.style.display = 'none';
   } else {
     // Show API key warning if not configured
