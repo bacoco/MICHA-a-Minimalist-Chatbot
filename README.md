@@ -1,6 +1,6 @@
 # 🌐 Universal Web Assistant
 
-> AI-powered browser extension that provides contextual help on ANY website using Jina AI + Albert LLM
+> Serverless AI-powered Chrome extension that provides contextual help on ANY website using Jina AI + Albert LLM
 
 ![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -22,40 +22,28 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 ## 🚀 Quick Start Guide (5 minutes)
 
 ### Prerequisites
-- Node.js 18+ installed
 - Chrome browser
 - Albert API key (free from [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr))
 
-### Step 1: Clone & Setup Backend
+### Step 1: Clone & Install Extension
 ```bash
 # Clone the repository
 git clone https://github.com/bacoco/Chat_service_public.git
 cd chat-service-public
-
-# Install dependencies
-npm install
-cd backend
-npm install
-
-# Configure API key
-cp .env.example .env
-# Edit .env and add your Albert API key:
-# API_KEY_ALBERT=your_key_here
 ```
 
-### Step 2: Start the Backend
-```bash
-# From the backend directory
-npm run dev
-# Backend will start on http://localhost:3001
-```
-
-### Step 3: Install Chrome Extension
+### Step 2: Install Chrome Extension
 1. Open Chrome and go to `chrome://extensions/`
 2. Enable **"Developer mode"** (toggle in top right)
 3. Click **"Load unpacked"**
 4. Select the `extension` folder from the project
 5. The extension icon will appear in your toolbar!
+
+### Step 3: Configure API Key
+1. Right-click the extension icon in Chrome toolbar
+2. Select "Options"
+3. Enter your Albert API key
+4. Click "Save"
 
 ### Step 4: Test It Out!
 1. Visit any website (e.g., Wikipedia, GitHub, Amazon)
@@ -75,16 +63,11 @@ npm run dev
 5. Generate a new key
 6. Copy it to your `.env` file
 
-### Environment Configuration
-Create a `.env` file in the `backend` directory:
-```env
-PORT=3001
-SERVER_URL_ALBERT=https://albert.api.etalab.gouv.fr/v1
-API_KEY_ALBERT=your_actual_key_here
-MODEL_ALBERT=albert-large
-CACHE_TTL=3600
-MAX_TOKENS=500
-```
+### Extension Configuration
+The Albert API key is stored securely in Chrome's sync storage. Configure it through:
+1. Right-click extension icon → Options
+2. Enter your Albert API key
+3. Save settings
 
 ### Extension Settings
 - **Position**: Choose where the chat bubble appears (bottom-right by default)
@@ -121,53 +104,47 @@ MAX_TOKENS=500
 - "How do I install it?"
 - "What are the main features?"
 
-## 🏗️ Architecture
+## 🏗️ Architecture (Serverless)
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│   Browser   │────▶│   Extension  │────▶│   Backend   │
-│             │     │              │     │             │
-│  Any Site   │     │  Content.js  │     │  Express    │
-└─────────────┘     └──────────────┘     └──────┬──────┘
-                                                 │
-                                    ┌────────────┴────────────┐
-                                    │                         │
-                                    ▼                         ▼
-                              ┌──────────┐            ┌─────────────┐
-                              │ Jina AI  │            │ Albert LLM  │
-                              │          │            │             │
-                              │ Extract  │            │  Generate   │
-                              └──────────┘            └─────────────┘
+┌─────────────┐     ┌──────────────┐     ┌──────────────────┐
+│   Browser   │────▶│   Extension  │────▶│  Service Worker  │
+│             │     │              │     │                  │
+│  Any Site   │     │  Content.js  │     │ (Background JS)  │
+└─────────────┘     └──────────────┘     └────────┬─────────┘
+                                                   │
+                                    ┌──────────────┴──────────────┐
+                                    │                             │
+                                    ▼                             ▼
+                              ┌──────────┐                 ┌─────────────┐
+                              │ Jina AI  │                 │ Albert LLM  │
+                              │          │                 │             │
+                              │ Extract  │                 │  Generate   │
+                              └──────────┘                 └─────────────┘
 ```
+
+No backend server needed! The extension directly calls external APIs.
 
 ## 🛠️ Development
 
 ### Project Structure
 ```
 chat-service-public/
-├── backend/               # Express API server
-│   ├── server.js         # Main server file
-│   ├── services/         # Jina & Albert integrations
-│   ├── utils/            # Caching utilities
-│   └── middleware/       # Logging & error handling
-├── extension/            # Chrome extension
-│   ├── manifest.json     # Extension config
-│   ├── content.js        # Main injection script
-│   ├── background.js     # Service worker
-│   ├── popup.html/js     # Settings UI
-│   └── styles.css        # Widget styling
-└── package.json          # Workspace config
+├── extension/                # Chrome extension (serverless)
+│   ├── manifest.json        # Extension config
+│   ├── content.js          # Main injection script
+│   ├── service-worker.js   # Background script (API calls)
+│   ├── popup.html/js       # Settings UI
+│   ├── options.html/js     # API key configuration
+│   └── styles.css          # Widget styling
+└── README.md               # Documentation
 ```
 
 ### Running in Development
 ```bash
-# Terminal 1: Backend
-cd backend
-npm run dev
-
-# Terminal 2: Extension development
+# Load extension in Chrome
 # Make changes to extension files
-# Reload extension in chrome://extensions/
+# Click reload button in chrome://extensions/
 ```
 
 ### Building for Production
@@ -175,8 +152,6 @@ npm run dev
 # Build extension ZIP
 cd extension
 zip -r ../universal-assistant.zip .
-
-# Backend is ready to deploy as-is
 ```
 
 ## 🐛 Troubleshooting
@@ -187,16 +162,16 @@ zip -r ../universal-assistant.zip .
 - Check console for errors (F12)
 
 ### No AI Responses
-- Verify backend is running (`http://localhost:3001/health`)
-- Check Albert API key is valid
-- Look for errors in backend console
+- Check Albert API key is configured in extension options
+- Verify API key is valid at albert.api.etalab.gouv.fr
+- Check console for errors (F12 → Console tab)
 
 ### Widget Positioning Issues
 - Some sites override CSS - try different position in settings
 - Refresh page after changing position
 
 ### Performance Issues
-- Backend caches Jina responses for 1 hour
+- Service worker caches Jina responses for 1 hour
 - Heavy pages may take time to process
 - Try disabling on resource-intensive sites
 

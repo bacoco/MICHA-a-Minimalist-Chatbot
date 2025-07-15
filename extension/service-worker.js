@@ -147,6 +147,37 @@ try {
     }
   });
 
+  // Extract follow-up questions from AI response
+  function extractFollowUpQuestions(aiResponse) {
+    const questions = [];
+    
+    // Look for the questions section in the response
+    const questionPatterns = [
+      /Questions suggérées\s*:\s*\n([\s\S]*?)$/i,
+      /Questions you might want to ask:\s*\n([\s\S]*?)$/i,
+      /Questions? (?:à poser|possibles?):\s*\n([\s\S]*?)$/i
+    ];
+    
+    for (const pattern of questionPatterns) {
+      const match = aiResponse.match(pattern);
+      if (match) {
+        const questionsText = match[1];
+        // Extract numbered questions (1., 2., etc.) or bullet points
+        const questionLines = questionsText.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.match(/^[0-9]+\.|^[-•*]/))
+          .map(line => line.replace(/^[0-9]+\.\s*|^[-•*]\s*/, '').trim())
+          .filter(q => q.length > 0);
+        
+        questions.push(...questionLines);
+        break;
+      }
+    }
+    
+    // Return up to 4 questions
+    return questions.slice(0, 4);
+  }
+
   // Main assist handler
   async function handleAssistRequest({ message, url, context }) {
     try {
@@ -170,11 +201,21 @@ try {
       // Generate response using Albert
       const aiResponse = await generateAlbertResponse(prompt, context, apiKey);
       
-      // Generate suggestions
-      const suggestions = generateSuggestions(context);
+      // Extract follow-up questions from the AI response
+      const extractedQuestions = extractFollowUpQuestions(aiResponse);
+      
+      // Remove the questions section from the response to avoid duplication
+      let cleanedResponse = aiResponse;
+      const questionSectionPattern = /\n*(?:Questions suggérées|Questions you might want to ask|Questions? (?:à poser|possibles?)):\s*\n[\s\S]*$/i;
+      cleanedResponse = cleanedResponse.replace(questionSectionPattern, '').trim();
+      
+      // Use extracted questions if available, otherwise fall back to default suggestions
+      const suggestions = extractedQuestions.length > 0 
+        ? extractedQuestions 
+        : generateSuggestions(context);
       
       return {
-        response: aiResponse,
+        response: cleanedResponse,
         suggestions,
         context: {
           siteType: context?.siteType || 'general',

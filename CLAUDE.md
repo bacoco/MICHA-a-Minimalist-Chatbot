@@ -11,27 +11,6 @@ Universal Web Assistant is an AI-powered Chrome extension that provides contextu
 
 ## Key Development Commands
 
-### Backend Development
-```bash
-# Navigate to backend directory
-cd backend
-
-# Install dependencies
-npm install
-
-# Start development server with auto-reload
-npm run dev
-
-# Start production server
-npm start
-
-# Run tests
-npm test
-
-# Build for production
-npm run build
-```
-
 ### Extension Development
 ```bash
 # Build extension for production
@@ -48,9 +27,9 @@ zip -r universal-assistant.zip .
 ## Architecture & Code Structure
 
 ### High-Level Architecture
-The system follows a three-tier architecture:
+The system follows a serverless architecture:
 1. **Browser Extension** → Injects UI on all websites, detects context
-2. **Backend API** → Orchestrates Jina + Albert, handles caching
+2. **Service Worker** → Directly calls Jina + Albert APIs, handles caching
 3. **External Services** → Jina AI for content extraction, Albert LLM for responses
 
 ### Key Implementation Details
@@ -65,12 +44,12 @@ The extension automatically detects website types to provide contextual response
 - `social`: Twitter, Facebook, LinkedIn
 - `general`: Everything else
 
-#### API Flow (backend/server.js)
-1. Extension sends: `{ message, url, context: { siteType, language, domain } }`
-2. Backend fetches page content via Jina: `GET https://r.jina.ai/{encodedUrl}`
-3. Backend builds context-aware prompt for Albert with page content
+#### API Flow (service-worker.js)
+1. Content script sends: `{ message, url, context: { siteType, language, domain } }`
+2. Service worker fetches page content via Jina: `GET https://r.jina.ai/{encodedUrl}`
+3. Service worker builds context-aware prompt for Albert with page content
 4. Albert returns response adapted to site type and language
-5. Backend generates smart suggestions based on response
+5. Service worker extracts follow-up questions from AI response
 
 #### Chrome Storage Structure
 ```javascript
@@ -92,12 +71,13 @@ The extension automatically detects website types to provide contextual response
    - Handles website type detection
    - Manages UI injection and positioning
    - Implements keyboard shortcuts (Ctrl+Shift+A)
-   - Communicates with backend API
+   - Communicates with service worker
 
-2. **backend/server.js**: Express API server
-   - `/api/assist` endpoint orchestrates Jina + Albert
+2. **extension/service-worker.js**: Background service worker
+   - Directly calls Jina AI for page content extraction
+   - Directly calls Albert API for AI responses
    - Implements caching for Jina responses (1hr TTL)
-   - Handles context-aware prompt building
+   - Extracts follow-up questions from AI responses
 
 3. **extension/manifest.json**: Extension configuration
    - Uses `<all_urls>` for universal compatibility
@@ -106,15 +86,10 @@ The extension automatically detects website types to provide contextual response
 
 ## Environment Configuration
 
-Backend requires `.env` file:
-```env
-PORT=3001
-SERVER_URL_ALBERT=https://albert.api.etalab.gouv.fr/v1
-API_KEY_ALBERT=your_key_here  # Get from https://albert.api.etalab.gouv.fr
-MODEL_ALBERT=albert-large
-CACHE_TTL=3600
-MAX_TOKENS=500
-```
+The extension stores the Albert API key in Chrome's sync storage. Users need to:
+1. Get a free API key from https://albert.api.etalab.gouv.fr
+2. Right-click the extension icon and select "Options"
+3. Enter the API key in the settings page
 
 ## Important Context-Aware Features
 
@@ -134,6 +109,6 @@ MAX_TOKENS=500
 ## Common Issues & Solutions
 
 1. **Widget not appearing**: Check if domain is blacklisted in Chrome storage
-2. **No responses**: Verify backend is running and Albert API key is valid
+2. **No responses**: Verify Albert API key is configured in extension options
 3. **CSP blocks**: Some sites with strict Content Security Policy may block the widget
-4. **Performance**: Implement Jina response caching to reduce API calls
+4. **Performance**: Service worker implements Jina response caching to reduce API calls

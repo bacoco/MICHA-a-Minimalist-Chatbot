@@ -2,23 +2,17 @@
   "name": "universal-web-assistant",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-powered Chrome extension that provides contextual help on any website",
-  "workspaces": [
-    "backend",
-    "extension"
-  ],
+  "description": "Serverless AI-powered Chrome extension that provides contextual help on any website",
   "scripts": {
-    "dev": "cd backend && npm run dev",
-    "build": "cd backend && npm run build",
-    "test": "cd backend && npm test",
-    "extension:build": "cd extension && zip -r ../universal-assistant.zip ."
+    "build": "cd extension && zip -r ../universal-assistant.zip ."
   },
   "keywords": [
     "chrome-extension",
     "ai-assistant",
     "jina",
     "albert",
-    "web-assistant"
+    "web-assistant",
+    "serverless"
   ],
   "author": "Universal Web Assistant Team",
   "license": "MIT"
