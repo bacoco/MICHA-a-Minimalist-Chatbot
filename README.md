@@ -1,6 +1,6 @@
 # 🌐 Universal Web Assistant
 
-> Serverless AI-powered Chrome extension that provides contextual help on ANY website using Jina AI + Multiple AI Models (Albert, OpenAI, Anthropic, Custom)
+> Serverless AI-powered Chrome extension that provides contextual help on ANY website using Jina AI + Multiple AI Models (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, Custom)
 
 ![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -8,12 +8,12 @@
 
 ## ✨ What is it?
 
-Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all powered by your choice of AI providers including Albert (French government AI), OpenAI, Anthropic, or custom endpoints.
+Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all powered by your choice of AI providers including OpenRouter, Groq, Hugging Face, Albert (French government AI), OpenAI, Anthropic, or custom endpoints.
 
 ### 🎯 Key Features
 
 - **Works Everywhere**: Functions on any website without configuration
-- **Multi-Model Support**: Choose from Albert, OpenAI, Anthropic, or custom AI providers
+- **Multi-Model Support**: Choose from 6+ AI providers including free options (OpenRouter, Groq, Hugging Face, Albert) and premium models (OpenAI, Anthropic)
 - **Smart Context**: Automatically adapts to different types of sites (news, shopping, docs, etc.)
 - **Multi-language**: Responds in the language of the page
 - **Privacy First**: No data collection, all preferences stored locally
@@ -24,24 +24,50 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 
 The extension supports multiple AI providers to give you flexibility in choosing the model that best fits your needs:
 
-### 🇫🇷 Albert (Recommended - Free)
+### 🆓 Free AI Providers
+
+#### 🌐 OpenRouter (Recommended - Free Models Available)
+- **Provider**: OpenRouter aggregator platform
+- **Cost**: Free tier available (10 requests/minute)
+- **Best for**: Access to multiple cutting-edge models, no API key required for free models
+- **Models**: Llama 3.1 8B, Mixtral 8x7B, Qwen 2.5 7B, Gemma 2 9B, and more
+- **Get API Key**: [openrouter.ai](https://openrouter.ai) (optional for free models)
+
+#### ⚡ Groq (Free - High Speed)
+- **Provider**: Groq inference engine
+- **Cost**: Free (30 requests/minute)
+- **Best for**: Ultra-fast inference, real-time responses
+- **Models**: Llama 3.1 8B/70B, Mixtral 8x7B, Gemma 7B
+- **Get API Key**: [console.groq.com](https://console.groq.com)
+
+#### 🤗 Hugging Face (Free - Open Source)
+- **Provider**: Hugging Face
+- **Cost**: Free (1000 requests/hour)
+- **Best for**: Open-source models, research applications
+- **Models**: Mistral 7B, Zephyr 7B, CodeLlama 7B
+- **Get API Key**: [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+
+#### 🇫🇷 Albert (Free - French Government)
 - **Provider**: French Government AI
-- **Cost**: Free
+- **Cost**: Completely free
 - **Best for**: General assistance, French language support, privacy-conscious users
+- **Models**: albert-large, albert-base, albert-light
 - **Get API Key**: [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
 
-### 🧠 OpenAI (ChatGPT)
+### 💰 Premium AI Providers
+
+#### 🧠 OpenAI (ChatGPT)
 - **Provider**: OpenAI
 - **Cost**: Pay-per-use
 - **Best for**: Advanced reasoning, creative tasks, code generation
-- **Models**: GPT-3.5-turbo, GPT-4, GPT-4-turbo
+- **Models**: GPT-4-turbo-preview, GPT-4, GPT-3.5-turbo
 - **Get API Key**: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 
-### 🎭 Anthropic (Claude)
+#### 🎭 Anthropic (Claude)
 - **Provider**: Anthropic
 - **Cost**: Pay-per-use
 - **Best for**: Nuanced responses, analysis, safety-focused interactions
-- **Models**: Claude-3-haiku, Claude-3-sonnet, Claude-3-opus
+- **Models**: Claude-3-opus, Claude-3-sonnet, Claude-3-haiku
 - **Get API Key**: [console.anthropic.com](https://console.anthropic.com)
 
 ### 🔧 Custom Endpoint
@@ -55,6 +81,9 @@ The extension supports multiple AI providers to give you flexibility in choosing
 ### Prerequisites
 - Chrome browser
 - API key from your chosen AI provider:
+  - **OpenRouter**: Free models available at [openrouter.ai](https://openrouter.ai) (optional API key for premium models)
+  - **Groq**: Free from [console.groq.com](https://console.groq.com)
+  - **Hugging Face**: Free from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
   - **Albert**: Free from [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
   - **OpenAI**: From [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
   - **Anthropic**: From [console.anthropic.com](https://console.anthropic.com)
@@ -77,9 +106,10 @@ cd Universal_Web_Assistant
 ### Step 3: Configure AI Provider
 1. Right-click the extension icon in Chrome toolbar
 2. Select "Options"
-3. Choose your AI provider (Albert, OpenAI, Anthropic, or Custom)
-4. Enter your API key
-5. Click "Save"
+3. Choose your AI provider (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, or Custom)
+4. Enter your API key (or leave blank for OpenRouter free models)
+5. Select your preferred model
+6. Click "Save"
 
 ### Step 4: Test It Out!
 1. Visit any website (e.g., Wikipedia, GitHub, Amazon)
@@ -93,7 +123,31 @@ cd Universal_Web_Assistant
 
 ### Getting API Keys for Different Providers
 
-#### Albert API Key (Free - Recommended)
+#### OpenRouter API Key (Free Models Available - Recommended)
+1. Visit [openrouter.ai](https://openrouter.ai)
+2. Sign up for an account (free)
+3. Go to "API Keys" section
+4. Create a new key (optional for free models)
+5. Copy it for use in extension settings
+6. Note: No API key required for free models
+
+#### Groq API Key (Free - High Speed)
+1. Visit [console.groq.com](https://console.groq.com)
+2. Sign up for an account (free)
+3. Go to "API Keys" section
+4. Create a new key
+5. Copy it for use in extension settings
+6. Note: 30 requests/minute on free tier
+
+#### Hugging Face API Key (Free - Open Source)
+1. Visit [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+2. Sign up or log in to your Hugging Face account
+3. Click "New token"
+4. Select "Read" permissions
+5. Copy the generated token
+6. Note: 1000 requests/hour on free tier
+
+#### Albert API Key (Free - French Government)
 1. Visit [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
 2. Click "S'inscrire" (Sign up)
 3. Create an account (free)
@@ -268,7 +322,7 @@ We welcome contributions! Here's how:
 
 ## 🔮 Roadmap
 
-- [x] Multi-model AI support (Albert, OpenAI, Anthropic, Custom)
+- [x] Multi-model AI support (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, Custom)
 - [ ] Firefox extension support
 - [ ] Voice input/output
 - [ ] Conversation export feature
@@ -282,6 +336,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **Jina AI** for amazing content extraction
+- **OpenRouter** for free access to multiple AI models
+- **Groq** for ultra-fast inference capabilities
+- **Hugging Face** for open-source AI models
 - **Albert LLM** for free French language AI capabilities
 - **OpenAI** for GPT models
 - **Anthropic** for Claude models
