@@ -14,6 +14,10 @@ const quickApiKey = document.getElementById('quickApiKey');
 const saveApiKeyButton = document.getElementById('saveApiKey');
 const advancedConfigButton = document.getElementById('advancedConfig');
 const apiKeySection = document.getElementById('apiKeySection');
+const apiConfiguredSection = document.getElementById('apiConfiguredSection');
+const changeApiKeyButton = document.getElementById('changeApiKey');
+const openAdvancedSettingsButton = document.getElementById('openAdvancedSettings');
+const settingsButton = document.getElementById('settingsButton');
 
 // Storage keys
 const SETTINGS_KEY = 'universalAssistantSettings';
@@ -21,15 +25,17 @@ const BLACKLIST_KEY = 'blacklist';
 
 // Load settings on popup open
 async function loadSettings() {
-  const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey']);
+  const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey', 'modelConfig']);
   
   // Check if API key is configured
-  if (data.apiKey || (typeof DEFAULT_CONFIG !== 'undefined' && DEFAULT_CONFIG.encryptedApiKey)) {
-    // Hide API key warning if configured or default is available
+  if (data.apiKey || data.modelConfig?.apiKey) {
+    // Hide API key warning if configured
     apiKeySection.style.display = 'none';
+    apiConfiguredSection.style.display = 'block';
   } else {
     // Show API key warning if not configured
     apiKeySection.style.display = 'block';
+    apiConfiguredSection.style.display = 'none';
   }
   
   // Load preferences
@@ -227,8 +233,9 @@ if (saveApiKeyButton) {
         }
       });
       
-      // Hide the API key section
+      // Hide the API key section and show configured section
       apiKeySection.style.display = 'none';
+      apiConfiguredSection.style.display = 'block';
       
       // Notify content scripts
       const tabs = await chrome.tabs.query({});
@@ -267,6 +274,52 @@ if (quickApiKey) {
     if (e.key === 'Enter') {
       saveApiKeyButton.click();
     }
+  });
+}
+
+// Settings button handler
+if (settingsButton) {
+  settingsButton.addEventListener('click', () => {
+    // Open options page in a popup window for better UX
+    chrome.windows.create({
+      url: chrome.runtime.getURL('options.html'),
+      type: 'popup',
+      width: 800,
+      height: 700,
+      left: Math.round((screen.width - 800) / 2),
+      top: Math.round((screen.height - 700) / 2)
+    });
+    // Close the extension popup
+    window.close();
+  });
+}
+
+// Change API Key button handler
+if (changeApiKeyButton) {
+  changeApiKeyButton.addEventListener('click', () => {
+    // Show the API key configuration section
+    apiConfiguredSection.style.display = 'none';
+    apiKeySection.style.display = 'block';
+    configureApiKeyButton.style.display = 'none';
+    quickConfig.style.display = 'block';
+    quickApiKey.focus();
+  });
+}
+
+// Open Advanced Settings button handler
+if (openAdvancedSettingsButton) {
+  openAdvancedSettingsButton.addEventListener('click', () => {
+    // Open options page in a popup window for better UX
+    chrome.windows.create({
+      url: chrome.runtime.getURL('options.html'),
+      type: 'popup',
+      width: 800,
+      height: 700,
+      left: Math.round((screen.width - 800) / 2),
+      top: Math.round((screen.height - 700) / 2)
+    });
+    // Close the extension popup
+    window.close();
   });
 }
 
