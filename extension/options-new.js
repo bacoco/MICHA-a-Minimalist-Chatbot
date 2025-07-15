@@ -1,7 +1,31 @@
 // Enhanced options page script for Universal Web Assistant
 
-// Model configurations
+// Model configurations with free providers
 const MODEL_CONFIGS = {
+  openrouter: {
+    endpoint: 'https://openrouter.ai/api/v1',
+    models: [], // Will be populated dynamically
+    help: 'Free models available: Llama 3.1 8B, Mixtral 8x7B, Qwen 2.5 7B, Gemma 2 9B. Rate limit: 10 requests/minute.',
+    keyHelp: 'Get your free API key from openrouter.ai',
+    isFree: true,
+    rateLimits: { requests: 10, period: 'minute' }
+  },
+  groq: {
+    endpoint: 'https://api.groq.com/openai/v1',
+    models: [], // Will be populated dynamically
+    help: 'Free models available: Llama 3 8B/70B, Mixtral 8x7B, Gemma 7B. Rate limit: 30 requests/minute.',
+    keyHelp: 'Get your free API key from console.groq.com',
+    isFree: true,
+    rateLimits: { requests: 30, period: 'minute' }
+  },
+  huggingface: {
+    endpoint: 'https://api-inference.huggingface.co/v1',
+    models: [], // Will be populated dynamically
+    help: 'Free models available: Mistral 7B, Zephyr 7B, CodeLlama 7B. Rate limit: 1000 requests/hour.',
+    keyHelp: 'Get your free API key from huggingface.co',
+    isFree: true,
+    rateLimits: { requests: 1000, period: 'hour' }
+  },
   albert: {
     endpoint: 'https://albert.api.etalab.gouv.fr/v1',
     models: [
@@ -10,7 +34,8 @@ const MODEL_CONFIGS = {
       { value: 'albert-light', text: 'albert-light (Fastest)' }
     ],
     help: 'Choose the model based on your needs. Larger models are more capable but slower.',
-    keyHelp: 'Get your free API key from albert.api.etalab.gouv.fr'
+    keyHelp: 'Get your free API key from albert.api.etalab.gouv.fr',
+    isFree: true
   },
   openai: {
     endpoint: 'https://api.openai.com/v1',
@@ -20,7 +45,8 @@ const MODEL_CONFIGS = {
       { value: 'gpt-3.5-turbo', text: 'GPT-3.5 Turbo' }
     ],
     help: 'GPT-4 models are more capable but cost more. GPT-3.5 is faster and cheaper.',
-    keyHelp: 'Get your API key from platform.openai.com'
+    keyHelp: 'Get your API key from platform.openai.com',
+    isFree: false
   },
   anthropic: {
     endpoint: 'https://api.anthropic.com/v1',
@@ -30,15 +56,199 @@ const MODEL_CONFIGS = {
       { value: 'claude-3-haiku', text: 'Claude 3 Haiku (Fastest)' }
     ],
     help: 'Claude models excel at nuanced, thoughtful responses.',
-    keyHelp: 'Get your API key from console.anthropic.com'
+    keyHelp: 'Get your API key from console.anthropic.com',
+    isFree: false
   },
   custom: {
     endpoint: '',
     models: [],
     help: 'Enter your custom model name. The API should be OpenAI-compatible.',
-    keyHelp: 'Use the API key provided by your custom endpoint'
+    keyHelp: 'Use the API key provided by your custom endpoint',
+    isFree: false
   }
 };
+
+// Free model configurations for each provider
+const FREE_MODEL_CONFIGS = {
+  openrouter: {
+    freeModels: [
+      { id: 'meta-llama/llama-3.1-8b-instruct:free', name: 'Llama 3.1 8B (Free)', provider: 'OpenRouter' },
+      { id: 'mistralai/mixtral-8x7b-instruct:free', name: 'Mixtral 8x7B (Free)', provider: 'OpenRouter' },
+      { id: 'qwen/qwen-2.5-7b-instruct:free', name: 'Qwen 2.5 7B (Free)', provider: 'OpenRouter' },
+      { id: 'google/gemma-2-9b-it:free', name: 'Gemma 2 9B (Free)', provider: 'OpenRouter' }
+    ]
+  },
+  groq: {
+    freeModels: [
+      { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B (Free)', provider: 'Groq' },
+      { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B (Free)', provider: 'Groq' },
+      { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Free)', provider: 'Groq' },
+      { id: 'gemma-7b-it', name: 'Gemma 7B (Free)', provider: 'Groq' }
+    ]
+  },
+  huggingface: {
+    freeModels: [
+      { id: 'mistralai/Mistral-7B-Instruct-v0.1', name: 'Mistral 7B (Free)', provider: 'Hugging Face' },
+      { id: 'HuggingFaceH4/zephyr-7b-beta', name: 'Zephyr 7B (Free)', provider: 'Hugging Face' },
+      { id: 'codellama/CodeLlama-7b-Instruct-hf', name: 'CodeLlama 7B (Free)', provider: 'Hugging Face' }
+    ]
+  }
+};
+
+// Default free model selection
+const DEFAULT_FREE_MODEL = {
+  provider: 'openrouter',
+  model: 'meta-llama/llama-3.1-8b-instruct:free'
+};
+
+// Function to retrieve all free models from providers
+async function getFreeModels() {
+  try {
+    // Check cache first
+    const cached = await getCachedFreeModels();
+    if (cached) {
+      console.log('Using cached free models');
+      return cached;
+    }
+
+    console.log('Fetching free models from providers...');
+    const allFreeModels = [];
+
+    // Get free models from static configurations
+    for (const [provider, config] of Object.entries(FREE_MODEL_CONFIGS)) {
+      const providerModels = config.freeModels.map(model => ({
+        ...model,
+        provider: provider,
+        isFree: true
+      }));
+      allFreeModels.push(...providerModels);
+    }
+
+    // Add Albert models as free
+    const albertModels = MODEL_CONFIGS.albert.models.map(model => ({
+      id: model.value,
+      name: model.text + ' (Free)',
+      provider: 'albert',
+      isFree: true
+    }));
+    allFreeModels.push(...albertModels);
+
+    // Try to fetch dynamic models from OpenRouter API
+    try {
+      const openRouterModels = await fetchOpenRouterModels();
+      const freeOpenRouterModels = openRouterModels.filter(model => 
+        model.pricing?.prompt === 0 && model.pricing?.completion === 0
+      );
+      
+      freeOpenRouterModels.forEach(model => {
+        allFreeModels.push({
+          id: model.id,
+          name: `${model.name} (Free)`,
+          provider: 'openrouter',
+          isFree: true
+        });
+      });
+    } catch (error) {
+      console.warn('Failed to fetch OpenRouter models dynamically:', error);
+    }
+
+    // Cache the results for 24 hours
+    await cacheFreeModels(allFreeModels);
+    
+    return allFreeModels;
+  } catch (error) {
+    console.error('Error fetching free models:', error);
+    
+    // Return static fallback models
+    return getFallbackFreeModels();
+  }
+}
+
+// Function to fetch OpenRouter models dynamically
+async function fetchOpenRouterModels() {
+  const response = await fetch('https://openrouter.ai/api/v1/models', {
+    headers: {
+      'Accept': 'application/json'
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`OpenRouter API error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  return data.data || [];
+}
+
+// Function to get cached free models
+async function getCachedFreeModels() {
+  try {
+    const result = await chrome.storage.local.get(['freeModelsCache']);
+    const cache = result.freeModelsCache;
+    
+    if (cache && cache.expires > Date.now()) {
+      return cache.data;
+    }
+    
+    // Clean up expired cache
+    if (cache) {
+      await chrome.storage.local.remove(['freeModelsCache']);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting cached free models:', error);
+    return null;
+  }
+}
+
+// Function to cache free models
+async function cacheFreeModels(models) {
+  try {
+    const cacheData = {
+      data: models,
+      expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+    };
+    
+    await chrome.storage.local.set({ freeModelsCache: cacheData });
+  } catch (error) {
+    console.error('Error caching free models:', error);
+  }
+}
+
+// Fallback free models if all dynamic fetching fails
+function getFallbackFreeModels() {
+  return [
+    { id: 'meta-llama/llama-3.1-8b-instruct:free', name: 'Llama 3.1 8B (Free)', provider: 'openrouter', isFree: true },
+    { id: 'mistralai/mixtral-8x7b-instruct:free', name: 'Mixtral 8x7B (Free)', provider: 'openrouter', isFree: true },
+    { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B (Free)', provider: 'groq', isFree: true },
+    { id: 'albert-large', name: 'albert-large (Free)', provider: 'albert', isFree: true }
+  ];
+}
+
+// Function to get the default free model
+function getDefaultFreeModel() {
+  return DEFAULT_FREE_MODEL;
+}
+
+// Function to populate provider with free models
+async function populateProviderWithFreeModels(provider) {
+  const freeModels = await getFreeModels();
+  const providerFreeModels = freeModels.filter(model => model.provider === provider);
+  
+  // Convert to the expected format
+  const formattedModels = providerFreeModels.map(model => ({
+    value: model.id,
+    text: model.name
+  }));
+  
+  // Update the MODEL_CONFIGS
+  if (MODEL_CONFIGS[provider]) {
+    MODEL_CONFIGS[provider].models = formattedModels;
+  }
+  
+  return formattedModels;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Options page loaded');
@@ -120,14 +330,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     firstTab.classList.add('active');
   }
   
-  // Set default provider configuration if nothing is loaded
+  // Set default free provider configuration if nothing is loaded
   if (!elements.apiEndpoint.value) {
-    elements.provider.value = 'albert';
+    const defaultFreeModel = getDefaultFreeModel();
+    elements.provider.value = defaultFreeModel.provider;
     elements.provider.dispatchEvent(new Event('change'));
   }
   
   // Provider change handler
-  elements.provider.addEventListener('change', () => {
+  elements.provider.addEventListener('change', async () => {
     const provider = elements.provider.value;
     const config = MODEL_CONFIGS[provider];
     
@@ -159,16 +370,47 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Update model options
       elements.model.innerHTML = '';
-      config.models.forEach(model => {
-        const option = document.createElement('option');
-        option.value = model.value;
-        option.textContent = model.text;
-        elements.model.appendChild(option);
-      });
+      
+      // If this is a free provider with dynamic models, populate them
+      if (config.isFree && config.models.length === 0) {
+        try {
+          const freeModels = await populateProviderWithFreeModels(provider);
+          freeModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.value;
+            option.textContent = model.text;
+            elements.model.appendChild(option);
+          });
+          
+          // Set default model for this provider
+          if (provider === getDefaultFreeModel().provider) {
+            elements.model.value = getDefaultFreeModel().model;
+          }
+        } catch (error) {
+          console.error('Error loading free models for provider:', provider, error);
+          // Add a fallback option
+          const option = document.createElement('option');
+          option.value = 'error';
+          option.textContent = 'Error loading models';
+          elements.model.appendChild(option);
+        }
+      } else {
+        // Use static models
+        config.models.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.value;
+          option.textContent = model.text;
+          elements.model.appendChild(option);
+        });
+      }
     }
     
-    // Update help text
-    elements.modelHelp.textContent = config.help;
+    // Update help text with free indicator
+    let helpText = config.help;
+    if (config.isFree) {
+      helpText = `🆓 FREE - ${helpText}`;
+    }
+    elements.modelHelp.textContent = helpText;
   });
   
   // Auto-hide slider
@@ -585,6 +827,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         testUrl = `${endpoint}/models`;
         headers['Authorization'] = `Bearer ${apiKey}`;
         break;
+        
+      case 'openrouter':
+        testUrl = `${endpoint}/models`;
+        headers['Authorization'] = `Bearer ${apiKey}`;
+        headers['HTTP-Referer'] = chrome.runtime.getURL('');
+        headers['X-Title'] = 'Universal Web Assistant';
+        break;
+        
+      case 'groq':
+        testUrl = `${endpoint}/models`;
+        headers['Authorization'] = `Bearer ${apiKey}`;
+        break;
+        
+      case 'huggingface':
+        // Hugging Face doesn't have a models endpoint, test with a simple request
+        return true; // For now, assume it's valid
         
       case 'anthropic':
         // Anthropic doesn't have a simple test endpoint, so we'll do a minimal completion

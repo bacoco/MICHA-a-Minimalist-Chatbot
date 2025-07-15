@@ -650,6 +650,74 @@ try {
         };
         break;
         
+      case 'openrouter':
+        // OpenRouter API format (OpenAI-compatible)
+        headers['Authorization'] = `Bearer ${apiKey}`;
+        headers['HTTP-Referer'] = chrome.runtime.getURL('');
+        headers['X-Title'] = 'Universal Web Assistant';
+        apiUrl = `${endpoint}/chat/completions`;
+        requestBody = {
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: getSystemPrompt(context)
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: CONFIG.MAX_TOKENS,
+          temperature: 0.7,
+          top_p: 0.9
+        };
+        break;
+        
+      case 'groq':
+        // Groq API format (OpenAI-compatible)
+        headers['Authorization'] = `Bearer ${apiKey}`;
+        apiUrl = `${endpoint}/chat/completions`;
+        requestBody = {
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: getSystemPrompt(context)
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: CONFIG.MAX_TOKENS,
+          temperature: 0.7,
+          top_p: 0.9
+        };
+        break;
+        
+      case 'huggingface':
+        // Hugging Face Inference API format
+        headers['Authorization'] = `Bearer ${apiKey}`;
+        apiUrl = `${endpoint}/chat/completions`;
+        requestBody = {
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: getSystemPrompt(context)
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: CONFIG.MAX_TOKENS,
+          temperature: 0.7,
+          top_p: 0.9
+        };
+        break;
+        
       case 'openai':
       case 'albert':
       case 'custom':
