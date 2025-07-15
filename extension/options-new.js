@@ -601,10 +601,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     try {
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(testUrl, { 
         headers,
-        timeout: 10000 // 10 second timeout
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
       console.error('API test error:', error);
@@ -630,6 +636,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Remove trailing slash for consistency
       const cleanUrl = url.replace(/\/$/, '');
       
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(`${cleanUrl}/rest/v1/`, {
         method: 'GET',
         headers: {
@@ -637,8 +647,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           'Authorization': `Bearer ${key}`,
           'Content-Type': 'application/json'
         },
-        timeout: 10000 // 10 second timeout
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       return response.ok;
     } catch (error) {

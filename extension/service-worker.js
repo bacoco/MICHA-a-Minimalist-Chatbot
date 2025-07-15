@@ -1,8 +1,37 @@
 // Service Worker for Universal Web Assistant
 // Fixed version with proper error handling
 
-// Import default config and crypto utils
-importScripts('default-config.js', 'crypto-utils.js', 'supabase-utils.js');
+// Import crypto utils and supabase utils
+importScripts('crypto-utils.js', 'supabase-utils.js');
+
+// Try to import default config if it exists
+try {
+  importScripts('default-config.js');
+} catch (error) {
+  console.log('No default-config.js found, using fallback configuration');
+  // Define fallback configuration
+  const DEFAULT_CONFIG = {
+    provider: 'albert',
+    endpoint: 'https://albert.api.etalab.gouv.fr/v1',
+    model: 'albert-large',
+    encryptedApiKey: null,
+    enabledByDefault: true,
+    cacheEnabled: true,
+    cacheTTL: 3600000, // 1 hour in milliseconds
+    features: {
+      supabaseCache: true,
+      chatHistory: true,
+      contextualHelp: true,
+      keyboardShortcuts: true
+    }
+  };
+  // Make it available globally
+  if (typeof window !== 'undefined') {
+    window.DEFAULT_CONFIG = DEFAULT_CONFIG;
+  } else {
+    globalThis.DEFAULT_CONFIG = DEFAULT_CONFIG;
+  }
+}
 
 // Wrap everything in try-catch to prevent registration failures
 try {
@@ -409,13 +438,19 @@ try {
     const jinaUrl = `${CONFIG.JINA_BASE_URL}/${encodedUrl}`;
     
     try {
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const response = await fetch(jinaUrl, {
         headers: {
           'Accept': 'text/plain',
           'User-Agent': 'Universal-Web-Assistant/1.0'
         },
-        timeout: 30000 // 30 second timeout
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`Jina API error: ${response.status} ${response.statusText}`);
