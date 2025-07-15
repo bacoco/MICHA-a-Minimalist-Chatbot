@@ -41,6 +41,8 @@ const MODEL_CONFIGS = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('Options page loaded');
+  
   // Elements
   const elements = {
     // Tabs
@@ -97,6 +99,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load saved settings
   await loadSettings();
   
+  // Ensure first tab is active
+  const modelTab = document.getElementById('modelTab');
+  const firstTab = document.querySelector('.tab[data-tab="model"]');
+  if (modelTab && !modelTab.classList.contains('active')) {
+    modelTab.classList.add('active');
+  }
+  if (firstTab && !firstTab.classList.contains('active')) {
+    firstTab.classList.add('active');
+  }
+  
+  // Set default provider configuration if nothing is loaded
+  if (!elements.apiEndpoint.value) {
+    elements.provider.value = 'albert';
+    elements.provider.dispatchEvent(new Event('change'));
+  }
+  
   // Provider change handler
   elements.provider.addEventListener('change', () => {
     const provider = elements.provider.value;
@@ -118,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       // For predefined providers
       elements.apiEndpoint.value = config.endpoint;
-      elements.apiEndpoint.setAttribute('readonly', true);
+      elements.apiEndpoint.setAttribute('readonly', 'readonly');
       
       // Replace input with select if needed
       if (elements.model.tagName === 'INPUT') {
@@ -289,13 +307,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (elements.closeButton) {
     elements.closeButton.addEventListener('click', () => {
       // Check if opened as popup window
-      chrome.windows.getCurrent((window) => {
-        if (window.type === 'popup') {
+      chrome.windows.getCurrent((currentWindow) => {
+        if (currentWindow.type === 'popup') {
           // Close the popup window
-          chrome.windows.remove(window.id);
+          chrome.windows.remove(currentWindow.id);
         } else {
-          // If opened as tab, close the tab
-          window.close();
+          // If opened as tab, get current tab and close it
+          chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+            if (tabs[0]) {
+              chrome.tabs.remove(tabs[0].id);
+            }
+          });
         }
       });
     });
@@ -317,9 +339,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.provider.dispatchEvent(new Event('change'));
         
         setTimeout(() => {
-          elements.apiEndpoint.value = data.modelConfig.endpoint;
-          elements.model.value = data.modelConfig.model;
-          elements.apiKey.value = data.modelConfig.apiKey;
+          if (data.modelConfig.endpoint) {
+            elements.apiEndpoint.value = data.modelConfig.endpoint;
+          }
+          if (data.modelConfig.model && elements.model) {
+            elements.model.value = data.modelConfig.model;
+          }
+          if (data.modelConfig.apiKey) {
+            elements.apiKey.value = data.modelConfig.apiKey;
+          }
         }, 100);
         
         updateApiKeyStatus(!!data.modelConfig.apiKey);
