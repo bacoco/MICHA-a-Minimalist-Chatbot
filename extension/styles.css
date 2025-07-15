@@ -8,6 +8,34 @@
   line-height: 1.5;
 }
 
+/* Webpage transformation for panel mode */
+html.uwa-panel-active {
+  margin-right: var(--uwa-panel-width, 400px);
+  transition: margin-right 0.3s ease;
+  position: relative;
+  width: calc(100% - var(--uwa-panel-width, 400px));
+  overflow-x: auto;
+}
+
+html.uwa-panel-active body {
+  max-width: 100%;
+  position: relative;
+}
+
+/* Handle fixed position elements */
+html.uwa-panel-active *[style*="position: fixed"],
+html.uwa-panel-active .fixed {
+  margin-right: var(--uwa-panel-width, 400px);
+}
+
+/* Common fixed headers/navbars */
+html.uwa-panel-active header[style*="position: fixed"],
+html.uwa-panel-active nav[style*="position: fixed"],
+html.uwa-panel-active [class*="header"][style*="position: fixed"],
+html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
+  width: calc(100% - var(--uwa-panel-width, 400px)) !important;
+}
+
 /* Position classes */
 .uwa-widget.bottom-right {
   bottom: 20px;
@@ -27,6 +55,98 @@
 .uwa-widget.top-left {
   top: 20px;
   left: 20px;
+}
+
+/* Panel mode */
+.uwa-widget.panel-mode {
+  top: 0;
+  right: 0;
+  bottom: auto;
+  width: auto;
+  height: auto;
+}
+
+.uwa-widget.panel-mode .uwa-panel {
+  position: relative;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 520px;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.08);
+  animation: slideInRight 0.3s ease;
+}
+
+.uwa-widget.panel-mode .uwa-toggle {
+  display: none;
+}
+
+/* Panel tab button */
+.uwa-panel-tab {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 80px;
+  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  border: none;
+  border-radius: 16px 0 0 16px;
+  color: white;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: -2px 0 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+  z-index: 2147483646;
+}
+
+.uwa-panel-tab:hover {
+  width: 40px;
+  box-shadow: -4px 0 12px rgba(102, 126, 234, 0.4);
+}
+
+.uwa-widget.panel-mode .uwa-panel-tab {
+  display: flex;
+}
+
+.uwa-widget.panel-mode .uwa-resize-handle {
+  cursor: nwse-resize;
+  width: 16px;
+  height: 16px;
+  bottom: 0;
+  right: 0;
+  left: auto;
+  top: auto;
+}
+
+.uwa-widget.panel-mode .uwa-resize-handle::before {
+  bottom: 4px;
+  right: 4px;
+  left: auto;
+  top: auto;
+  transform: none;
+  width: 4px;
+  height: 4px;
+  background: #CBD5E1;
+  border-radius: 50%;
+}
+
+/* Panel mode animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Toggle button */
@@ -57,8 +177,10 @@
 /* Panel */
 .uwa-panel {
   position: absolute;
-  width: 380px;
-  height: 520px;
+  min-width: 300px;
+  min-height: 400px;
+  max-width: 600px;
+  max-height: 800px;
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
@@ -66,6 +188,12 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+
+.uwa-panel.resizing {
+  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.16);
+  user-select: none;
 }
 
 .uwa-widget.bottom-right .uwa-panel,
@@ -105,7 +233,15 @@
   letter-spacing: -0.02em;
 }
 
-.uwa-close {
+.uwa-header-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.uwa-close,
+.uwa-minimize,
+.uwa-mode-toggle {
   background: none;
   border: none;
   color: white;
@@ -122,8 +258,22 @@
   line-height: 1;
 }
 
-.uwa-close:hover {
+.uwa-minimize {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.uwa-mode-toggle {
+  font-size: 16px;
+}
+
+.uwa-close:hover,
+.uwa-minimize:hover,
+.uwa-mode-toggle:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.uwa-close:hover {
   transform: rotate(90deg);
 }
 
@@ -319,6 +469,11 @@
   background: #374151;
 }
 
+/* Dark theme panel mode adjustments */
+.uwa-widget[data-theme="dark"].panel-mode .uwa-panel {
+  border-left-color: #374151;
+}
+
 /* Auto theme - follows system preference */
 @media (prefers-color-scheme: dark) {
   .uwa-widget[data-theme="auto"] .uwa-panel {
@@ -360,6 +515,10 @@
   .uwa-widget[data-theme="auto"] .uwa-suggestion:hover {
     background: #374151;
   }
+  
+  .uwa-widget[data-theme="auto"].panel-mode .uwa-panel {
+    border-left-color: #374151;
+  }
 }
 
 /* Animations */
@@ -394,4 +553,131 @@
 
 .uwa-messages::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+/* Resize handle */
+.uwa-resize-handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  z-index: 10;
+}
+
+.uwa-widget.bottom-right .uwa-resize-handle {
+  bottom: 0;
+  right: 0;
+  cursor: nwse-resize;
+  border-bottom-right-radius: 16px;
+}
+
+.uwa-widget.bottom-left .uwa-resize-handle {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+  border-bottom-left-radius: 16px;
+}
+
+.uwa-widget.top-right .uwa-resize-handle {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+  border-top-right-radius: 16px;
+}
+
+.uwa-widget.top-left .uwa-resize-handle {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+  border-top-left-radius: 16px;
+}
+
+.uwa-resize-handle::before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #CBD5E1;
+  border-radius: 50%;
+}
+
+.uwa-widget.bottom-right .uwa-resize-handle::before {
+  bottom: 4px;
+  right: 4px;
+}
+
+.uwa-widget.bottom-left .uwa-resize-handle::before {
+  bottom: 4px;
+  left: 4px;
+}
+
+.uwa-widget.top-right .uwa-resize-handle::before {
+  top: 4px;
+  right: 4px;
+}
+
+.uwa-widget.top-left .uwa-resize-handle::before {
+  top: 4px;
+  left: 4px;
+}
+
+.uwa-resize-handle:hover::before {
+  background: #94A3B8;
+}
+
+/* Font size variations */
+.uwa-widget[data-font-size="small"] {
+  font-size: 12px;
+}
+
+.uwa-widget[data-font-size="medium"] {
+  font-size: 14px;
+}
+
+.uwa-widget[data-font-size="large"] {
+  font-size: 16px;
+}
+
+.uwa-widget[data-font-size="small"] .uwa-message {
+  font-size: 12px;
+}
+
+.uwa-widget[data-font-size="medium"] .uwa-message {
+  font-size: 14px;
+}
+
+.uwa-widget[data-font-size="large"] .uwa-message {
+  font-size: 16px;
+}
+
+/* Responsive design for panel mode */
+@media (max-width: 768px) {
+  /* On mobile, panel takes full width */
+  .uwa-widget.panel-mode .uwa-panel {
+    width: 100vw !important;
+    max-width: 100vw;
+  }
+  
+  .uwa-widget.panel-mode .uwa-resize-handle {
+    display: none;
+  }
+  
+  /* Full width transformation on mobile */
+  html.uwa-panel-active {
+    margin-right: 100vw;
+    width: 0;
+  }
+  
+  html.uwa-panel-active *[style*="position: fixed"],
+  html.uwa-panel-active header[style*="position: fixed"],
+  html.uwa-panel-active nav[style*="position: fixed"] {
+    display: none;
+  }
+}
+
+/* Medium screens */
+@media (max-width: 1024px) {
+  .uwa-widget.panel-mode .uwa-panel {
+    max-width: 50vw;
+  }
 }

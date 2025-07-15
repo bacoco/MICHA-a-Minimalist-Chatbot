@@ -8,10 +8,12 @@ try {
   // Configuration
   const CONFIG = {
     JINA_BASE_URL: 'https://r.jina.ai',
-    ALBERT_API_URL: 'https://albert.api.etalab.gouv.fr/v1',
     CACHE_PREFIX: 'uwa_cache_',
     CACHE_TTL: 3600000, // 1 hour in milliseconds
-    MAX_TOKENS: 500
+    MAX_TOKENS: 500,
+    DEFAULT_PROVIDER: 'albert',
+    DEFAULT_ENDPOINT: 'https://albert.api.etalab.gouv.fr/v1',
+    DEFAULT_MODEL: 'albert-large'
   };
 
   // Default settings
@@ -153,27 +155,33 @@ try {
     
     // Look for the questions section in the response
     const questionPatterns = [
-      /Questions suggérées\s*:\s*\n([\s\S]*?)$/i,
-      /Questions you might want to ask:\s*\n([\s\S]*?)$/i,
-      /Questions? (?:à poser|possibles?):\s*\n([\s\S]*?)$/i
+      /Questions suggérées\s*:\s*([\s\S]*?)$/i,
+      /Questions you might want to ask:\s*([\s\S]*?)$/i,
+      /Questions? (?:à poser|possibles?):\s*([\s\S]*?)$/i
     ];
     
     for (const pattern of questionPatterns) {
       const match = aiResponse.match(pattern);
       if (match) {
         const questionsText = match[1];
-        // Extract numbered questions (1., 2., etc.) or bullet points
-        const questionLines = questionsText.split('\n')
-          .map(line => line.trim())
-          .filter(line => line.match(/^[0-9]+\.|^[-•*]/))
-          .map(line => line.replace(/^[0-9]+\.\s*|^[-•*]\s*/, '').trim())
-          .filter(q => q.length > 0);
+        console.log('Found questions text:', questionsText);
         
-        questions.push(...questionLines);
+        // Split by numbers followed by period and match until question mark
+        const questionMatches = questionsText.match(/\d+\.\s*[^?]+\?/g);
+        if (questionMatches) {
+          questionMatches.forEach(q => {
+            // Remove the number and period, trim whitespace
+            const cleanQuestion = q.replace(/^\d+\.\s*/, '').trim();
+            if (cleanQuestion.length > 0) {
+              questions.push(cleanQuestion);
+            }
+          });
+        }
         break;
       }
     }
     
+    console.log('Extracted questions:', questions);
     // Return up to 4 questions
     return questions.slice(0, 4);
   }
@@ -181,9 +189,18 @@ try {
   // Main assist handler
   async function handleAssistRequest({ message, url, context }) {
     try {
-      // Get API key from storage
-      const { apiKey } = await chrome.storage.sync.get(['apiKey']);
-      if (!apiKey) {
+      // Get model configuration from storage
+      const { modelConfig, apiKey } = await chrome.storage.sync.get(['modelConfig', 'apiKey']);
+      
+      // Use modelConfig if available, otherwise fall back to legacy apiKey
+      const config = modelConfig || {
+        provider: CONFIG.DEFAULT_PROVIDER,
+        endpoint: CONFIG.DEFAULT_ENDPOINT,
+        model: CONFIG.DEFAULT_MODEL,
+        apiKey: apiKey
+      };
+      
+      if (!config.apiKey) {
         throw new Error('API key not configured. Please set it in extension options.');
       }
       
@@ -198,16 +215,20 @@ try {
       // Build prompt
       const prompt = buildPrompt(message, pageContent, context);
       
-      // Generate response using Albert
-      const aiResponse = await generateAlbertResponse(prompt, context, apiKey);
+      // Generate response using AI
+      const aiResponse = await generateAIResponse(prompt, context, config);
       
       // Extract follow-up questions from the AI response
       const extractedQuestions = extractFollowUpQuestions(aiResponse);
       
       // Remove the questions section from the response to avoid duplication
       let cleanedResponse = aiResponse;
-      const questionSectionPattern = /\n*(?:Questions suggérées|Questions you might want to ask|Questions? (?:à poser|possibles?)):\s*\n[\s\S]*$/i;
+      const questionSectionPattern = /\n*(?:Questions suggérées|Questions you might want to ask|Questions? (?:à poser|possibles?))\s*:\s*[\s\S]*$/i;
       cleanedResponse = cleanedResponse.replace(questionSectionPattern, '').trim();
+      
+      console.log('Original response length:', aiResponse.length);
+      console.log('Cleaned response length:', cleanedResponse.length);
+      console.log('Questions found:', extractedQuestions.length);
       
       // Use extracted questions if available, otherwise fall back to default suggestions
       const suggestions = extractedQuestions.length > 0 
@@ -260,32 +281,66 @@ try {
     return content;
   }
 
-  // Generate response using Albert LLM
-  async function generateAlbertResponse(prompt, context, apiKey) {
-    const requestBody = {
-      model: 'albert-large',
-      messages: [
-        {
-          role: 'system',
-          content: getSystemPrompt(context)
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: CONFIG.MAX_TOKENS,
-      temperature: 0.7,
-      top_p: 0.9
+  // Generate response using AI
+  async function generateAIResponse(prompt, context, config) {
+    const { provider, endpoint, model, apiKey } = config;
+    
+    let requestBody;
+    let apiUrl;
+    let headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     };
     
-    const response = await fetch(`${CONFIG.ALBERT_API_URL}/chat/completions`, {
+    // Build request based on provider
+    switch (provider) {
+      case 'anthropic':
+        // Anthropic API format
+        headers['x-api-key'] = apiKey;
+        headers['anthropic-version'] = '2023-06-01';
+        apiUrl = `${endpoint}/messages`;
+        requestBody = {
+          model: model,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: CONFIG.MAX_TOKENS,
+          temperature: 0.7
+        };
+        break;
+        
+      case 'openai':
+      case 'albert':
+      case 'custom':
+      default:
+        // OpenAI-compatible format (including Albert)
+        headers['Authorization'] = `Bearer ${apiKey}`;
+        apiUrl = `${endpoint}/chat/completions`;
+        requestBody = {
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: getSystemPrompt(context)
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: CONFIG.MAX_TOKENS,
+          temperature: 0.7,
+          top_p: 0.9
+        };
+        break;
+    }
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
+      headers: headers,
       body: JSON.stringify(requestBody)
     });
     
@@ -296,11 +351,18 @@ try {
       } else if (response.status === 429) {
         throw new Error('Rate limit exceeded. Please try again later.');
       }
-      throw new Error(`Albert API error: ${error}`);
+      throw new Error(`${provider} API error: ${error}`);
     }
     
     const data = await response.json();
-    return data.choices[0].message.content;
+    
+    // Extract content based on provider response format
+    if (provider === 'anthropic') {
+      return data.content[0].text;
+    } else {
+      // OpenAI-compatible format
+      return data.choices[0].message.content;
+    }
   }
 
   // Build context-aware prompt

@@ -8,7 +8,7 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       margin: 0;
       padding: 20px;
-      max-width: 600px;
+      max-width: 700px;
       margin: 0 auto;
       background: #f5f5f5;
     }
@@ -49,17 +49,20 @@
     }
     
     input[type="text"],
-    input[type="password"] {
+    input[type="password"],
+    select {
       width: 100%;
       padding: 10px 12px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 14px;
       box-sizing: border-box;
+      background: white;
     }
     
     input[type="text"]:focus,
-    input[type="password"]:focus {
+    input[type="password"]:focus,
+    select:focus {
       outline: none;
       border-color: #4285f4;
     }
@@ -98,6 +101,31 @@
     button:disabled {
       background: #ccc;
       cursor: not-allowed;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .button-secondary {
+      background: #f1f3f4;
+      color: #5f6368;
+      border: 1px solid #dadce0;
+    }
+    
+    .button-secondary:hover {
+      background: #e8eaed;
+    }
+    
+    .button-danger {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .button-danger:hover {
+      background: #c82333;
     }
     
     .success-message,
@@ -162,6 +190,89 @@
       color: #666;
       font-size: 14px;
     }
+    
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 30px;
+    }
+    
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.3s;
+      position: relative;
+    }
+    
+    .tab:hover {
+      color: #4285f4;
+    }
+    
+    .tab.active {
+      color: #4285f4;
+    }
+    
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #4285f4;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .slider-container {
+      margin-top: 10px;
+    }
+    
+    .slider {
+      width: 100%;
+      height: 5px;
+      border-radius: 5px;
+      background: #ddd;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4285f4;
+      cursor: pointer;
+    }
+    
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4285f4;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .slider-value {
+      display: inline-block;
+      margin-left: 10px;
+      font-size: 14px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -171,43 +282,192 @@
     <div class="success-message" id="successMessage"></div>
     <div class="error-message" id="errorMessage"></div>
     
-    <div class="instructions">
-      <h3>How to get your Albert API key:</h3>
-      <ol>
-        <li>Visit <a href="https://albert.api.etalab.gouv.fr" target="_blank">albert.api.etalab.gouv.fr</a></li>
-        <li>Click "S'inscrire" (Sign up) to create a free account</li>
-        <li>Once logged in, go to the "API Keys" section</li>
-        <li>Generate a new API key</li>
-        <li>Copy and paste it below</li>
-      </ol>
+    <div class="tabs">
+      <button class="tab active" data-tab="model">Model Configuration</button>
+      <button class="tab" data-tab="appearance">Appearance</button>
+      <button class="tab" data-tab="shortcuts">Shortcuts</button>
+      <button class="tab" data-tab="about">About</button>
     </div>
     
-    <div class="section">
-      <h2>API Configuration</h2>
-      
-      <div class="form-group">
-        <label for="apiKey">
-          Albert API Key
-          <span class="api-key-status" id="apiKeyStatus"></span>
-        </label>
-        <input type="password" id="apiKey" placeholder="Enter your Albert API key">
-        <div class="help-text">
-          Your API key is stored securely in your browser and never sent anywhere except to Albert's API.
-        </div>
+    <!-- Model Configuration Tab -->
+    <div class="tab-content active" id="modelTab">
+      <div class="instructions">
+        <h3>Quick Setup Guide:</h3>
+        <ol>
+          <li>Select your AI provider (Albert is free and default)</li>
+          <li>For Albert: Visit <a href="https://albert.api.etalab.gouv.fr" target="_blank">albert.api.etalab.gouv.fr</a> to get a free API key</li>
+          <li>Enter your API key and test the connection</li>
+          <li>Save your settings</li>
+        </ol>
       </div>
       
-      <button id="saveButton">Save Settings</button>
+      <div class="section">
+        <h2>AI Model Configuration</h2>
+        
+        <div class="form-group">
+          <label for="provider">AI Provider</label>
+          <select id="provider">
+            <option value="albert" selected>Albert (French Government AI - Free)</option>
+            <option value="openai">OpenAI (ChatGPT)</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="custom">Custom API Endpoint</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="apiEndpoint">API Endpoint</label>
+          <input type="text" id="apiEndpoint" placeholder="https://api.example.com/v1" value="https://albert.api.etalab.gouv.fr/v1">
+          <div class="help-text">
+            The base URL for API requests. This is automatically set based on your provider.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="model">Model</label>
+          <select id="model">
+            <option value="albert-large">albert-large (Most capable)</option>
+            <option value="albert-base">albert-base (Balanced)</option>
+            <option value="albert-light">albert-light (Fastest)</option>
+          </select>
+          <div class="help-text" id="modelHelp">
+            Choose the model based on your needs. Larger models are more capable but slower.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="apiKey">
+            API Key
+            <span class="api-key-status" id="apiKeyStatus"></span>
+          </label>
+          <input type="password" id="apiKey" placeholder="Enter your API key">
+          <div class="help-text">
+            Your API key is stored securely in your browser and only sent to your selected AI provider.
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button id="testButton" class="button-secondary">Test Connection</button>
+          <button id="saveButton">Save Settings</button>
+          <button id="clearButton" class="button-danger">Clear Credentials</button>
+        </div>
+      </div>
     </div>
     
-    <div class="section">
-      <h2>About</h2>
-      <p style="color: #666; font-size: 14px; line-height: 1.6;">
-        Universal Web Assistant uses Jina AI to extract page content and Albert LLM (French government AI) 
-        to provide intelligent responses. Your API key enables direct communication with Albert's servers.
-      </p>
+    <!-- Appearance Tab -->
+    <div class="tab-content" id="appearanceTab">
+      <div class="section">
+        <h2>Widget Appearance</h2>
+        
+        <div class="form-group">
+          <label for="position">Widget Position</label>
+          <select id="position">
+            <option value="bottom-right">Bottom Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="top-right">Top Right</option>
+            <option value="top-left">Top Left</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="auto">Auto (Follow System)</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="fontSize">Text Size</label>
+          <select id="fontSize">
+            <option value="small">Small (12px)</option>
+            <option value="medium">Medium (14px)</option>
+            <option value="large">Large (16px)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="autoHide">
+            Auto-hide after inactivity
+            <span class="slider-value" id="autoHideValue">Disabled</span>
+          </label>
+          <div class="slider-container">
+            <input type="range" min="0" max="300" value="0" step="30" class="slider" id="autoHide">
+          </div>
+          <div class="help-text">
+            Automatically minimize the widget after seconds of inactivity (0 = disabled)
+          </div>
+        </div>
+        
+        <button id="saveAppearanceButton">Save Appearance</button>
+      </div>
+    </div>
+    
+    <!-- Shortcuts Tab -->
+    <div class="tab-content" id="shortcutsTab">
+      <div class="section">
+        <h2>Keyboard Shortcuts</h2>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="enableShortcuts" checked>
+            Enable keyboard shortcuts
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <label for="toggleShortcut">Toggle Widget</label>
+          <input type="text" id="toggleShortcut" value="Ctrl+Shift+A" readonly>
+          <div class="help-text">
+            Press this combination to show/hide the assistant widget
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="minimizeShortcut">Minimize Widget</label>
+          <input type="text" id="minimizeShortcut" value="Escape" readonly>
+          <div class="help-text">
+            Press this key when the widget is focused to minimize it
+          </div>
+        </div>
+        
+        <button id="saveShortcutsButton">Save Shortcuts</button>
+      </div>
+    </div>
+    
+    <!-- About Tab -->
+    <div class="tab-content" id="aboutTab">
+      <div class="section">
+        <h2>About Universal Web Assistant</h2>
+        <p style="color: #666; font-size: 14px; line-height: 1.6;">
+          Universal Web Assistant uses Jina AI to extract page content and connects to your chosen AI provider 
+          for intelligent responses. The extension supports multiple AI models including Albert (French government AI), 
+          OpenAI, Anthropic, and custom endpoints.
+        </p>
+        
+        <h3 style="font-size: 16px; margin-top: 24px;">Supported Providers:</h3>
+        <ul style="color: #666; font-size: 14px; line-height: 1.8;">
+          <li><strong>Albert:</strong> Free French government AI, great for general assistance</li>
+          <li><strong>OpenAI:</strong> GPT models for advanced capabilities</li>
+          <li><strong>Anthropic:</strong> Claude models for nuanced responses</li>
+          <li><strong>Custom:</strong> Connect to any OpenAI-compatible API</li>
+        </ul>
+        
+        <h3 style="font-size: 16px; margin-top: 24px;">Privacy:</h3>
+        <p style="color: #666; font-size: 14px; line-height: 1.6;">
+          All settings are stored locally in your browser. API keys are encrypted and only sent to your 
+          selected AI provider. No data is collected or stored by the extension itself. Page content is 
+          extracted using Jina AI's privacy-respecting service.
+        </p>
+        
+        <h3 style="font-size: 16px; margin-top: 24px;">Version:</h3>
+        <p style="color: #666; font-size: 14px;">
+          Version 1.1.0 - Multi-model support with enhanced UI
+        </p>
+      </div>
     </div>
   </div>
   
-  <script src="options.js"></script>
+  <script src="options-new.js"></script>
 </body>
 </html>

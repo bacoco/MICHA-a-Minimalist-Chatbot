@@ -7,11 +7,20 @@
   // State
   let widget = null;
   let isExpanded = false;
+  let isResizing = false;
+  let startX = 0;
+  let startY = 0;
+  let startWidth = 0;
+  let startHeight = 0;
   let settings = {
     enabled: true,
-    position: 'bottom-right',
+    position: 'top-left',
     theme: 'auto',
-    shortcuts: true
+    shortcuts: true,
+    panelWidth: 380,
+    panelHeight: 520,
+    fontSize: 'medium',
+    panelMode: false
   };
   
   // Website type detection
@@ -53,17 +62,37 @@
   
   // Create widget HTML
   function createWidgetHTML() {
+    const panelClass = settings.panelMode ? 'panel-mode' : '';
     return `
-      <div id="${WIDGET_ID}" class="uwa-widget ${settings.position}" data-theme="${settings.theme}">
+      <div id="${WIDGET_ID}" class="uwa-widget ${settings.position} ${panelClass}" data-theme="${settings.theme}" data-font-size="${settings.fontSize || 'medium'}">
         <button class="uwa-toggle" aria-label="Toggle Universal Assistant">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="currentColor"/>
           </svg>
         </button>
-        <div class="uwa-panel" style="display: none;">
+        <button class="uwa-panel-tab" aria-label="Open chat panel" style="display: none;">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M4 3h12v14H4z" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 10h4M8 7h4M8 13h4" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </button>
+        <div class="uwa-panel" style="display: none; width: ${settings.panelWidth}px; height: ${settings.panelHeight}px;">
           <div class="uwa-header">
             <h3>Universal Assistant</h3>
-            <button class="uwa-close" aria-label="Close assistant">×</button>
+            <div class="uwa-header-controls">
+              <button class="uwa-mode-toggle" aria-label="Toggle panel mode" title="Toggle panel mode">
+                <svg class="dock-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="10" y="2" width="4" height="12" rx="1" fill="currentColor"/>
+                  <rect x="2" y="2" width="6" height="12" rx="1" fill="currentColor" opacity="0.3"/>
+                </svg>
+                <svg class="float-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display: none;">
+                  <rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M6 3V1M10 3V1M3 6H1M3 10H1" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </button>
+              <button class="uwa-minimize" aria-label="Minimize assistant">_</button>
+              <button class="uwa-close" aria-label="Close assistant">×</button>
+            </div>
           </div>
           <div class="uwa-messages"></div>
           <div class="uwa-input-container">
@@ -74,6 +103,7 @@
               </svg>
             </button>
           </div>
+          <div class="uwa-resize-handle"></div>
         </div>
       </div>
     `;
@@ -94,23 +124,37 @@
   // Attach event listeners
   function attachEventListeners() {
     const toggle = widget.querySelector('.uwa-toggle');
+    const panelTab = widget.querySelector('.uwa-panel-tab');
     const close = widget.querySelector('.uwa-close');
+    const minimize = widget.querySelector('.uwa-minimize');
+    const modeToggle = widget.querySelector('.uwa-mode-toggle');
     const input = widget.querySelector('.uwa-input');
     const send = widget.querySelector('.uwa-send');
+    const resizeHandle = widget.querySelector('.uwa-resize-handle');
+    const panel = widget.querySelector('.uwa-panel');
     
     toggle.addEventListener('click', toggleWidget);
+    panelTab.addEventListener('click', toggleWidget);
     close.addEventListener('click', toggleWidget);
+    minimize.addEventListener('click', minimizeWidget);
+    modeToggle.addEventListener('click', togglePanelMode);
     send.addEventListener('click', sendMessage);
     input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
     
-    // Keyboard shortcut
+    // Resize functionality
+    resizeHandle.addEventListener('mousedown', startResize);
+    
+    // Keyboard shortcuts
     if (settings.shortcuts) {
       document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === 'A') {
           e.preventDefault();
           toggleWidget();
+        } else if (e.key === 'Escape' && isExpanded) {
+          e.preventDefault();
+          minimizeWidget();
         }
       });
     }
@@ -119,11 +163,23 @@
   // Toggle widget visibility
   function toggleWidget() {
     const panel = widget.querySelector('.uwa-panel');
+    const panelTab = widget.querySelector('.uwa-panel-tab');
     isExpanded = !isExpanded;
     
     if (isExpanded) {
       panel.style.display = 'flex';
       widget.classList.add('expanded');
+      
+      // In panel mode, use stored dimensions
+      if (settings.panelMode) {
+        panel.style.height = settings.panelHeight + 'px';
+        panel.style.width = settings.panelWidth + 'px';
+        // Update webpage offset when opening
+        document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
+        // Hide panel tab when expanded
+        panelTab.style.display = 'none';
+      }
+      
       widget.querySelector('.uwa-input').focus();
       
       // Show initial suggestions if no messages yet
@@ -134,6 +190,185 @@
     } else {
       panel.style.display = 'none';
       widget.classList.remove('expanded');
+      
+      // In panel mode, remove webpage offset when closing
+      if (settings.panelMode) {
+        document.documentElement.style.setProperty('--uwa-panel-width', '0px');
+        // Show panel tab when collapsed
+        panelTab.style.display = 'block';
+      }
+    }
+  }
+  
+  // Minimize widget
+  function minimizeWidget() {
+    const panel = widget.querySelector('.uwa-panel');
+    const panelTab = widget.querySelector('.uwa-panel-tab');
+    panel.style.display = 'none';
+    widget.classList.remove('expanded');
+    isExpanded = false;
+    
+    // In panel mode, remove webpage offset when minimizing
+    if (settings.panelMode) {
+      document.documentElement.style.setProperty('--uwa-panel-width', '0px');
+      // Show panel tab when minimized
+      panelTab.style.display = 'block';
+    }
+  }
+  
+  // Toggle between panel and floating mode
+  function togglePanelMode() {
+    settings.panelMode = !settings.panelMode;
+    
+    // Update widget classes
+    if (settings.panelMode) {
+      widget.classList.add('panel-mode');
+      // Hide the floating toggle button when in panel mode
+      widget.querySelector('.uwa-toggle').style.display = 'none';
+      // Show panel tab when panel is minimized
+      if (!isExpanded) {
+        widget.querySelector('.uwa-panel-tab').style.display = 'block';
+      }
+      // Add class to body to shift webpage content
+      document.documentElement.classList.add('uwa-panel-active');
+      // Only set the panel width if the panel is expanded
+      if (isExpanded) {
+        document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
+      } else {
+        document.documentElement.style.setProperty('--uwa-panel-width', '0px');
+      }
+    } else {
+      widget.classList.remove('panel-mode');
+      // Show the floating toggle button when in floating mode
+      widget.querySelector('.uwa-toggle').style.display = '';
+      // Hide panel tab
+      widget.querySelector('.uwa-panel-tab').style.display = 'none';
+      // Remove class from body to restore normal layout
+      document.documentElement.classList.remove('uwa-panel-active');
+      document.documentElement.style.removeProperty('--uwa-panel-width');
+    }
+    
+    // Toggle icon visibility
+    const dockIcon = widget.querySelector('.dock-icon');
+    const floatIcon = widget.querySelector('.float-icon');
+    if (settings.panelMode) {
+      dockIcon.style.display = 'none';
+      floatIcon.style.display = 'block';
+    } else {
+      dockIcon.style.display = 'block';
+      floatIcon.style.display = 'none';
+    }
+    
+    // Reset panel dimensions for panel mode
+    const panel = widget.querySelector('.uwa-panel');
+    if (settings.panelMode) {
+      panel.style.width = settings.panelWidth + 'px';
+      panel.style.height = settings.panelHeight + 'px';
+    } else {
+      panel.style.width = settings.panelWidth + 'px';
+      panel.style.height = settings.panelHeight + 'px';
+    }
+    
+    // Save preference
+    saveSettings();
+  }
+  
+  // Start resizing
+  function startResize(e) {
+    e.preventDefault();
+    isResizing = true;
+    
+    const panel = widget.querySelector('.uwa-panel');
+    startX = e.clientX;
+    startY = e.clientY;
+    startWidth = parseInt(window.getComputedStyle(panel).width, 10);
+    startHeight = parseInt(window.getComputedStyle(panel).height, 10);
+    
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize);
+    
+    // Add resizing class for visual feedback
+    panel.classList.add('resizing');
+  }
+  
+  // Do resize
+  function doResize(e) {
+    if (!isResizing) return;
+    
+    const panel = widget.querySelector('.uwa-panel');
+    
+    if (settings.panelMode) {
+      // In panel mode, resize both width and height from bottom-right corner
+      let newWidth = startWidth - (e.clientX - startX);
+      let newHeight = startHeight - (e.clientY - startY);
+      
+      // Apply constraints for panel mode
+      newWidth = Math.max(300, Math.min(800, newWidth));
+      newHeight = Math.max(400, Math.min(window.innerHeight, newHeight));
+      
+      // Apply new dimensions
+      panel.style.width = newWidth + 'px';
+      panel.style.height = newHeight + 'px';
+      
+      // Update the webpage offset
+      document.documentElement.style.setProperty('--uwa-panel-width', newWidth + 'px');
+      
+      // Save to settings
+      settings.panelWidth = newWidth;
+      settings.panelHeight = newHeight;
+    } else {
+      // In floating mode, resize both width and height
+      const position = settings.position;
+      
+      // Calculate new dimensions
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+      
+      // Adjust width based on position
+      if (position.includes('right')) {
+        newWidth = startWidth - (e.clientX - startX);
+      } else {
+        newWidth = startWidth + (e.clientX - startX);
+      }
+      
+      // Adjust height based on position
+      if (position.includes('bottom')) {
+        newHeight = startHeight - (e.clientY - startY);
+      } else {
+        newHeight = startHeight + (e.clientY - startY);
+      }
+      
+      // Apply constraints
+      newWidth = Math.max(300, Math.min(600, newWidth));
+      newHeight = Math.max(400, Math.min(800, newHeight));
+      
+      // Apply new dimensions
+      panel.style.width = newWidth + 'px';
+      panel.style.height = newHeight + 'px';
+      
+      // Save to settings
+      settings.panelWidth = newWidth;
+      settings.panelHeight = newHeight;
+    }
+  }
+  
+  // Stop resizing
+  function stopResize() {
+    if (!isResizing) return;
+    
+    isResizing = false;
+    const panel = widget.querySelector('.uwa-panel');
+    panel.classList.remove('resizing');
+    
+    document.removeEventListener('mousemove', doResize);
+    document.removeEventListener('mouseup', stopResize);
+    
+    // Save dimensions to storage
+    if (chrome.storage && chrome.storage.sync) {
+      chrome.storage.sync.get(STORAGE_KEY, (result) => {
+        const updatedSettings = { ...result[STORAGE_KEY], ...settings };
+        chrome.storage.sync.set({ [STORAGE_KEY]: updatedSettings });
+      });
     }
   }
   
@@ -290,6 +525,16 @@
     });
   }
   
+  // Save settings to storage
+  async function saveSettings() {
+    if (typeof chrome === 'undefined' || !chrome.storage) {
+      console.warn('Chrome storage API not available');
+      return;
+    }
+    
+    chrome.storage.sync.set({ [STORAGE_KEY]: settings });
+  }
+  
   // Check if site is blacklisted
   async function isBlacklisted() {
     if (typeof chrome === 'undefined' || !chrome.storage) {
@@ -408,4 +653,18 @@
       }
     });
   }
+  
+  // Handle window resize for panel mode
+  window.addEventListener('resize', () => {
+    if (widget && settings.panelMode && isExpanded) {
+      const panel = widget.querySelector('.uwa-panel');
+      if (panel) {
+        // Keep panel height within viewport
+        const maxHeight = window.innerHeight;
+        if (settings.panelHeight > maxHeight) {
+          panel.style.height = maxHeight + 'px';
+        }
+      }
+    }
+  });
 })();
