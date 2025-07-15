@@ -298,7 +298,10 @@
       <div class="instructions">
         <h3>Quick Setup Guide:</h3>
         <ol>
-          <li>Select your AI provider (Albert is free and default)</li>
+          <li>Select your AI provider (Free providers are available and recommended)</li>
+          <li>For OpenRouter: Visit <a href="https://openrouter.ai" target="_blank">openrouter.ai</a> to get a free API key</li>
+          <li>For Groq: Visit <a href="https://console.groq.com" target="_blank">console.groq.com</a> to get a free API key</li>
+          <li>For Hugging Face: Visit <a href="https://huggingface.co" target="_blank">huggingface.co</a> to get a free API key</li>
           <li>For Albert: Visit <a href="https://albert.api.etalab.gouv.fr" target="_blank">albert.api.etalab.gouv.fr</a> to get a free API key</li>
           <li>Enter your API key and test the connection</li>
           <li>Save your settings</li>
@@ -311,10 +314,17 @@
         <div class="form-group">
           <label for="provider">AI Provider</label>
           <select id="provider">
-            <option value="albert" selected>Albert (French Government AI - Free)</option>
-            <option value="openai">OpenAI (ChatGPT)</option>
-            <option value="anthropic">Anthropic (Claude)</option>
-            <option value="custom">Custom API Endpoint</option>
+            <optgroup label="🆓 Free Providers">
+              <option value="openrouter" selected>OpenRouter (Free Models Available)</option>
+              <option value="groq">Groq (Free Models Available)</option>
+              <option value="huggingface">Hugging Face (Free Models Available)</option>
+              <option value="albert">Albert (French Government AI - Free)</option>
+            </optgroup>
+            <optgroup label="💳 Paid Providers">
+              <option value="openai">OpenAI (ChatGPT)</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="custom">Custom API Endpoint</option>
+            </optgroup>
           </select>
         </div>
         
@@ -526,15 +536,18 @@
         <h2>About Universal Web Assistant</h2>
         <p style="color: #666; font-size: 14px; line-height: 1.6;">
           Universal Web Assistant uses Jina AI to extract page content and connects to your chosen AI provider 
-          for intelligent responses. The extension supports multiple AI models including Albert (French government AI), 
-          OpenAI, Anthropic, and custom endpoints.
+          for intelligent responses. The extension supports multiple free AI models including OpenRouter, Groq, 
+          Hugging Face, Albert (French government AI), as well as paid providers like OpenAI, Anthropic, and custom endpoints.
         </p>
         
         <h3 style="font-size: 16px; margin-top: 24px;">Supported Providers:</h3>
         <ul style="color: #666; font-size: 14px; line-height: 1.8;">
-          <li><strong>Albert:</strong> Free French government AI, great for general assistance</li>
-          <li><strong>OpenAI:</strong> GPT models for advanced capabilities</li>
-          <li><strong>Anthropic:</strong> Claude models for nuanced responses</li>
+          <li><strong>🆓 OpenRouter:</strong> Free access to Llama 3.1 8B, Mixtral 8x7B, Qwen 2.5 7B, and more</li>
+          <li><strong>🆓 Groq:</strong> Free access to Llama 3.1 8B/70B, Mixtral 8x7B with ultra-fast inference</li>
+          <li><strong>🆓 Hugging Face:</strong> Free access to Mistral 7B, Zephyr 7B, CodeLlama 7B models</li>
+          <li><strong>🆓 Albert:</strong> Free French government AI, great for general assistance</li>
+          <li><strong>💳 OpenAI:</strong> GPT models for advanced capabilities (paid)</li>
+          <li><strong>💳 Anthropic:</strong> Claude models for nuanced responses (paid)</li>
           <li><strong>Custom:</strong> Connect to any OpenAI-compatible API</li>
         </ul>
         
