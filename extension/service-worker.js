@@ -41,7 +41,9 @@ try {
   const CONFIG = {
     JINA_BASE_URL: 'https://r.jina.ai',
     CACHE_PREFIX: 'uwa_cache_',
+    BACKGROUND_CACHE_PREFIX: 'uwa_bg_cache_',
     CACHE_TTL: 3600000, // 1 hour in milliseconds
+    BACKGROUND_CACHE_TTL: 1800000, // 30 minutes in milliseconds
     MAX_TOKENS: 500,
     DEFAULT_PROVIDER: 'albert',
     DEFAULT_ENDPOINT: 'https://albert.api.etalab.gouv.fr/v1',
@@ -262,8 +264,18 @@ try {
         console.error('Jina extraction failed:', error);
       }
       
-      // Build prompt
-      const prompt = buildPrompt(message, pageContent, context);
+      // Fetch background content if enabled
+      let backgroundContent = [];
+      try {
+        if (context.discoveredLinks && context.discoveredLinks.length > 0) {
+          backgroundContent = await fetchBackgroundContent(context.discoveredLinks, context);
+        }
+      } catch (error) {
+        console.error('Background content fetching failed:', error);
+      }
+      
+      // Build prompt with background content
+      const prompt = buildPrompt(message, pageContent, context, backgroundContent);
       
       // Generate response using AI
       const aiResponse = await generateAIResponse(prompt, context, config);
@@ -704,7 +716,102 @@ try {
   }
 
   // Build context-aware prompt
-  function buildPrompt(userMessage, pageContent, context) {
+  // Fetch background content from discovered links
+  async function fetchBackgroundContent(discoveredLinks, context) {
+    try {
+      // Get background loading settings
+      const { preferences } = await chrome.storage.sync.get(['preferences']);
+      const backgroundConfig = preferences?.backgroundLoading || { enabled: false };
+      
+      // Check if background loading is enabled
+      if (!backgroundConfig.enabled || !discoveredLinks || discoveredLinks.length === 0) {
+        return [];
+      }
+      
+      // Limit the number of links to process
+      const maxPages = Math.min(backgroundConfig.maxPages || 5, discoveredLinks.length);
+      const linksToProcess = discoveredLinks.slice(0, maxPages);
+      
+      const backgroundContent = [];
+      const promises = [];
+      
+      for (const link of linksToProcess) {
+        const promise = fetchSingleBackgroundContent(link.url, backgroundConfig.cacheTTL || 30);
+        promises.push(promise);
+      }
+      
+      // Execute all requests in parallel but limit concurrency
+      const results = await Promise.allSettled(promises);
+      
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        if (result.status === 'fulfilled' && result.value) {
+          backgroundContent.push({
+            url: linksToProcess[i].url,
+            title: linksToProcess[i].text || 'Untitled',
+            content: result.value.content,
+            summary: result.value.summary || result.value.content.substring(0, 500) + '...'
+          });
+        }
+      }
+      
+      return backgroundContent;
+    } catch (error) {
+      console.error('Error fetching background content:', error);
+      return [];
+    }
+  }
+  
+  // Fetch content for a single background link
+  async function fetchSingleBackgroundContent(url, cacheTTL) {
+    try {
+      // Create cache key
+      const cacheKey = CONFIG.BACKGROUND_CACHE_PREFIX + btoa(url).replace(/[^a-zA-Z0-9]/g, '');
+      
+      // Check cache first
+      const cached = await chrome.storage.local.get([cacheKey]);
+      if (cached[cacheKey]) {
+        const { content, timestamp } = cached[cacheKey];
+        const age = Date.now() - timestamp;
+        const ttl = (cacheTTL * 60 * 1000) || CONFIG.BACKGROUND_CACHE_TTL;
+        
+        if (age < ttl) {
+          return { content, fromCache: true };
+        }
+      }
+      
+      // Fetch from Jina API
+      const encodedUrl = encodeURIComponent(url);
+      const response = await fetch(`${CONFIG.JINA_BASE_URL}/${encodedUrl}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/plain',
+          'User-Agent': 'Mozilla/5.0 (compatible; UniversalWebAssistant/1.0)'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Jina API returned ${response.status}`);
+      }
+      
+      const content = await response.text();
+      
+      // Cache the result
+      await chrome.storage.local.set({
+        [cacheKey]: {
+          content: content,
+          timestamp: Date.now()
+        }
+      });
+      
+      return { content, fromCache: false };
+    } catch (error) {
+      console.error(`Error fetching background content for ${url}:`, error);
+      return null;
+    }
+  }
+
+  function buildPrompt(userMessage, pageContent, context, backgroundContent = []) {
     const { siteType = 'general', language = 'en', title = '' } = context || {};
     
     const languageInstruction = (language === 'fr' || language === 'fr-FR' || language.startsWith('fr'))
@@ -746,7 +853,23 @@ User Message: "${userMessage}"`;
 
     if (pageContent) {
       const truncatedContent = pageContent.substring(0, 3000);
-      prompt += `\n\nPage Content Summary:\n${truncatedContent}${pageContent.length > 3000 ? '...' : ''}`;
+      prompt += `\n\nMain Page Content:\n${truncatedContent}${pageContent.length > 3000 ? '...' : ''}`;
+    }
+    
+    // Add background content if available
+    if (backgroundContent && backgroundContent.length > 0) {
+      prompt += `\n\nRelated Pages Context:`;
+      backgroundContent.forEach((content, index) => {
+        if (index < 5) { // Limit to 5 background pages
+          prompt += `\n\n${index + 1}. ${content.title}:\n${content.summary}`;
+        }
+      });
+      
+      const contextInfo = isFrenchLanguage 
+        ? `\n\nNote: J'ai accès au contenu de ${backgroundContent.length} pages connexes du même domaine pour vous fournir une réponse plus complète.`
+        : `\n\nNote: I have access to content from ${backgroundContent.length} related pages from the same domain to provide you with a more comprehensive answer.`;
+      
+      prompt += contextInfo;
     }
     
     prompt += '\n\nProvide a helpful, concise response.';

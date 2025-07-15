@@ -60,6 +60,65 @@
     return navigator.language.split('-')[0] || 'en';
   }
   
+  // Same-domain link discovery
+  function discoverSameDomainLinks() {
+    const currentHostname = window.location.hostname;
+    const currentUrl = window.location.href;
+    const links = document.querySelectorAll('a[href]');
+    
+    const discoveredLinks = [];
+    const seenUrls = new Set();
+    
+    Array.from(links).forEach(link => {
+      try {
+        const href = link.href;
+        const url = new URL(href);
+        
+        // Only include same-domain links
+        if (url.hostname === currentHostname && href !== currentUrl) {
+          // Avoid duplicates
+          if (!seenUrls.has(href)) {
+            seenUrls.add(href);
+            
+            // Get link context
+            const linkText = link.textContent?.trim() || '';
+            const linkTitle = link.title || '';
+            const parentText = link.parentElement?.textContent?.trim() || '';
+            
+            // Prioritize navigation and content links
+            const isNavLink = link.closest('nav, header, .nav, .menu, .navigation') !== null;
+            const isContentLink = link.closest('main, article, .content, .post') !== null;
+            const isBreadcrumb = link.closest('.breadcrumb, .breadcrumbs') !== null;
+            
+            // Calculate priority score
+            let priority = 0;
+            if (isNavLink) priority += 3;
+            if (isContentLink) priority += 2;
+            if (isBreadcrumb) priority += 1;
+            if (linkText.length > 0) priority += 1;
+            
+            discoveredLinks.push({
+              url: href,
+              text: linkText.substring(0, 100), // Limit text length
+              title: linkTitle.substring(0, 100),
+              priority: priority,
+              isNavLink,
+              isContentLink,
+              isBreadcrumb
+            });
+          }
+        }
+      } catch (error) {
+        // Ignore malformed URLs
+      }
+    });
+    
+    // Sort by priority and limit results
+    return discoveredLinks
+      .sort((a, b) => b.priority - a.priority)
+      .slice(0, 20); // Limit to top 20 links
+  }
+  
   // Create widget HTML
   function createWidgetHTML() {
     const panelClass = settings.panelMode ? 'panel-mode' : '';
@@ -393,6 +452,9 @@
     const loadingId = addMessage('Thinking...', 'assistant', true);
     
     try {
+      // Discover same-domain links for background loading
+      const discoveredLinks = discoverSameDomainLinks();
+      
       // Send message to service worker
       const response = await chrome.runtime.sendMessage({
         action: 'assist',
@@ -403,7 +465,8 @@
             siteType: detectWebsiteType(),
             language: detectLanguage(),
             domain: window.location.hostname,
-            title: document.title
+            title: document.title,
+            discoveredLinks: discoveredLinks
           }
         }
       });
