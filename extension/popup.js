@@ -1,6 +1,6 @@
 // Universal Web Assistant - Popup Script
 
-// DOM elements
+// DOM elements - with null checks
 const enableToggle = document.getElementById('enableToggle');
 const shortcutsToggle = document.getElementById('shortcutsToggle');
 const positionSelect = document.getElementById('positionSelect');
@@ -19,41 +19,122 @@ const changeApiKeyButton = document.getElementById('changeApiKey');
 const openAdvancedSettingsButton = document.getElementById('openAdvancedSettings');
 const settingsButton = document.getElementById('settingsButton');
 
+// Loading state tracking
+let isLoadingSettings = false;
+
 // Storage keys
 const SETTINGS_KEY = 'universalAssistantSettings';
 const BLACKLIST_KEY = 'blacklist';
 
-// Load settings on popup open
-async function loadSettings() {
-  const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey', 'modelConfig']);
-  
-  // Check if API key is configured
-  if (data.apiKey || data.modelConfig?.apiKey) {
-    // Hide API key warning if configured
-    apiKeySection.style.display = 'none';
-    apiConfiguredSection.style.display = 'block';
-  } else {
-    // Show API key warning if not configured
-    apiKeySection.style.display = 'block';
-    apiConfiguredSection.style.display = 'none';
+/**
+ * Opens the options page in a popup window with consistent positioning
+ * @description Reusable function to avoid code duplication
+ */
+function openOptionsPage() {
+  chrome.windows.create({
+    url: chrome.runtime.getURL('options.html'),
+    type: 'popup',
+    width: 800,
+    height: 700,
+    left: Math.round((screen.width - 800) / 2),
+    top: Math.round((screen.height - 700) / 2)
+  });
+  window.close();
+}
+
+/**
+ * Validates Albert API key format
+ * @param {string} apiKey - The API key to validate
+ * @returns {boolean} True if valid, false otherwise
+ */
+function validateApiKey(apiKey) {
+  if (!apiKey || typeof apiKey !== 'string') {
+    return false;
   }
   
-  // Load preferences
-  const settings = data[SETTINGS_KEY] || {
-    enabled: true,
-    position: 'bottom-right',
-    shortcuts: true,
-    theme: 'auto'
-  };
+  // Basic validation: should be a non-empty string with reasonable length
+  const trimmed = apiKey.trim();
+  if (trimmed.length < 10 || trimmed.length > 200) {
+    return false;
+  }
   
-  enableToggle.checked = settings.enabled;
-  shortcutsToggle.checked = settings.shortcuts;
-  positionSelect.value = settings.position;
-  themeSelect.value = settings.theme;
+  // Check for suspicious patterns that might indicate invalid keys
+  if (trimmed.includes(' ') || trimmed.includes('\n') || trimmed.includes('\t')) {
+    return false;
+  }
   
-  // Load blacklist
-  const blacklist = data[BLACKLIST_KEY] || [];
-  renderBlacklist(blacklist);
+  return true;
+}
+
+/**
+ * Shows loading state for a button
+ * @param {HTMLElement} button - The button element
+ * @param {string} loadingText - Text to show during loading
+ */
+function showLoadingState(button, loadingText = 'Loading...') {
+  if (!button) return;
+  
+  button.dataset.originalText = button.textContent;
+  button.textContent = loadingText;
+  button.disabled = true;
+}
+
+/**
+ * Hides loading state for a button
+ * @param {HTMLElement} button - The button element
+ */
+function hideLoadingState(button) {
+  if (!button) return;
+  
+  button.textContent = button.dataset.originalText || button.textContent;
+  button.disabled = false;
+  delete button.dataset.originalText;
+}
+
+// Load settings on popup open
+async function loadSettings() {
+  // Prevent race conditions by checking if already loading
+  if (isLoadingSettings) {
+    return;
+  }
+  
+  isLoadingSettings = true;
+  
+  try {
+    const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey', 'modelConfig']);
+    
+    // Check if API key is configured with null checks
+    if (data.apiKey || data.modelConfig?.apiKey) {
+      // Hide API key warning if configured
+      if (apiKeySection) apiKeySection.style.display = 'none';
+      if (apiConfiguredSection) apiConfiguredSection.style.display = 'block';
+    } else {
+      // Show API key warning if not configured
+      if (apiKeySection) apiKeySection.style.display = 'block';
+      if (apiConfiguredSection) apiConfiguredSection.style.display = 'none';
+    }
+  
+    // Load preferences with null checks
+    const settings = data[SETTINGS_KEY] || {
+      enabled: true,
+      position: 'bottom-right',
+      shortcuts: true,
+      theme: 'auto'
+    };
+    
+    if (enableToggle) enableToggle.checked = settings.enabled;
+    if (shortcutsToggle) shortcutsToggle.checked = settings.shortcuts;
+    if (positionSelect) positionSelect.value = settings.position;
+    if (themeSelect) themeSelect.value = settings.theme;
+    
+    // Load blacklist
+    const blacklist = data[BLACKLIST_KEY] || [];
+    renderBlacklist(blacklist);
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+  } finally {
+    isLoadingSettings = false;
+  }
 }
 
 // Save settings
@@ -81,6 +162,8 @@ async function saveSettings() {
 
 // Render blacklist
 function renderBlacklist(blacklist) {
+  if (!blacklistItems) return;
+  
   blacklistItems.innerHTML = '';
   
   if (blacklist.length === 0) {
@@ -181,19 +264,21 @@ async function addCurrentSite() {
   }
 }
 
-// Event listeners
-enableToggle.addEventListener('change', saveSettings);
-shortcutsToggle.addEventListener('change', saveSettings);
-positionSelect.addEventListener('change', saveSettings);
-themeSelect.addEventListener('change', saveSettings);
-addBlacklistButton.addEventListener('click', addDomain);
+// Event listeners with null checks
+if (enableToggle) enableToggle.addEventListener('change', saveSettings);
+if (shortcutsToggle) shortcutsToggle.addEventListener('change', saveSettings);
+if (positionSelect) positionSelect.addEventListener('change', saveSettings);
+if (themeSelect) themeSelect.addEventListener('change', saveSettings);
+if (addBlacklistButton) addBlacklistButton.addEventListener('click', addDomain);
 
 // Enter key on blacklist input
-blacklistInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    addDomain();
-  }
-});
+if (blacklistInput) {
+  blacklistInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      addDomain();
+    }
+  });
+}
 
 // Add context menu for current site (removed to avoid conflicts)
 // document.addEventListener('contextmenu', (e) => {
@@ -205,21 +290,34 @@ blacklistInput.addEventListener('keypress', (e) => {
 // Configure API Key button handler - show quick config
 if (configureApiKeyButton) {
   configureApiKeyButton.addEventListener('click', () => {
-    configureApiKeyButton.style.display = 'none';
-    quickConfig.style.display = 'block';
-    quickApiKey.focus();
+    if (configureApiKeyButton) configureApiKeyButton.style.display = 'none';
+    if (quickConfig) quickConfig.style.display = 'block';
+    if (quickApiKey) quickApiKey.focus();
   });
 }
 
 // Save API key directly from popup
 if (saveApiKeyButton) {
   saveApiKeyButton.addEventListener('click', async () => {
+    if (!quickApiKey) {
+      alert('API key input not found');
+      return;
+    }
+    
     const apiKey = quickApiKey.value.trim();
     
     if (!apiKey) {
       alert('Please enter an API key');
       return;
     }
+    
+    // Validate API key format
+    if (!validateApiKey(apiKey)) {
+      alert('Invalid API key format. Please ensure it is a valid Albert API key (10-200 characters, no spaces or special characters).');
+      return;
+    }
+    
+    showLoadingState(saveApiKeyButton, 'Saving...');
     
     try {
       // Save API key with default Albert configuration
@@ -234,8 +332,8 @@ if (saveApiKeyButton) {
       });
       
       // Hide the API key section and show configured section
-      apiKeySection.style.display = 'none';
-      apiConfiguredSection.style.display = 'block';
+      if (apiKeySection) apiKeySection.style.display = 'none';
+      if (apiConfiguredSection) apiConfiguredSection.style.display = 'block';
       
       // Notify content scripts
       const tabs = await chrome.tabs.query({});
@@ -246,30 +344,32 @@ if (saveApiKeyButton) {
       });
       
     } catch (error) {
-      alert('Failed to save API key: ' + error.message);
+      console.error('Failed to save API key:', error);
+      
+      // Provide specific error messages
+      let errorMessage = 'Failed to save API key';
+      if (error.message.includes('quota')) {
+        errorMessage = 'Storage quota exceeded. Please free up space and try again.';
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message) {
+        errorMessage = `Failed to save API key: ${error.message}`;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      hideLoadingState(saveApiKeyButton);
     }
   });
 }
 
 // Advanced configuration button
 if (advancedConfigButton) {
-  advancedConfigButton.addEventListener('click', () => {
-    // Open options page in a popup window for better UX
-    chrome.windows.create({
-      url: chrome.runtime.getURL('options.html'),
-      type: 'popup',
-      width: 800,
-      height: 700,
-      left: Math.round((screen.width - 800) / 2),
-      top: Math.round((screen.height - 700) / 2)
-    });
-    // Close the extension popup
-    window.close();
-  });
+  advancedConfigButton.addEventListener('click', openOptionsPage);
 }
 
 // Enter key on API key input
-if (quickApiKey) {
+if (quickApiKey && saveApiKeyButton) {
   quickApiKey.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       saveApiKeyButton.click();
@@ -279,48 +379,24 @@ if (quickApiKey) {
 
 // Settings button handler
 if (settingsButton) {
-  settingsButton.addEventListener('click', () => {
-    // Open options page in a popup window for better UX
-    chrome.windows.create({
-      url: chrome.runtime.getURL('options.html'),
-      type: 'popup',
-      width: 800,
-      height: 700,
-      left: Math.round((screen.width - 800) / 2),
-      top: Math.round((screen.height - 700) / 2)
-    });
-    // Close the extension popup
-    window.close();
-  });
+  settingsButton.addEventListener('click', openOptionsPage);
 }
 
 // Change API Key button handler
 if (changeApiKeyButton) {
   changeApiKeyButton.addEventListener('click', () => {
-    // Show the API key configuration section
-    apiConfiguredSection.style.display = 'none';
-    apiKeySection.style.display = 'block';
-    configureApiKeyButton.style.display = 'none';
-    quickConfig.style.display = 'block';
-    quickApiKey.focus();
+    // Show the API key configuration section with null checks
+    if (apiConfiguredSection) apiConfiguredSection.style.display = 'none';
+    if (apiKeySection) apiKeySection.style.display = 'block';
+    if (configureApiKeyButton) configureApiKeyButton.style.display = 'none';
+    if (quickConfig) quickConfig.style.display = 'block';
+    if (quickApiKey) quickApiKey.focus();
   });
 }
 
 // Open Advanced Settings button handler
 if (openAdvancedSettingsButton) {
-  openAdvancedSettingsButton.addEventListener('click', () => {
-    // Open options page in a popup window for better UX
-    chrome.windows.create({
-      url: chrome.runtime.getURL('options.html'),
-      type: 'popup',
-      width: 800,
-      height: 700,
-      left: Math.round((screen.width - 800) / 2),
-      top: Math.round((screen.height - 700) / 2)
-    });
-    // Close the extension popup
-    window.close();
-  });
+  openAdvancedSettingsButton.addEventListener('click', openOptionsPage);
 }
 
 // Initialize
