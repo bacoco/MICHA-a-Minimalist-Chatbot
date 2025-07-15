@@ -77,6 +77,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     minimizeShortcut: document.getElementById('minimizeShortcut'),
     saveShortcutsButton: document.getElementById('saveShortcutsButton'),
     
+    // Supabase Storage
+    enableSupabase: document.getElementById('enableSupabase'),
+    supabaseUrl: document.getElementById('supabaseUrl'),
+    supabaseKey: document.getElementById('supabaseKey'),
+    userId: document.getElementById('userId'),
+    dataRetention: document.getElementById('dataRetention'),
+    testSupabaseButton: document.getElementById('testSupabaseButton'),
+    saveStorageButton: document.getElementById('saveStorageButton'),
+    clearStorageButton: document.getElementById('clearStorageButton'),
+    
     // Messages
     successMessage: document.getElementById('successMessage'),
     errorMessage: document.getElementById('errorMessage')
@@ -302,6 +312,85 @@ document.addEventListener('DOMContentLoaded', async () => {
       showError('Failed to save shortcuts: ' + error.message);
     }
   });
+
+  // Test Supabase connection
+  elements.testSupabaseButton.addEventListener('click', async () => {
+    const url = elements.supabaseUrl.value.trim();
+    const key = elements.supabaseKey.value.trim();
+    
+    if (!url || !key) {
+      showError('Please enter both Supabase URL and API key');
+      return;
+    }
+    
+    elements.testSupabaseButton.disabled = true;
+    elements.testSupabaseButton.textContent = 'Testing...';
+    
+    try {
+      const isValid = await testSupabaseConnection(url, key);
+      if (isValid) {
+        showSuccess('Supabase connection successful!');
+      } else {
+        showError('Supabase connection failed. Please check your URL and API key.');
+      }
+    } catch (error) {
+      showError('Supabase test failed: ' + error.message);
+    } finally {
+      elements.testSupabaseButton.disabled = false;
+      elements.testSupabaseButton.textContent = 'Test Connection';
+    }
+  });
+
+  // Save Supabase storage settings
+  elements.saveStorageButton.addEventListener('click', async () => {
+    const supabaseConfig = {
+      enabled: elements.enableSupabase.checked,
+      url: elements.supabaseUrl.value.trim(),
+      key: elements.supabaseKey.value.trim(),
+      userId: elements.userId.value.trim(),
+      dataRetention: parseInt(elements.dataRetention.value)
+    };
+    
+    if (supabaseConfig.enabled) {
+      if (!supabaseConfig.url || !supabaseConfig.key || !supabaseConfig.userId) {
+        showError('Please fill in all required Supabase configuration fields');
+        return;
+      }
+    }
+    
+    elements.saveStorageButton.disabled = true;
+    elements.saveStorageButton.textContent = 'Saving...';
+    
+    try {
+      await chrome.storage.sync.set({ supabaseConfig });
+      showSuccess('Supabase storage settings saved successfully!');
+    } catch (error) {
+      showError('Failed to save storage settings: ' + error.message);
+    } finally {
+      elements.saveStorageButton.disabled = false;
+      elements.saveStorageButton.textContent = 'Save Settings';
+    }
+  });
+
+  // Clear Supabase data
+  elements.clearStorageButton.addEventListener('click', async () => {
+    if (confirm('Are you sure you want to clear ALL stored data from Supabase? This includes chat history and Jina transcriptions. This action cannot be undone.')) {
+      try {
+        // Send message to service worker to clear Supabase data
+        const response = await chrome.runtime.sendMessage({
+          action: 'clearSupabaseData'
+        });
+        
+        if (response.success) {
+          showSuccess('All Supabase data cleared successfully');
+        } else {
+          showError('Failed to clear data: ' + response.error);
+        }
+      } catch (error) {
+        showError('Failed to clear data: ' + error.message);
+      }
+    }
+  });
   
   // Close button handler
   if (elements.closeButton) {
@@ -330,7 +419,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         'modelConfig', 
         'apiKey', 
         'preferences',
-        'universalAssistantSettings'
+        'universalAssistantSettings',
+        'supabaseConfig'
       ]);
       
       // Load model configuration
@@ -382,6 +472,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
       
+      // Load Supabase configuration
+      if (data.supabaseConfig) {
+        elements.enableSupabase.checked = data.supabaseConfig.enabled || false;
+        elements.supabaseUrl.value = data.supabaseConfig.url || '';
+        elements.supabaseKey.value = data.supabaseConfig.key || '';
+        elements.userId.value = data.supabaseConfig.userId || '';
+        elements.dataRetention.value = data.supabaseConfig.dataRetention || 30;
+      }
+      
     } catch (error) {
       console.error('Failed to load settings:', error);
     }
@@ -425,6 +524,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       return response.ok;
     } catch (error) {
       console.error('API test error:', error);
+      return false;
+    }
+  }
+
+  // Test Supabase connection
+  async function testSupabaseConnection(url, key) {
+    try {
+      // Test connection by trying to access the database
+      const response = await fetch(`${url}/rest/v1/`, {
+        method: 'GET',
+        headers: {
+          'apikey': key,
+          'Authorization': `Bearer ${key}`
+        }
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Supabase test error:', error);
       return false;
     }
   }

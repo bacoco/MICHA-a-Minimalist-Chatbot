@@ -2,7 +2,7 @@
 // Fixed version with proper error handling
 
 // Import default config and crypto utils
-importScripts('default-config.js', 'crypto-utils.js');
+importScripts('default-config.js', 'crypto-utils.js', 'supabase-client.js');
 
 // Wrap everything in try-catch to prevent registration failures
 try {
@@ -150,6 +150,14 @@ try {
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true;
     }
+
+    // Handle Supabase data clearing
+    if (request.action === 'clearSupabaseData') {
+      handleClearSupabaseData()
+        .then(() => sendResponse({ success: true }))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+    }
   });
 
   // Extract follow-up questions from AI response
@@ -246,6 +254,14 @@ try {
       const suggestions = extractedQuestions.length > 0 
         ? extractedQuestions 
         : generateSuggestions(context);
+
+      // Save chat interaction to Supabase if enabled
+      try {
+        await saveToSupabase(message, cleanedResponse, url, context);
+      } catch (error) {
+        console.error('Failed to save to Supabase:', error);
+        // Continue without failing the entire request
+      }
       
       return {
         response: cleanedResponse,
@@ -270,6 +286,25 @@ try {
       console.log('Cache hit for', url);
       return cached;
     }
+
+    // Check Supabase cache first
+    try {
+      const supabaseClient = await getSupabaseClient();
+      if (supabaseClient) {
+        const { supabaseConfig } = await chrome.storage.sync.get('supabaseConfig');
+        if (supabaseConfig && supabaseConfig.enabled) {
+          const cachedTranscription = await supabaseClient.getCachedJinaTranscription(supabaseConfig.userId, url);
+          if (cachedTranscription) {
+            console.log('Supabase cache hit for', url);
+            // Also save to Chrome storage for local access
+            await setCachedData(cacheKey, cachedTranscription.content, CONFIG.CACHE_TTL);
+            return cachedTranscription.content;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check Supabase cache:', error);
+    }
     
     console.log('Fetching content from Jina for', url);
     
@@ -289,6 +324,19 @@ try {
     
     const content = await response.text();
     await setCachedData(cacheKey, content, CONFIG.CACHE_TTL);
+
+    // Save to Supabase if enabled
+    try {
+      const supabaseClient = await getSupabaseClient();
+      if (supabaseClient) {
+        const { supabaseConfig } = await chrome.storage.sync.get('supabaseConfig');
+        if (supabaseConfig && supabaseConfig.enabled) {
+          await supabaseClient.saveJinaTranscription(supabaseConfig.userId, url, content, CONFIG.CACHE_TTL);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save Jina transcription to Supabase:', error);
+    }
     
     return content;
   }
@@ -533,6 +581,105 @@ Format: Liste numérotée de 1 à 4.`;
     } catch (error) {
       console.error('Cache cleanup error:', error);
     }
+  }
+
+  // Supabase helper functions
+  async function getSupabaseClient() {
+    try {
+      const { supabaseConfig } = await chrome.storage.sync.get('supabaseConfig');
+      
+      if (!supabaseConfig || !supabaseConfig.enabled || !supabaseConfig.url || !supabaseConfig.key) {
+        return null;
+      }
+      
+      return new SupabaseClient(supabaseConfig.url, supabaseConfig.key);
+    } catch (error) {
+      console.error('Failed to get Supabase client:', error);
+      return null;
+    }
+  }
+
+  async function saveToSupabase(userMessage, assistantResponse, url, context) {
+    try {
+      const supabaseClient = await getSupabaseClient();
+      if (!supabaseClient) {
+        return; // Supabase not configured
+      }
+
+      const { supabaseConfig } = await chrome.storage.sync.get('supabaseConfig');
+      if (!supabaseConfig || !supabaseConfig.enabled) {
+        return;
+      }
+
+      // Save the chat interaction
+      await supabaseClient.saveChatInteraction(
+        supabaseConfig.userId,
+        url,
+        context,
+        userMessage,
+        assistantResponse
+      );
+
+      console.log('Chat interaction saved to Supabase');
+    } catch (error) {
+      console.error('Failed to save chat interaction to Supabase:', error);
+      throw error;
+    }
+  }
+
+  async function handleClearSupabaseData() {
+    try {
+      const supabaseClient = await getSupabaseClient();
+      if (!supabaseClient) {
+        throw new Error('Supabase not configured');
+      }
+
+      const { supabaseConfig } = await chrome.storage.sync.get('supabaseConfig');
+      if (!supabaseConfig || !supabaseConfig.enabled) {
+        throw new Error('Supabase not enabled');
+      }
+
+      await supabaseClient.deleteAllUserData(supabaseConfig.userId);
+      console.log('All Supabase data cleared');
+    } catch (error) {
+      console.error('Failed to clear Supabase data:', error);
+      throw error;
+    }
+  }
+
+  // Periodic cleanup of old data
+  async function performSupabaseCleanup() {
+    try {
+      const supabaseClient = await getSupabaseClient();
+      if (!supabaseClient) {
+        return;
+      }
+
+      const { supabaseConfig } = await chrome.storage.sync.get('supabaseConfig');
+      if (!supabaseConfig || !supabaseConfig.enabled) {
+        return;
+      }
+
+      await supabaseClient.cleanupExpiredData(supabaseConfig.userId, supabaseConfig.dataRetention);
+      console.log('Supabase cleanup completed');
+    } catch (error) {
+      console.error('Failed to perform Supabase cleanup:', error);
+    }
+  }
+
+  // Set up periodic Supabase cleanup
+  if (chrome.alarms) {
+    chrome.alarms.create('cleanupSupabase', { periodInMinutes: 1440 }, () => { // Daily cleanup
+      if (chrome.runtime.lastError) {
+        console.log('Supabase cleanup alarm setup info:', chrome.runtime.lastError.message);
+      }
+    });
+
+    chrome.alarms.onAlarm.addListener((alarm) => {
+      if (alarm.name === 'cleanupSupabase') {
+        performSupabaseCleanup().catch(console.error);
+      }
+    });
   }
 
   console.log('Service Worker: Initialization complete');

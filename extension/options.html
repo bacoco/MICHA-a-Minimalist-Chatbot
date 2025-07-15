@@ -287,6 +287,7 @@
     
     <div class="tabs">
       <button class="tab active" data-tab="model">Model Configuration</button>
+      <button class="tab" data-tab="storage">Data Storage</button>
       <button class="tab" data-tab="appearance">Appearance</button>
       <button class="tab" data-tab="shortcuts">Shortcuts</button>
       <button class="tab" data-tab="about">About</button>
@@ -352,6 +353,132 @@
           <button id="testButton" class="button-secondary">Test Connection</button>
           <button id="saveButton">Save Settings</button>
           <button id="clearButton" class="button-danger">Clear Credentials</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Data Storage Tab -->
+    <div class="tab-content" id="storageTab">
+      <div class="instructions">
+        <h3>Supabase Integration Setup:</h3>
+        <ol>
+          <li>Create a free Supabase account at <a href="https://supabase.com" target="_blank">supabase.com</a></li>
+          <li>Create a new project and copy your project URL and anon key</li>
+          <li>Enable Row Level Security (RLS) policies for your tables</li>
+          <li>Configure your settings below to start persisting chat history and Jina transcriptions</li>
+        </ol>
+      </div>
+      
+      <div class="section">
+        <h2>Supabase Configuration</h2>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="enableSupabase">
+            Enable Supabase data persistence
+          </label>
+          <div class="help-text">
+            When enabled, all chat history and Jina transcriptions will be saved to your Supabase database
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="supabaseUrl">Supabase Project URL</label>
+          <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co">
+          <div class="help-text">
+            Your Supabase project URL from the API settings in your Supabase dashboard
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="supabaseKey">Supabase Anon Key</label>
+          <input type="password" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+          <div class="help-text">
+            Your Supabase anon/public key from the API settings in your Supabase dashboard
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="userId">User Identifier</label>
+          <input type="text" id="userId" placeholder="user123 or email@example.com">
+          <div class="help-text">
+            A unique identifier for your data. This helps separate your data from other users.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="dataRetention">Data Retention (days)</label>
+          <select id="dataRetention">
+            <option value="7">7 days</option>
+            <option value="30" selected>30 days</option>
+            <option value="90">90 days</option>
+            <option value="365">1 year</option>
+            <option value="0">Never delete</option>
+          </select>
+          <div class="help-text">
+            How long to keep chat history and Jina transcriptions before automatic cleanup
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button id="testSupabaseButton" class="button-secondary">Test Connection</button>
+          <button id="saveStorageButton">Save Settings</button>
+          <button id="clearStorageButton" class="button-danger">Clear All Data</button>
+        </div>
+        
+        <div class="form-group" style="margin-top: 20px;">
+          <label>Database Setup</label>
+          <div class="help-text">
+            <strong>Required SQL to run in your Supabase SQL editor:</strong>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 10px; font-family: monospace; white-space: pre-wrap; font-size: 12px;">-- Create chat_sessions table
+CREATE TABLE chat_sessions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id VARCHAR(255) NOT NULL,
+  url TEXT NOT NULL,
+  site_type VARCHAR(50),
+  language VARCHAR(10),
+  domain VARCHAR(255),
+  title TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create chat_messages table
+CREATE TABLE chat_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID REFERENCES chat_sessions(id) ON DELETE CASCADE,
+  role VARCHAR(20) NOT NULL,
+  message TEXT NOT NULL,
+  context JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create jina_transcriptions table
+CREATE TABLE jina_transcriptions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  url TEXT NOT NULL,
+  content TEXT NOT NULL,
+  user_id VARCHAR(255) NOT NULL,
+  cached_until TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create indexes for better performance
+CREATE INDEX idx_chat_sessions_user_id ON chat_sessions(user_id);
+CREATE INDEX idx_chat_messages_session_id ON chat_messages(session_id);
+CREATE INDEX idx_jina_transcriptions_user_id ON jina_transcriptions(user_id);
+CREATE INDEX idx_jina_transcriptions_url ON jina_transcriptions(url);
+
+-- Enable RLS (Row Level Security)
+ALTER TABLE chat_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jina_transcriptions ENABLE ROW LEVEL SECURITY;
+
+-- Create policies (adjust based on your authentication needs)
+CREATE POLICY "Users can manage their own sessions" ON chat_sessions FOR ALL USING (true);
+CREATE POLICY "Users can manage their own messages" ON chat_messages FOR ALL USING (true);
+CREATE POLICY "Users can manage their own transcriptions" ON jina_transcriptions FOR ALL USING (true);</div>
+          </div>
         </div>
       </div>
     </div>
