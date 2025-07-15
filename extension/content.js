@@ -176,9 +176,9 @@
       panel.style.display = 'flex';
       widget.classList.add('expanded');
       
-      // In panel mode, use stored dimensions
+      // In panel mode, use full viewport height
       if (settings.panelMode) {
-        panel.style.height = settings.panelHeight + 'px';
+        panel.style.height = '100vh';
         panel.style.width = settings.panelWidth + 'px';
         // Update webpage offset when opening
         document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
@@ -269,7 +269,7 @@
     const panel = widget.querySelector('.uwa-panel');
     if (settings.panelMode) {
       panel.style.width = settings.panelWidth + 'px';
-      panel.style.height = settings.panelHeight + 'px';
+      panel.style.height = '100vh';
     } else {
       panel.style.width = settings.panelWidth + 'px';
       panel.style.height = settings.panelHeight + 'px';
@@ -304,24 +304,21 @@
     const panel = widget.querySelector('.uwa-panel');
     
     if (settings.panelMode) {
-      // In panel mode, resize both width and height from bottom-right corner
+      // In panel mode, resize width only - height is always 100vh
       let newWidth = startWidth - (e.clientX - startX);
-      let newHeight = startHeight - (e.clientY - startY);
       
       // Apply constraints for panel mode
       newWidth = Math.max(300, Math.min(800, newWidth));
-      newHeight = Math.max(400, Math.min(window.innerHeight, newHeight));
       
-      // Apply new dimensions
+      // Apply new dimensions - width only, height stays 100vh
       panel.style.width = newWidth + 'px';
-      panel.style.height = newHeight + 'px';
+      panel.style.height = '100vh';
       
       // Update the webpage offset
       document.documentElement.style.setProperty('--uwa-panel-width', newWidth + 'px');
       
-      // Save to settings
+      // Save to settings - only width for panel mode
       settings.panelWidth = newWidth;
-      settings.panelHeight = newHeight;
     } else {
       // In floating mode, resize both width and height
       const position = settings.position;
