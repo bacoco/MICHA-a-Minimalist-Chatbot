@@ -216,6 +216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       apiKey: elements.apiKey.value.trim()
     };
     
+    // Input validation
     if (!modelConfig.apiKey) {
       showError('Please enter an API key');
       return;
@@ -226,15 +227,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     
+    // Validate endpoint URL
+    try {
+      new URL(modelConfig.endpoint);
+    } catch {
+      showError('Invalid API endpoint URL format');
+      return;
+    }
+    
+    if (!modelConfig.model) {
+      showError('Please select or enter a model');
+      return;
+    }
+    
     elements.saveButton.disabled = true;
     elements.saveButton.textContent = 'Saving...';
     
     try {
+      // Encrypt sensitive data before storage
+      const encryptedConfig = {
+        ...modelConfig,
+        apiKey: encrypt(modelConfig.apiKey)
+      };
+      
       // Save to storage
       await chrome.storage.sync.set({ 
-        modelConfig,
-        // Keep backward compatibility
-        apiKey: modelConfig.apiKey
+        modelConfig: encryptedConfig,
+        // Keep backward compatibility with encrypted key
+        apiKey: encrypt(modelConfig.apiKey)
       });
       
       showSuccess('Model configuration saved successfully!');
@@ -353,16 +373,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       enableChatHistory: elements.enableChatHistory.checked
     };
     
-    if (storageConfig.enabled && (!storageConfig.url || !storageConfig.key)) {
-      showError('Please enter both Supabase URL and key');
-      return;
+    // Input validation
+    if (storageConfig.enabled) {
+      if (!storageConfig.url || !storageConfig.key) {
+        showError('Please enter both Supabase URL and key');
+        return;
+      }
+      
+      // Validate URL format
+      try {
+        new URL(storageConfig.url);
+      } catch {
+        showError('Invalid Supabase URL format');
+        return;
+      }
+      
+      // Validate retention period
+      if (storageConfig.cacheRetention < 1 || storageConfig.cacheRetention > 365) {
+        showError('Cache retention must be between 1 and 365 days');
+        return;
+      }
     }
     
     elements.saveStorageButton.disabled = true;
     elements.saveStorageButton.textContent = 'Saving...';
     
     try {
-      await chrome.storage.sync.set({ supabaseConfig: storageConfig });
+      // Encrypt sensitive data before storage
+      const encryptedConfig = {
+        ...storageConfig,
+        key: storageConfig.key ? encrypt(storageConfig.key) : '',
+        url: storageConfig.url ? encrypt(storageConfig.url) : ''
+      };
+      
+      await chrome.storage.sync.set({ supabaseConfig: encryptedConfig });
       showSuccess('Storage settings saved successfully!');
     } catch (error) {
       showError('Failed to save storage settings: ' + error.message);
@@ -434,14 +478,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.model.value = data.modelConfig.model;
           }
           if (data.modelConfig.apiKey) {
-            elements.apiKey.value = data.modelConfig.apiKey;
+            try {
+              // Decrypt API key
+              elements.apiKey.value = decrypt(data.modelConfig.apiKey);
+            } catch (error) {
+              console.error('Failed to decrypt API key:', error);
+              // Fall back to unencrypted for backward compatibility
+              elements.apiKey.value = data.modelConfig.apiKey;
+            }
           }
         }, 100);
         
         updateApiKeyStatus(!!data.modelConfig.apiKey);
       } else if (data.apiKey) {
         // Backward compatibility
-        elements.apiKey.value = data.apiKey;
+        try {
+          elements.apiKey.value = decrypt(data.apiKey);
+        } catch (error) {
+          console.error('Failed to decrypt legacy API key:', error);
+          // Fall back to unencrypted for backward compatibility
+          elements.apiKey.value = data.apiKey;
+        }
         updateApiKeyStatus(true);
       } else {
         updateApiKeyStatus(false);
@@ -473,8 +530,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Load storage settings
       if (data.supabaseConfig) {
         elements.enableSupabase.checked = data.supabaseConfig.enabled || false;
-        elements.supabaseUrl.value = data.supabaseConfig.url || '';
-        elements.supabaseKey.value = data.supabaseConfig.key || '';
+        
+        // Decrypt sensitive data
+        try {
+          elements.supabaseUrl.value = data.supabaseConfig.url ? decrypt(data.supabaseConfig.url) : '';
+          elements.supabaseKey.value = data.supabaseConfig.key ? decrypt(data.supabaseConfig.key) : '';
+        } catch (error) {
+          console.error('Failed to decrypt Supabase config:', error);
+          // Fall back to unencrypted values for backward compatibility
+          elements.supabaseUrl.value = data.supabaseConfig.url || '';
+          elements.supabaseKey.value = data.supabaseConfig.key || '';
+        }
+        
         elements.cacheStrategy.value = data.supabaseConfig.cacheStrategy || 'hash';
         elements.cacheRetention.value = data.supabaseConfig.cacheRetention || 30;
         elements.enableChatHistory.checked = data.supabaseConfig.enableChatHistory || false;
@@ -490,6 +557,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const provider = elements.provider.value;
     const endpoint = elements.apiEndpoint.value;
     const apiKey = elements.apiKey.value;
+    
+    // Input validation
+    if (!provider || !endpoint || !apiKey) {
+      throw new Error('Missing required configuration');
+    }
+    
+    // Validate endpoint URL
+    try {
+      new URL(endpoint);
+    } catch {
+      throw new Error('Invalid endpoint URL format');
+    }
     
     let testUrl;
     let headers = {
@@ -516,33 +595,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         testUrl = `${endpoint}/models`;
         headers['Authorization'] = `Bearer ${apiKey}`;
         break;
+        
+      default:
+        throw new Error('Unknown provider');
     }
     
     try {
-      const response = await fetch(testUrl, { headers });
+      const response = await fetch(testUrl, { 
+        headers,
+        timeout: 10000 // 10 second timeout
+      });
       return response.ok;
     } catch (error) {
       console.error('API test error:', error);
-      return false;
+      throw error;
     }
   }
   
   // Test Supabase connection
   async function testSupabaseConnection(url, key) {
     try {
-      const response = await fetch(`${url}/rest/v1/`, {
+      // Input validation
+      if (!url || !key) {
+        throw new Error('URL and key are required');
+      }
+      
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch {
+        throw new Error('Invalid URL format');
+      }
+      
+      // Remove trailing slash for consistency
+      const cleanUrl = url.replace(/\/$/, '');
+      
+      const response = await fetch(`${cleanUrl}/rest/v1/`, {
         method: 'GET',
         headers: {
           'apikey': key,
           'Authorization': `Bearer ${key}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 10000 // 10 second timeout
       });
       
       return response.ok;
     } catch (error) {
       console.error('Supabase test error:', error);
-      return false;
+      throw error;
     }
   }
   

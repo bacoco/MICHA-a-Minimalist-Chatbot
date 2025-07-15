@@ -68,6 +68,19 @@ CREATE POLICY "Users can update their own transcriptions" ON jina_transcriptions
 CREATE POLICY "Users can delete their own transcriptions" ON jina_transcriptions
   FOR DELETE USING (user_id = current_setting('app.user_id', true));
 
+-- Alternative policies using header-based user context (fallback)
+CREATE POLICY "Users can view their own transcriptions via header" ON jina_transcriptions
+  FOR SELECT USING (
+    current_setting('app.user_id', true) IS NULL AND 
+    user_id = current_setting('request.headers', true)::json->>'x-user-id'
+  );
+
+CREATE POLICY "Users can insert their own transcriptions via header" ON jina_transcriptions
+  FOR INSERT WITH CHECK (
+    current_setting('app.user_id', true) IS NULL AND 
+    user_id = current_setting('request.headers', true)::json->>'x-user-id'
+  );
+
 -- RLS Policies for chat_sessions
 CREATE POLICY "Users can view their own sessions" ON chat_sessions
   FOR SELECT USING (user_id = current_setting('app.user_id', true));
@@ -80,6 +93,19 @@ CREATE POLICY "Users can update their own sessions" ON chat_sessions
 
 CREATE POLICY "Users can delete their own sessions" ON chat_sessions
   FOR DELETE USING (user_id = current_setting('app.user_id', true));
+
+-- Alternative policies using header-based user context (fallback)
+CREATE POLICY "Users can view their own sessions via header" ON chat_sessions
+  FOR SELECT USING (
+    current_setting('app.user_id', true) IS NULL AND 
+    user_id = current_setting('request.headers', true)::json->>'x-user-id'
+  );
+
+CREATE POLICY "Users can insert their own sessions via header" ON chat_sessions
+  FOR INSERT WITH CHECK (
+    current_setting('app.user_id', true) IS NULL AND 
+    user_id = current_setting('request.headers', true)::json->>'x-user-id'
+  );
 
 -- RLS Policies for chat_messages
 CREATE POLICY "Users can view messages from their sessions" ON chat_messages
@@ -114,6 +140,34 @@ CREATE POLICY "Users can delete messages from their sessions" ON chat_messages
     )
   );
 
+-- Alternative policies using header-based user context (fallback)
+CREATE POLICY "Users can view messages from their sessions via header" ON chat_messages
+  FOR SELECT USING (
+    current_setting('app.user_id', true) IS NULL AND 
+    session_id IN (
+      SELECT id FROM chat_sessions 
+      WHERE user_id = current_setting('request.headers', true)::json->>'x-user-id'
+    )
+  );
+
+CREATE POLICY "Users can insert messages to their sessions via header" ON chat_messages
+  FOR INSERT WITH CHECK (
+    current_setting('app.user_id', true) IS NULL AND 
+    session_id IN (
+      SELECT id FROM chat_sessions 
+      WHERE user_id = current_setting('request.headers', true)::json->>'x-user-id'
+    )
+  );
+
+-- Function to set user context for RLS policies
+CREATE OR REPLACE FUNCTION set_user_context(user_id TEXT)
+RETURNS VOID AS $$
+BEGIN
+  -- Set the user context for the current session
+  PERFORM set_config('app.user_id', user_id, true);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Function to automatically clean up expired transcriptions
 CREATE OR REPLACE FUNCTION cleanup_expired_transcriptions()
 RETURNS INTEGER AS $$
@@ -146,9 +200,17 @@ CREATE TRIGGER update_session_on_message_insert
   FOR EACH ROW
   EXECUTE FUNCTION update_session_timestamp();
 
+-- Grant necessary permissions
+GRANT EXECUTE ON FUNCTION set_user_context(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION cleanup_expired_transcriptions() TO anon, authenticated;
+
 -- Create a scheduled job to clean up expired transcriptions (if pg_cron is available)
 -- This needs to be run manually or set up in Supabase dashboard
 -- SELECT cron.schedule('cleanup-expired-transcriptions', '0 2 * * *', 'SELECT cleanup_expired_transcriptions();');
+
+-- Example usage:
+-- SELECT set_user_context('user_abc123_1234567890');
+-- Now all queries will be filtered by this user ID through RLS policies
 
 -- Insert some sample data for testing (optional)
 -- INSERT INTO jina_transcriptions (page_hash, url, content, user_id, cached_until) 
