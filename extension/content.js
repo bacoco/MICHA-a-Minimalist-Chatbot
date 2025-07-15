@@ -18,7 +18,7 @@
     theme: 'auto',
     shortcuts: true,
     panelWidth: 380,
-    panelHeight: 520,
+    panelHeight: window.innerHeight,
     fontSize: 'medium',
     panelMode: false
   };
