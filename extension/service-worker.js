@@ -1,8 +1,37 @@
 // Service Worker for Universal Web Assistant
 // Fixed version with proper error handling
 
-// Import default config and crypto utils
-importScripts('default-config.js', 'crypto-utils.js');
+// Import crypto utils and supabase utils
+importScripts('crypto-utils.js', 'supabase-utils.js');
+
+// Try to import default config if it exists
+try {
+  importScripts('default-config.js');
+} catch (error) {
+  console.log('No default-config.js found, using fallback configuration');
+  // Define fallback configuration
+  const DEFAULT_CONFIG = {
+    provider: 'albert',
+    endpoint: 'https://albert.api.etalab.gouv.fr/v1',
+    model: 'albert-large',
+    encryptedApiKey: null,
+    enabledByDefault: true,
+    cacheEnabled: true,
+    cacheTTL: 3600000, // 1 hour in milliseconds
+    features: {
+      supabaseCache: true,
+      chatHistory: true,
+      contextualHelp: true,
+      keyboardShortcuts: true
+    }
+  };
+  // Make it available globally
+  if (typeof window !== 'undefined') {
+    window.DEFAULT_CONFIG = DEFAULT_CONFIG;
+  } else {
+    globalThis.DEFAULT_CONFIG = DEFAULT_CONFIG;
+  }
+}
 
 // Wrap everything in try-catch to prevent registration failures
 try {
@@ -196,12 +225,21 @@ try {
       const { modelConfig, apiKey } = await chrome.storage.sync.get(['modelConfig', 'apiKey']);
       
       // Use modelConfig if available, otherwise fall back to legacy apiKey
-      const config = modelConfig || {
+      let config = modelConfig || {
         provider: CONFIG.DEFAULT_PROVIDER,
         endpoint: CONFIG.DEFAULT_ENDPOINT,
         model: CONFIG.DEFAULT_MODEL,
         apiKey: apiKey
       };
+      
+      // Decrypt API key if encrypted
+      if (config.apiKey) {
+        try {
+          config.apiKey = decrypt(config.apiKey);
+        } catch (error) {
+          console.warn('Failed to decrypt API key, using as-is for backward compatibility');
+        }
+      }
       
       if (!config.apiKey) {
         // Use default encrypted API key if none configured
@@ -216,10 +254,10 @@ try {
         }
       }
       
-      // Fetch page content using Jina
+      // Fetch page content using Jina with hash-based caching
       let pageContent = null;
       try {
-        pageContent = await fetchPageContent(url);
+        pageContent = await fetchPageContent(url, context);
       } catch (error) {
         console.error('Jina extraction failed:', error);
       }
@@ -247,6 +285,13 @@ try {
         ? extractedQuestions 
         : generateSuggestions(context);
       
+      // Save chat history if Supabase is enabled
+      try {
+        await saveChatHistory(message, cleanedResponse, url, context);
+      } catch (error) {
+        console.error('Failed to save chat history:', error);
+      }
+      
       return {
         response: cleanedResponse,
         suggestions,
@@ -261,36 +306,317 @@ try {
     }
   }
 
-  // Fetch page content using Jina AI
-  async function fetchPageContent(url) {
+  // Fetch page content using Jina AI with hash-based Supabase caching
+  async function fetchPageContent(url, context = {}) {
+    try {
+      // Get Supabase configuration
+      const { supabaseConfig } = await chrome.storage.sync.get(['supabaseConfig']);
+      
+      // If Supabase is enabled and configured, use hash-based caching
+      if (supabaseConfig && supabaseConfig.enabled && supabaseConfig.url && supabaseConfig.key) {
+        // Decrypt configuration
+        let decryptedConfig = { ...supabaseConfig };
+        try {
+          decryptedConfig.url = decrypt(supabaseConfig.url);
+          decryptedConfig.key = decrypt(supabaseConfig.key);
+        } catch (error) {
+          console.warn('Failed to decrypt Supabase config, using as-is for backward compatibility');
+          decryptedConfig.url = supabaseConfig.url;
+          decryptedConfig.key = supabaseConfig.key;
+        }
+        
+        return await fetchPageContentWithSupabase(url, context, decryptedConfig);
+      } else {
+        // Fall back to original Chrome storage caching
+        return await fetchPageContentWithChromeStorage(url);
+      }
+    } catch (error) {
+      console.error('Error in fetchPageContent:', error);
+      // Fall back to original method if Supabase fails
+      return await fetchPageContentWithChromeStorage(url);
+    }
+  }
+  
+  // Fetch page content with Supabase hash-based caching
+  async function fetchPageContentWithSupabase(url, context, supabaseConfig) {
+    try {
+      // Input validation
+      if (!url || !InputValidator.isValidUrl(url)) {
+        throw new SupabaseError('Invalid URL provided');
+      }
+      
+      if (!supabaseConfig.url || !supabaseConfig.key) {
+        throw new SupabaseError('Invalid Supabase configuration');
+      }
+      
+      const client = new SupabaseClient(supabaseConfig.url, supabaseConfig.key);
+      
+      // Set user context for RLS policies
+      const userId = await getUserId();
+      await client.setUserContext(userId);
+      
+      const cacheManager = new SupabaseCacheManager(client);
+      
+      // Generate page hash based on strategy with validation
+      let pageHash;
+      const title = context?.title || '';
+      
+      if (supabaseConfig.cacheStrategy === 'hash') {
+        pageHash = await HashGenerator.generatePageHash(url, title);
+      } else if (supabaseConfig.cacheStrategy === 'url') {
+        pageHash = await HashGenerator.generateContentHash(url);
+      } else {
+        // Hybrid: use both URL and title
+        pageHash = await HashGenerator.generatePageHash(url, title);
+      }
+      
+      // Check if we have cached content with this hash
+      const cachedContent = await cacheManager.getTranscriptionByHash(pageHash);
+      
+      if (cachedContent) {
+        console.log('Supabase cache hit for', url, 'with hash:', pageHash);
+        return cachedContent;
+      }
+      
+      console.log('Supabase cache miss, fetching from Jina for', url);
+      
+      // Fetch from Jina API with validation
+      const content = await fetchFromJina(url);
+      
+      if (!content || typeof content !== 'string') {
+        throw new Error('Invalid content received from Jina');
+      }
+      
+      // Save to Supabase with hash
+      const ttlHours = Math.max(1, Math.min(8760, supabaseConfig.cacheRetention * 24)); // Convert days to hours, validate range
+      await cacheManager.saveTranscription(pageHash, url, content, userId, ttlHours);
+      
+      return content;
+    } catch (error) {
+      console.error('Supabase caching error:', error);
+      
+      // Log specific error types for debugging
+      if (error instanceof SupabaseError) {
+        console.error('Supabase specific error:', error.message, error.statusCode);
+      }
+      
+      // Fall back to Chrome storage
+      return await fetchPageContentWithChromeStorage(url);
+    }
+  }
+  
+  // Original Chrome storage caching method
+  async function fetchPageContentWithChromeStorage(url) {
     const cacheKey = `${CONFIG.CACHE_PREFIX}${url}`;
     const cached = await getCachedData(cacheKey);
     
     if (cached) {
-      console.log('Cache hit for', url);
+      console.log('Chrome storage cache hit for', url);
       return cached;
     }
     
-    console.log('Fetching content from Jina for', url);
+    console.log('Chrome storage cache miss, fetching from Jina for', url);
+    
+    const content = await fetchFromJina(url);
+    await setCachedData(cacheKey, content, CONFIG.CACHE_TTL);
+    
+    return content;
+  }
+  
+  // Core Jina API fetching function
+  async function fetchFromJina(url) {
+    // Input validation
+    if (!url || typeof url !== 'string') {
+      throw new Error('Invalid URL provided to fetchFromJina');
+    }
+    
+    if (!InputValidator.isValidUrl(url)) {
+      throw new Error('Invalid URL format provided to fetchFromJina');
+    }
     
     const encodedUrl = encodeURIComponent(url);
     const jinaUrl = `${CONFIG.JINA_BASE_URL}/${encodedUrl}`;
     
-    const response = await fetch(jinaUrl, {
-      headers: {
-        'Accept': 'text/plain',
-        'User-Agent': 'Universal-Web-Assistant/1.0'
+    try {
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      const response = await fetch(jinaUrl, {
+        headers: {
+          'Accept': 'text/plain',
+          'User-Agent': 'Universal-Web-Assistant/1.0'
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`Jina API error: ${response.status} ${response.statusText}`);
       }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Jina API error: ${response.status}`);
+      
+      const content = await response.text();
+      
+      // Validate content
+      if (!content || typeof content !== 'string') {
+        throw new Error('Invalid content received from Jina API');
+      }
+      
+      return content;
+    } catch (error) {
+      console.error('Error fetching from Jina:', error);
+      throw error;
     }
-    
-    const content = await response.text();
-    await setCachedData(cacheKey, content, CONFIG.CACHE_TTL);
-    
-    return content;
+  }
+  
+  // Get or generate a unique user ID
+  async function getUserId() {
+    try {
+      const { userId } = await chrome.storage.local.get(['userId']);
+      
+      if (userId && typeof userId === 'string' && userId.length > 0) {
+        return userId;
+      }
+      
+      // Generate a new user ID with better randomness
+      const timestamp = Date.now();
+      const randomPart = Math.random().toString(36).substr(2, 9);
+      const newUserId = `user_${randomPart}_${timestamp}`;
+      
+      await chrome.storage.local.set({ userId: newUserId });
+      return newUserId;
+    } catch (error) {
+      console.error('Error getting/generating user ID:', error);
+      
+      // Fallback to a simple ID if storage fails
+      return `user_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`;
+    }
+  }
+  
+  // Save chat history to Supabase
+  async function saveChatHistory(userMessage, aiResponse, url, context) {
+    try {
+      // Input validation
+      if (!userMessage || !aiResponse || !url) {
+        console.warn('Invalid parameters for chat history save');
+        return;
+      }
+      
+      if (!InputValidator.isValidUrl(url)) {
+        console.warn('Invalid URL for chat history save');
+        return;
+      }
+      
+      // Get Supabase configuration
+      const { supabaseConfig } = await chrome.storage.sync.get(['supabaseConfig']);
+      
+      // Only save if Supabase is enabled and chat history is enabled
+      if (!supabaseConfig || !supabaseConfig.enabled || !supabaseConfig.enableChatHistory) {
+        return;
+      }
+      
+      if (!supabaseConfig.url || !supabaseConfig.key) {
+        console.warn('Supabase not configured, skipping chat history save');
+        return;
+      }
+      
+      // Decrypt configuration
+      let decryptedConfig = { ...supabaseConfig };
+      try {
+        decryptedConfig.url = decrypt(supabaseConfig.url);
+        decryptedConfig.key = decrypt(supabaseConfig.key);
+      } catch (error) {
+        console.warn('Failed to decrypt Supabase config, using as-is for backward compatibility');
+        decryptedConfig.url = supabaseConfig.url;
+        decryptedConfig.key = supabaseConfig.key;
+      }
+      
+      const client = new SupabaseClient(decryptedConfig.url, decryptedConfig.key);
+      
+      // Set user context for RLS policies
+      const userId = await getUserId();
+      await client.setUserContext(userId);
+      
+      const cacheManager = new SupabaseCacheManager(client);
+      
+      // Get or create chat session
+      const sessionId = await getOrCreateChatSession(
+        cacheManager, 
+        userId, 
+        url, 
+        context?.siteType || 'general', 
+        context?.language || 'en', 
+        context?.domain || new URL(url).hostname, 
+        context?.title || ''
+      );
+      
+      if (sessionId) {
+        // Save user message
+        await cacheManager.saveChatMessage(sessionId, 'user', userMessage, context);
+        
+        // Save AI response
+        await cacheManager.saveChatMessage(sessionId, 'assistant', aiResponse, context);
+      }
+      
+    } catch (error) {
+      console.error('Error saving chat history:', error);
+      
+      // Log specific error types for debugging
+      if (error instanceof SupabaseError) {
+        console.error('Supabase specific error in chat history:', error.message, error.statusCode);
+      }
+    }
+  }
+  
+  // Get or create chat session
+  async function getOrCreateChatSession(cacheManager, userId, url, siteType, language, domain, title) {
+    try {
+      // Input validation
+      if (!userId || !url || !siteType || !language || !domain) {
+        throw new SupabaseError('Missing required parameters for chat session');
+      }
+      
+      if (!InputValidator.isValidUrl(url)) {
+        throw new SupabaseError('Invalid URL provided');
+      }
+      
+      // Generate page hash to identify the session
+      const pageHash = await HashGenerator.generatePageHash(url, title || '');
+      
+      // Check if we already have a session for this page
+      const existingSessions = await cacheManager.client.query('chat_sessions', {
+        select: 'id',
+        filter: { user_id: userId, page_hash: pageHash },
+        limit: 1
+      });
+      
+      if (existingSessions && existingSessions.length > 0) {
+        return existingSessions[0].id;
+      }
+      
+      // Create new session
+      const sessionId = await cacheManager.createChatSession(
+        userId, 
+        url, 
+        siteType, 
+        language, 
+        domain, 
+        title || ''
+      );
+      
+      return sessionId;
+      
+    } catch (error) {
+      console.error('Error managing chat session:', error);
+      
+      // Log specific error types for debugging
+      if (error instanceof SupabaseError) {
+        console.error('Supabase specific error in chat session:', error.message, error.statusCode);
+      }
+      
+      return null;
+    }
   }
 
   // Generate response using AI
