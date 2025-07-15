@@ -77,6 +77,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     minimizeShortcut: document.getElementById('minimizeShortcut'),
     saveShortcutsButton: document.getElementById('saveShortcutsButton'),
     
+    // Storage
+    enableSupabase: document.getElementById('enableSupabase'),
+    supabaseUrl: document.getElementById('supabaseUrl'),
+    supabaseKey: document.getElementById('supabaseKey'),
+    cacheStrategy: document.getElementById('cacheStrategy'),
+    cacheRetention: document.getElementById('cacheRetention'),
+    enableChatHistory: document.getElementById('enableChatHistory'),
+    testSupabaseButton: document.getElementById('testSupabaseButton'),
+    saveStorageButton: document.getElementById('saveStorageButton'),
+    clearStorageButton: document.getElementById('clearStorageButton'),
+    
     // Messages
     successMessage: document.getElementById('successMessage'),
     errorMessage: document.getElementById('errorMessage')
@@ -302,6 +313,82 @@ document.addEventListener('DOMContentLoaded', async () => {
       showError('Failed to save shortcuts: ' + error.message);
     }
   });
+
+  // Test Supabase connection
+  elements.testSupabaseButton.addEventListener('click', async () => {
+    const supabaseUrl = elements.supabaseUrl.value.trim();
+    const supabaseKey = elements.supabaseKey.value.trim();
+    
+    if (!supabaseUrl || !supabaseKey) {
+      showError('Please enter both Supabase URL and key');
+      return;
+    }
+    
+    elements.testSupabaseButton.disabled = true;
+    elements.testSupabaseButton.textContent = 'Testing...';
+    
+    try {
+      const isValid = await testSupabaseConnection(supabaseUrl, supabaseKey);
+      if (isValid) {
+        showSuccess('Supabase connection successful!');
+      } else {
+        showError('Supabase connection failed. Please check your credentials.');
+      }
+    } catch (error) {
+      showError('Test failed: ' + error.message);
+    } finally {
+      elements.testSupabaseButton.disabled = false;
+      elements.testSupabaseButton.textContent = 'Test Connection';
+    }
+  });
+
+  // Save storage settings
+  elements.saveStorageButton.addEventListener('click', async () => {
+    const storageConfig = {
+      enabled: elements.enableSupabase.checked,
+      url: elements.supabaseUrl.value.trim(),
+      key: elements.supabaseKey.value.trim(),
+      cacheStrategy: elements.cacheStrategy.value,
+      cacheRetention: parseInt(elements.cacheRetention.value),
+      enableChatHistory: elements.enableChatHistory.checked
+    };
+    
+    if (storageConfig.enabled && (!storageConfig.url || !storageConfig.key)) {
+      showError('Please enter both Supabase URL and key');
+      return;
+    }
+    
+    elements.saveStorageButton.disabled = true;
+    elements.saveStorageButton.textContent = 'Saving...';
+    
+    try {
+      await chrome.storage.sync.set({ supabaseConfig: storageConfig });
+      showSuccess('Storage settings saved successfully!');
+    } catch (error) {
+      showError('Failed to save storage settings: ' + error.message);
+    } finally {
+      elements.saveStorageButton.disabled = false;
+      elements.saveStorageButton.textContent = 'Save Storage Settings';
+    }
+  });
+
+  // Clear storage data
+  elements.clearStorageButton.addEventListener('click', async () => {
+    if (confirm('Are you sure you want to clear all storage data? This will delete all cached transcriptions and chat history.')) {
+      try {
+        await chrome.storage.sync.remove(['supabaseConfig']);
+        elements.enableSupabase.checked = false;
+        elements.supabaseUrl.value = '';
+        elements.supabaseKey.value = '';
+        elements.cacheStrategy.value = 'hash';
+        elements.cacheRetention.value = 30;
+        elements.enableChatHistory.checked = false;
+        showSuccess('Storage settings cleared successfully');
+      } catch (error) {
+        showError('Failed to clear storage settings: ' + error.message);
+      }
+    }
+  });
   
   // Close button handler
   if (elements.closeButton) {
@@ -330,7 +417,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         'modelConfig', 
         'apiKey', 
         'preferences',
-        'universalAssistantSettings'
+        'universalAssistantSettings',
+        'supabaseConfig'
       ]);
       
       // Load model configuration
@@ -382,6 +470,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
       
+      // Load storage settings
+      if (data.supabaseConfig) {
+        elements.enableSupabase.checked = data.supabaseConfig.enabled || false;
+        elements.supabaseUrl.value = data.supabaseConfig.url || '';
+        elements.supabaseKey.value = data.supabaseConfig.key || '';
+        elements.cacheStrategy.value = data.supabaseConfig.cacheStrategy || 'hash';
+        elements.cacheRetention.value = data.supabaseConfig.cacheRetention || 30;
+        elements.enableChatHistory.checked = data.supabaseConfig.enableChatHistory || false;
+      }
+      
     } catch (error) {
       console.error('Failed to load settings:', error);
     }
@@ -425,6 +523,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       return response.ok;
     } catch (error) {
       console.error('API test error:', error);
+      return false;
+    }
+  }
+  
+  // Test Supabase connection
+  async function testSupabaseConnection(url, key) {
+    try {
+      const response = await fetch(`${url}/rest/v1/`, {
+        method: 'GET',
+        headers: {
+          'apikey': key,
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Supabase test error:', error);
       return false;
     }
   }

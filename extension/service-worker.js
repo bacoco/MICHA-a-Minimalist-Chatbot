@@ -2,7 +2,7 @@
 // Fixed version with proper error handling
 
 // Import default config and crypto utils
-importScripts('default-config.js', 'crypto-utils.js');
+importScripts('default-config.js', 'crypto-utils.js', 'supabase-utils.js');
 
 // Wrap everything in try-catch to prevent registration failures
 try {
@@ -216,10 +216,10 @@ try {
         }
       }
       
-      // Fetch page content using Jina
+      // Fetch page content using Jina with hash-based caching
       let pageContent = null;
       try {
-        pageContent = await fetchPageContent(url);
+        pageContent = await fetchPageContent(url, context);
       } catch (error) {
         console.error('Jina extraction failed:', error);
       }
@@ -247,6 +247,13 @@ try {
         ? extractedQuestions 
         : generateSuggestions(context);
       
+      // Save chat history if Supabase is enabled
+      try {
+        await saveChatHistory(message, cleanedResponse, url, context);
+      } catch (error) {
+        console.error('Failed to save chat history:', error);
+      }
+      
       return {
         response: cleanedResponse,
         suggestions,
@@ -261,18 +268,89 @@ try {
     }
   }
 
-  // Fetch page content using Jina AI
-  async function fetchPageContent(url) {
+  // Fetch page content using Jina AI with hash-based Supabase caching
+  async function fetchPageContent(url, context = {}) {
+    try {
+      // Get Supabase configuration
+      const { supabaseConfig } = await chrome.storage.sync.get(['supabaseConfig']);
+      
+      // If Supabase is enabled and configured, use hash-based caching
+      if (supabaseConfig && supabaseConfig.enabled && supabaseConfig.url && supabaseConfig.key) {
+        return await fetchPageContentWithSupabase(url, context, supabaseConfig);
+      } else {
+        // Fall back to original Chrome storage caching
+        return await fetchPageContentWithChromeStorage(url);
+      }
+    } catch (error) {
+      console.error('Error in fetchPageContent:', error);
+      // Fall back to original method if Supabase fails
+      return await fetchPageContentWithChromeStorage(url);
+    }
+  }
+  
+  // Fetch page content with Supabase hash-based caching
+  async function fetchPageContentWithSupabase(url, context, supabaseConfig) {
+    try {
+      const client = new SupabaseClient(supabaseConfig.url, supabaseConfig.key);
+      const cacheManager = new SupabaseCacheManager(client);
+      
+      // Generate page hash based on strategy
+      let pageHash;
+      if (supabaseConfig.cacheStrategy === 'hash') {
+        pageHash = await HashGenerator.generatePageHash(url, context.title);
+      } else if (supabaseConfig.cacheStrategy === 'url') {
+        pageHash = await HashGenerator.generateContentHash(url);
+      } else {
+        // Hybrid: use both URL and title
+        pageHash = await HashGenerator.generatePageHash(url, context.title);
+      }
+      
+      // Check if we have cached content with this hash
+      const cachedContent = await cacheManager.getTranscriptionByHash(pageHash);
+      
+      if (cachedContent) {
+        console.log('Supabase cache hit for', url, 'with hash:', pageHash);
+        return cachedContent;
+      }
+      
+      console.log('Supabase cache miss, fetching from Jina for', url);
+      
+      // Fetch from Jina API
+      const content = await fetchFromJina(url);
+      
+      // Save to Supabase with hash
+      const userId = await getUserId();
+      const ttlHours = supabaseConfig.cacheRetention * 24; // Convert days to hours
+      await cacheManager.saveTranscription(pageHash, url, content, userId, ttlHours);
+      
+      return content;
+    } catch (error) {
+      console.error('Supabase caching error:', error);
+      // Fall back to Chrome storage
+      return await fetchPageContentWithChromeStorage(url);
+    }
+  }
+  
+  // Original Chrome storage caching method
+  async function fetchPageContentWithChromeStorage(url) {
     const cacheKey = `${CONFIG.CACHE_PREFIX}${url}`;
     const cached = await getCachedData(cacheKey);
     
     if (cached) {
-      console.log('Cache hit for', url);
+      console.log('Chrome storage cache hit for', url);
       return cached;
     }
     
-    console.log('Fetching content from Jina for', url);
+    console.log('Chrome storage cache miss, fetching from Jina for', url);
     
+    const content = await fetchFromJina(url);
+    await setCachedData(cacheKey, content, CONFIG.CACHE_TTL);
+    
+    return content;
+  }
+  
+  // Core Jina API fetching function
+  async function fetchFromJina(url) {
     const encodedUrl = encodeURIComponent(url);
     const jinaUrl = `${CONFIG.JINA_BASE_URL}/${encodedUrl}`;
     
@@ -287,10 +365,98 @@ try {
       throw new Error(`Jina API error: ${response.status}`);
     }
     
-    const content = await response.text();
-    await setCachedData(cacheKey, content, CONFIG.CACHE_TTL);
+    return await response.text();
+  }
+  
+  // Get or generate a unique user ID
+  async function getUserId() {
+    const { userId } = await chrome.storage.local.get(['userId']);
+    if (userId) {
+      return userId;
+    }
     
-    return content;
+    // Generate a new user ID
+    const newUserId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    await chrome.storage.local.set({ userId: newUserId });
+    return newUserId;
+  }
+  
+  // Save chat history to Supabase
+  async function saveChatHistory(userMessage, aiResponse, url, context) {
+    try {
+      // Get Supabase configuration
+      const { supabaseConfig } = await chrome.storage.sync.get(['supabaseConfig']);
+      
+      // Only save if Supabase is enabled and chat history is enabled
+      if (!supabaseConfig || !supabaseConfig.enabled || !supabaseConfig.enableChatHistory) {
+        return;
+      }
+      
+      if (!supabaseConfig.url || !supabaseConfig.key) {
+        console.warn('Supabase not configured, skipping chat history save');
+        return;
+      }
+      
+      const client = new SupabaseClient(supabaseConfig.url, supabaseConfig.key);
+      const cacheManager = new SupabaseCacheManager(client);
+      
+      // Get or create chat session
+      const userId = await getUserId();
+      const sessionId = await getOrCreateChatSession(
+        cacheManager, 
+        userId, 
+        url, 
+        context.siteType, 
+        context.language, 
+        context.domain, 
+        context.title
+      );
+      
+      if (sessionId) {
+        // Save user message
+        await cacheManager.saveChatMessage(sessionId, 'user', userMessage, context);
+        
+        // Save AI response
+        await cacheManager.saveChatMessage(sessionId, 'assistant', aiResponse, context);
+      }
+      
+    } catch (error) {
+      console.error('Error saving chat history:', error);
+    }
+  }
+  
+  // Get or create chat session
+  async function getOrCreateChatSession(cacheManager, userId, url, siteType, language, domain, title) {
+    try {
+      // Generate page hash to identify the session
+      const pageHash = await HashGenerator.generatePageHash(url, title);
+      
+      // Check if we already have a session for this page
+      const existingSessions = await cacheManager.client.query('chat_sessions', {
+        select: '*',
+        filter: { user_id: userId, page_hash: pageHash }
+      });
+      
+      if (existingSessions && existingSessions.length > 0) {
+        return existingSessions[0].id;
+      }
+      
+      // Create new session
+      const sessionId = await cacheManager.createChatSession(
+        userId, 
+        url, 
+        siteType, 
+        language, 
+        domain, 
+        title
+      );
+      
+      return sessionId;
+      
+    } catch (error) {
+      console.error('Error managing chat session:', error);
+      return null;
+    }
   }
 
   // Generate response using AI

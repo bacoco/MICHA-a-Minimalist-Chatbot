@@ -12,7 +12,10 @@
   ],
   "host_permissions": [
     "https://r.jina.ai/*",
-    "https://albert.api.etalab.gouv.fr/*"
+    "https://albert.api.etalab.gouv.fr/*",
+    "https://*.supabase.co/*",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*"
   ],
   "background": {
     "service_worker": "service-worker.js"
