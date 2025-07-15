@@ -1,6 +1,6 @@
 # 🌐 Universal Web Assistant
 
-> Serverless AI-powered Chrome extension that provides contextual help on ANY website using Jina AI + Albert LLM
+> Serverless AI-powered Chrome extension that provides contextual help on ANY website using Jina AI + Multiple AI Models (Albert, OpenAI, Anthropic, Custom)
 
 ![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -8,22 +8,57 @@
 
 ## ✨ What is it?
 
-Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all powered by cutting-edge AI technology.
+Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all powered by your choice of AI providers including Albert (French government AI), OpenAI, Anthropic, or custom endpoints.
 
 ### 🎯 Key Features
 
 - **Works Everywhere**: Functions on any website without configuration
+- **Multi-Model Support**: Choose from Albert, OpenAI, Anthropic, or custom AI providers
 - **Smart Context**: Automatically adapts to different types of sites (news, shopping, docs, etc.)
 - **Multi-language**: Responds in the language of the page
 - **Privacy First**: No data collection, all preferences stored locally
 - **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+A`
 - **Site Control**: Enable/disable per domain as needed
 
+## 🤖 Supported AI Models
+
+The extension supports multiple AI providers to give you flexibility in choosing the model that best fits your needs:
+
+### 🇫🇷 Albert (Recommended - Free)
+- **Provider**: French Government AI
+- **Cost**: Free
+- **Best for**: General assistance, French language support, privacy-conscious users
+- **Get API Key**: [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
+
+### 🧠 OpenAI (ChatGPT)
+- **Provider**: OpenAI
+- **Cost**: Pay-per-use
+- **Best for**: Advanced reasoning, creative tasks, code generation
+- **Models**: GPT-3.5-turbo, GPT-4, GPT-4-turbo
+- **Get API Key**: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+
+### 🎭 Anthropic (Claude)
+- **Provider**: Anthropic
+- **Cost**: Pay-per-use
+- **Best for**: Nuanced responses, analysis, safety-focused interactions
+- **Models**: Claude-3-haiku, Claude-3-sonnet, Claude-3-opus
+- **Get API Key**: [console.anthropic.com](https://console.anthropic.com)
+
+### 🔧 Custom Endpoint
+- **Provider**: Your own or third-party
+- **Cost**: Depends on provider
+- **Best for**: Self-hosted models, specialized endpoints
+- **Requirements**: OpenAI-compatible API format
+
 ## 🚀 Quick Start Guide (5 minutes)
 
 ### Prerequisites
 - Chrome browser
-- Albert API key (free from [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr))
+- API key from your chosen AI provider:
+  - **Albert**: Free from [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
+  - **OpenAI**: From [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+  - **Anthropic**: From [console.anthropic.com](https://console.anthropic.com)
+  - **Custom**: From your provider
 
 ### Step 1: Clone & Install Extension
 ```bash
@@ -39,11 +74,12 @@ cd Universal_Web_Assistant
 4. Select the `extension` folder from the project
 5. The extension icon will appear in your toolbar!
 
-### Step 3: Configure API Key
+### Step 3: Configure AI Provider
 1. Right-click the extension icon in Chrome toolbar
 2. Select "Options"
-3. Enter your Albert API key
-4. Click "Save"
+3. Choose your AI provider (Albert, OpenAI, Anthropic, or Custom)
+4. Enter your API key
+5. Click "Save"
 
 ### Step 4: Test It Out!
 1. Visit any website (e.g., Wikipedia, GitHub, Amazon)
@@ -55,19 +91,38 @@ cd Universal_Web_Assistant
 
 ## 📋 Detailed Setup Instructions
 
-### Getting an Albert API Key
+### Getting API Keys for Different Providers
+
+#### Albert API Key (Free - Recommended)
 1. Visit [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
 2. Click "S'inscrire" (Sign up)
 3. Create an account (free)
 4. Go to "API Keys" section
 5. Generate a new key
-6. Copy it to your `.env` file
+6. Copy it for use in extension settings
+
+#### OpenAI API Key
+1. Visit [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Sign up or log in to your OpenAI account
+3. Click "Create new secret key"
+4. Copy the generated key
+5. Note: Pay-per-use pricing applies
+
+#### Anthropic API Key
+1. Visit [console.anthropic.com](https://console.anthropic.com)
+2. Sign up or log in to your Anthropic account
+3. Go to "API Keys" section
+4. Create a new key
+5. Copy the generated key
+6. Note: Pay-per-use pricing applies
 
 ### Extension Configuration
-The Albert API key is stored securely in Chrome's sync storage. Configure it through:
+API keys are stored securely in Chrome's sync storage. Configure through:
 1. Right-click extension icon → Options
-2. Enter your Albert API key
-3. Save settings
+2. Select your AI provider from the dropdown
+3. Enter your API key
+4. Optionally test the connection
+5. Save settings
 
 ### Extension Settings
 - **Position**: Choose where the chat bubble appears (bottom-right by default)
@@ -117,10 +172,11 @@ The Albert API key is stored securely in Chrome's sync storage. Configure it thr
                                     │                             │
                                     ▼                             ▼
                               ┌──────────┐                 ┌─────────────┐
-                              │ Jina AI  │                 │ Albert LLM  │
+                              │ Jina AI  │                 │  AI Model   │
                               │          │                 │             │
-                              │ Extract  │                 │  Generate   │
-                              └──────────┘                 └─────────────┘
+                              │ Extract  │                 │ Albert/GPT  │
+                              └──────────┘                 │ /Claude/etc │
+                                                           └─────────────┘
 ```
 
 No backend server needed! The extension directly calls external APIs.
@@ -179,8 +235,9 @@ zip -r universal-assistant.zip .
 - Check console for errors (F12)
 
 ### No AI Responses
-- Check Albert API key is configured in extension options
-- Verify API key is valid at albert.api.etalab.gouv.fr
+- Check API key is configured in extension options
+- Verify API key is valid for your chosen provider
+- Test connection using the "Test Connection" button in settings
 - Check console for errors (F12 → Console tab)
 
 ### Widget Positioning Issues
@@ -211,11 +268,12 @@ We welcome contributions! Here's how:
 
 ## 🔮 Roadmap
 
+- [x] Multi-model AI support (Albert, OpenAI, Anthropic, Custom)
 - [ ] Firefox extension support
 - [ ] Voice input/output
-- [ ] Custom AI model selection
 - [ ] Conversation export feature
 - [ ] Team/Enterprise features
+- [ ] Additional AI providers (Gemini, etc.)
 
 ## 📄 License
 
@@ -224,7 +282,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **Jina AI** for amazing content extraction
-- **Albert LLM** for French language AI capabilities
+- **Albert LLM** for free French language AI capabilities
+- **OpenAI** for GPT models
+- **Anthropic** for Claude models
 - All contributors and testers
 
 ---
