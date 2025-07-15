@@ -288,6 +288,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="model">Model Configuration</button>
       <button class="tab" data-tab="storage">Data Storage</button>
+      <button class="tab" data-tab="background">Background Loading</button>
       <button class="tab" data-tab="appearance">Appearance</button>
       <button class="tab" data-tab="shortcuts">Shortcuts</button>
       <button class="tab" data-tab="about">About</button>
@@ -434,6 +435,94 @@
           <button id="testSupabaseButton" class="button-secondary">Test Connection</button>
           <button id="saveStorageButton">Save Storage Settings</button>
           <button id="clearStorageButton" class="button-danger">Clear Storage Data</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Background Loading Tab -->
+    <div class="tab-content" id="backgroundTab">
+      <div class="instructions">
+        <h3>Background Loading:</h3>
+        <ol>
+          <li>Automatically discover and load same-domain links in the background</li>
+          <li>Provides richer context to AI assistant by using related page content</li>
+          <li>Maintains privacy by only loading pages from the same domain</li>
+          <li>Configurable limits and controls for performance and battery usage</li>
+        </ol>
+      </div>
+      
+      <div class="section">
+        <h2>Background Loading Settings</h2>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="enableBackgroundLoading">
+            Enable Background Loading
+          </label>
+          <div class="help-text">
+            When enabled, the assistant will load related pages from the same domain to provide better context
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="maxBackgroundPages">Maximum Background Pages</label>
+          <input type="number" id="maxBackgroundPages" min="1" max="20" value="5">
+          <div class="help-text">
+            Maximum number of background pages to load per website (1-20)
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="loadingTiming">Loading Timing</label>
+          <select id="loadingTiming">
+            <option value="on-demand">On-demand (when assistant is opened)</option>
+            <option value="page-load">Page load (immediately when page loads)</option>
+            <option value="first-question">First question (when user asks first question)</option>
+          </select>
+          <div class="help-text">
+            When to load background pages for better performance and battery life
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="showLoadingIndicator" checked>
+            Show Loading Indicator
+          </label>
+          <div class="help-text">
+            Display a visual indicator when background pages are being loaded
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="showContextInfo" checked>
+            Show Context Information
+          </label>
+          <div class="help-text">
+            Display which background pages are being used in AI responses
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="storageLimit">Storage Limit (MB)</label>
+          <input type="number" id="storageLimit" min="1" max="100" value="10">
+          <div class="help-text">
+            Maximum storage used for background content cache (1-100 MB)
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="backgroundCacheTTL">Background Cache TTL (minutes)</label>
+          <input type="number" id="backgroundCacheTTL" min="5" max="180" value="30">
+          <div class="help-text">
+            How long to keep background content cached (5-180 minutes)
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button id="saveBackgroundButton">Save Background Settings</button>
+          <button id="clearBackgroundCacheButton" class="button-danger">Clear Background Cache</button>
         </div>
       </div>
     </div>

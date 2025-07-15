@@ -3,6 +3,7 @@
 // DOM elements
 const enableToggle = document.getElementById('enableToggle');
 const shortcutsToggle = document.getElementById('shortcutsToggle');
+const backgroundLoadingToggle = document.getElementById('backgroundLoadingToggle');
 const positionSelect = document.getElementById('positionSelect');
 const themeSelect = document.getElementById('themeSelect');
 const blacklistInput = document.getElementById('blacklistInput');
@@ -21,7 +22,7 @@ const BLACKLIST_KEY = 'blacklist';
 
 // Load settings on popup open
 async function loadSettings() {
-  const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey']);
+  const data = await chrome.storage.sync.get([SETTINGS_KEY, BLACKLIST_KEY, 'apiKey', 'preferences']);
   
   // Check if API key is configured
   if (data.apiKey || (typeof DEFAULT_CONFIG !== 'undefined' && DEFAULT_CONFIG.encryptedApiKey)) {
@@ -44,6 +45,10 @@ async function loadSettings() {
   shortcutsToggle.checked = settings.shortcuts;
   positionSelect.value = settings.position;
   themeSelect.value = settings.theme;
+  
+  // Load background loading setting
+  const prefs = data.preferences || {};
+  backgroundLoadingToggle.checked = prefs.backgroundLoading?.enabled || false;
   
   // Load blacklist
   const blacklist = data[BLACKLIST_KEY] || [];
@@ -71,6 +76,30 @@ async function saveSettings() {
       // Ignore errors for tabs without content script
     });
   });
+}
+
+// Save background loading setting
+async function saveBackgroundLoadingSetting() {
+  try {
+    // Get existing preferences
+    const { preferences = {} } = await chrome.storage.sync.get('preferences');
+    
+    // Update background loading setting
+    const updatedPreferences = {
+      ...preferences,
+      backgroundLoading: {
+        ...preferences.backgroundLoading,
+        enabled: backgroundLoadingToggle.checked
+      }
+    };
+    
+    await chrome.storage.sync.set({ 
+      preferences: updatedPreferences,
+      universalAssistantSettings: updatedPreferences // Backward compatibility
+    });
+  } catch (error) {
+    console.error('Failed to save background loading setting:', error);
+  }
 }
 
 // Render blacklist
@@ -178,6 +207,7 @@ async function addCurrentSite() {
 // Event listeners
 enableToggle.addEventListener('change', saveSettings);
 shortcutsToggle.addEventListener('change', saveSettings);
+backgroundLoadingToggle.addEventListener('change', saveBackgroundLoadingSetting);
 positionSelect.addEventListener('change', saveSettings);
 themeSelect.addEventListener('change', saveSettings);
 addBlacklistButton.addEventListener('click', addDomain);

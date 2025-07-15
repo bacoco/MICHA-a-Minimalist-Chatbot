@@ -88,6 +88,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveStorageButton: document.getElementById('saveStorageButton'),
     clearStorageButton: document.getElementById('clearStorageButton'),
     
+    // Background Loading
+    enableBackgroundLoading: document.getElementById('enableBackgroundLoading'),
+    maxBackgroundPages: document.getElementById('maxBackgroundPages'),
+    loadingTiming: document.getElementById('loadingTiming'),
+    showLoadingIndicator: document.getElementById('showLoadingIndicator'),
+    showContextInfo: document.getElementById('showContextInfo'),
+    storageLimit: document.getElementById('storageLimit'),
+    backgroundCacheTTL: document.getElementById('backgroundCacheTTL'),
+    saveBackgroundButton: document.getElementById('saveBackgroundButton'),
+    clearBackgroundCacheButton: document.getElementById('clearBackgroundCacheButton'),
+    
     // Messages
     successMessage: document.getElementById('successMessage'),
     errorMessage: document.getElementById('errorMessage')
@@ -334,6 +345,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Save background loading settings
+  elements.saveBackgroundButton.addEventListener('click', async () => {
+    const backgroundConfig = {
+      enabled: elements.enableBackgroundLoading.checked,
+      maxPages: parseInt(elements.maxBackgroundPages.value),
+      timing: elements.loadingTiming.value,
+      showLoadingIndicator: elements.showLoadingIndicator.checked,
+      showContextInfo: elements.showContextInfo.checked,
+      storageLimit: parseInt(elements.storageLimit.value),
+      cacheTTL: parseInt(elements.backgroundCacheTTL.value)
+    };
+    
+    // Input validation
+    if (backgroundConfig.maxPages < 1 || backgroundConfig.maxPages > 20) {
+      showError('Maximum background pages must be between 1 and 20');
+      return;
+    }
+    
+    if (backgroundConfig.storageLimit < 1 || backgroundConfig.storageLimit > 100) {
+      showError('Storage limit must be between 1 and 100 MB');
+      return;
+    }
+    
+    if (backgroundConfig.cacheTTL < 5 || backgroundConfig.cacheTTL > 180) {
+      showError('Cache TTL must be between 5 and 180 minutes');
+      return;
+    }
+    
+    elements.saveBackgroundButton.disabled = true;
+    elements.saveBackgroundButton.textContent = 'Saving...';
+    
+    try {
+      // Get existing preferences and merge
+      const { preferences = {} } = await chrome.storage.sync.get('preferences');
+      const updatedPreferences = { 
+        ...preferences, 
+        backgroundLoading: backgroundConfig 
+      };
+      
+      await chrome.storage.sync.set({ 
+        preferences: updatedPreferences,
+        universalAssistantSettings: updatedPreferences // Backward compatibility
+      });
+      
+      showSuccess('Background loading settings saved successfully!');
+    } catch (error) {
+      showError('Failed to save background loading settings: ' + error.message);
+    } finally {
+      elements.saveBackgroundButton.disabled = false;
+      elements.saveBackgroundButton.textContent = 'Save Background Settings';
+    }
+  });
+
+  // Clear background cache
+  elements.clearBackgroundCacheButton.addEventListener('click', async () => {
+    if (confirm('Are you sure you want to clear all background content cache? This cannot be undone.')) {
+      try {
+        // Clear background cache from Chrome storage
+        const storage = await chrome.storage.local.get();
+        const keysToRemove = Object.keys(storage).filter(key => key.startsWith('uwa_bg_cache_'));
+        
+        if (keysToRemove.length > 0) {
+          await chrome.storage.local.remove(keysToRemove);
+        }
+        
+        showSuccess(`Background cache cleared successfully (${keysToRemove.length} items removed)`);
+      } catch (error) {
+        showError('Failed to clear background cache: ' + error.message);
+      }
+    }
+  });
+
   // Test Supabase connection
   elements.testSupabaseButton.addEventListener('click', async () => {
     const supabaseUrl = elements.supabaseUrl.value.trim();
@@ -545,6 +628,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.cacheStrategy.value = data.supabaseConfig.cacheStrategy || 'hash';
         elements.cacheRetention.value = data.supabaseConfig.cacheRetention || 30;
         elements.enableChatHistory.checked = data.supabaseConfig.enableChatHistory || false;
+      }
+      
+      // Load background loading settings
+      if (prefs.backgroundLoading) {
+        elements.enableBackgroundLoading.checked = prefs.backgroundLoading.enabled || false;
+        elements.maxBackgroundPages.value = prefs.backgroundLoading.maxPages || 5;
+        elements.loadingTiming.value = prefs.backgroundLoading.timing || 'on-demand';
+        elements.showLoadingIndicator.checked = prefs.backgroundLoading.showLoadingIndicator !== false;
+        elements.showContextInfo.checked = prefs.backgroundLoading.showContextInfo !== false;
+        elements.storageLimit.value = prefs.backgroundLoading.storageLimit || 10;
+        elements.backgroundCacheTTL.value = prefs.backgroundLoading.cacheTTL || 30;
       }
       
     } catch (error) {
