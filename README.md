@@ -4,7 +4,7 @@
 
 ![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-1.1.0-orange)
+![Version](https://img.shields.io/badge/version-1.2.0-orange)
 
 ## ✨ What is it?
 
@@ -15,7 +15,7 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 - **Works Everywhere**: Functions on any website without configuration
 - **Multi-Model Support**: Choose from 6+ AI providers including free options (OpenRouter, Groq, Hugging Face, Albert) and premium models (OpenAI, Anthropic)
 - **Smart Context**: Automatically adapts to different types of sites (news, shopping, docs, etc.)
-- **Multi-language**: Responds in the language of the page
+- **French-First**: Always responds in French for consistent experience
 - **Privacy First**: No data collection, all preferences stored locally
 - **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+A`
 - **Site Control**: Enable/disable per domain as needed
@@ -24,10 +24,11 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 
 - **Instant Start**: Pre-configured with Albert AI - works immediately after installation
 - **Dynamic Model Loading**: OpenRouter models with `:free` suffix load automatically
+- **French Language Priority**: All responses are now in French regardless of webpage language
 - **French-First Interface**: Loading messages in French ("Conversion de la page, Je réfléchis...")
 - **Persistent Chat**: Conversations continue across page navigation
 - **Smart Provider Switching**: API key clears when changing providers for security
-- **Language-Neutral UI**: Removed English status messages for better internationalization
+- **Consistent Experience**: Unified French experience across all websites
 
 ## 🤖 Supported AI Models
 
