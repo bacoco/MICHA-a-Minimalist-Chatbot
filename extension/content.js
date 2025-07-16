@@ -12,6 +12,8 @@
   let startY = 0;
   let startWidth = 0;
   let startHeight = 0;
+  let suggestionsLoading = false;
+  let initialSuggestionsShown = false;
   let settings = {
     enabled: true,
     position: 'bottom-right',
@@ -37,15 +39,6 @@
         network: '🌐 Network error. Please check your internet connection.',
         generic: '❌ Error: {error}\n\nPlease check the console for details.'
       },
-      suggestions: {
-        developer: ['Explain this code', 'How to debug this?', 'What are the best practices?', 'Analyze complexity'],
-        educational: ['Summarize this topic', 'Explain simply', 'What are the key concepts?', 'Give examples'],
-        ecommerce: ['Compare similar products', 'Is this a good deal?', 'What do reviews say?', 'Analyze value for money'],
-        article: ['Summarize this article', 'Main points?', 'Key takeaways?', 'What\'s the conclusion?'],
-        video: ['Summarize this video', 'Key moments?', 'Similar videos?', 'What\'s the main message?'],
-        social: ['What\'s trending?', 'Summarize comments', 'Related discussions?', 'Analyze overall sentiment'],
-        general: ['Summarize this page', 'Key points in bullets', 'What is this about?', 'Explain the context']
-      }
     },
     fr: {
       welcome: 'Bonjour! Je suis votre assistant IA. Comment puis-je vous aider avec cette page?',
@@ -328,6 +321,9 @@
   function toggleWidget() {
     const panel = widget.querySelector('.uwa-panel');
     const panelTab = widget.querySelector('.uwa-panel-tab');
+    const messages = widget.querySelector('.uwa-messages');
+    
+    
     isExpanded = !isExpanded;
     settings.isExpanded = isExpanded;  // Update settings
     
@@ -348,7 +344,6 @@
       widget.querySelector('.uwa-input').focus();
       
       // Show initial suggestions if no messages yet
-      const messages = widget.querySelector('.uwa-messages');
       if (messages.children.length === 0) {
         showInitialSuggestions();
       }
@@ -367,6 +362,9 @@
   function minimizeWidget() {
     const panel = widget.querySelector('.uwa-panel');
     const panelTab = widget.querySelector('.uwa-panel-tab');
+    const messages = widget.querySelector('.uwa-messages');
+    
+    
     panel.style.display = 'none';
     widget.classList.remove('expanded');
     isExpanded = false;
@@ -379,6 +377,7 @@
     document.documentElement.style.setProperty('--uwa-panel-width', '0px');
     // Show panel tab when minimized
     panelTab.style.display = 'flex';
+    
   }
   
   // Open settings
@@ -567,6 +566,13 @@
   // Add suggestions
   function addSuggestions(suggestions) {
     const messages = widget.querySelector('.uwa-messages');
+    
+    // Check if suggestions already exist and remove them
+    const existingSuggestions = messages.querySelector('.uwa-suggestions');
+    if (existingSuggestions) {
+      existingSuggestions.remove();
+    }
+    
     const suggestionsEl = document.createElement('div');
     suggestionsEl.className = 'uwa-suggestions';
     
@@ -586,17 +592,81 @@
   }
   
   // Show initial suggestions based on site type
-  function showInitialSuggestions() {
-    const siteType = detectWebsiteType();
+  async function showInitialSuggestions() {
+    // Prevent if already shown
+    if (initialSuggestionsShown) return;
+    
+    // Prevent duplicate calls
+    if (suggestionsLoading) return;
+    
+    const messages = widget.querySelector('.uwa-messages');
+    
+    // Check if suggestions already exist
+    const existingSuggestions = widget.querySelector('.uwa-suggestions');
+    if (existingSuggestions) return;
+    
+    // Check if any messages already exist (don't add welcome if chat history exists)
+    const hasMessages = messages.children.length > 0;
+    if (hasMessages) return;
+    
+    suggestionsLoading = true;
+    initialSuggestionsShown = true;
     
     // Welcome message in user's language
     const welcome = getTranslation('welcome');
     addMessage(welcome, 'assistant');
     
-    // Context-aware suggestions in user's language
-    const suggestions = getTranslation(`suggestions.${siteType}`) || getTranslation('suggestions.general');
-    addSuggestions(suggestions);
+    // Show loading state for suggestions
+    const loadingEl = document.createElement('div');
+    loadingEl.className = 'uwa-suggestions-loading';
+    
+    // Loading text in user's language
+    const loadingTexts = {
+      en: 'Loading contextual suggestions...',
+      fr: 'Chargement des suggestions contextuelles...',
+      es: 'Cargando sugerencias contextuales...',
+      de: 'Lade kontextbezogene Vorschläge...',
+      it: 'Caricamento suggerimenti contestuali...',
+      pt: 'Carregando sugestões contextuais...',
+      nl: 'Contextuele suggesties laden...'
+    };
+    const loadingText = loadingTexts[settings.language] || loadingTexts.en;
+    loadingEl.innerHTML = `<span>⏳</span> ${loadingText}`;
+    messages.appendChild(loadingEl);
+    
+    try {
+      // Request contextual suggestions from service worker
+      const response = await chrome.runtime.sendMessage({
+        action: 'getSuggestions',
+        data: {
+          url: window.location.href,
+          context: {
+            siteType: detectWebsiteType(),
+            language: settings.language,
+            domain: window.location.hostname,
+            title: document.title
+          }
+        }
+      });
+      
+      // Remove loading state
+      loadingEl.remove();
+      
+      if (response.success && response.suggestions && response.suggestions.length > 0) {
+        addSuggestions(response.suggestions);
+      }
+      // No fallback - just let user type if it fails
+    } catch (error) {
+      console.error('[UWA] Failed to get initial suggestions:', error);
+      // Remove loading state
+      loadingEl.remove();
+      // No fallback suggestions - user can just type
+    } finally {
+      // Reset loading flag
+      suggestionsLoading = false;
+    }
   }
+  
   
   // Load settings from storage
   async function loadSettings() {
@@ -758,6 +828,8 @@
           const messages = widget.querySelector('.uwa-messages');
           if (messages) {
             messages.innerHTML = ''; // Clear all existing messages
+            suggestionsLoading = false; // Reset flag when clearing messages
+            initialSuggestionsShown = false; // Reset so new language suggestions can show
             showInitialSuggestions(); // Show new welcome and suggestions in new language
           }
         }

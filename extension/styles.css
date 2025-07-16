@@ -306,6 +306,33 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
+/* Suggestions loading state */
+.uwa-suggestions-loading {
+  padding: 12px 20px;
+  margin: 8px 16px;
+  text-align: center;
+  background: #F3F4F6;
+  border-radius: 8px;
+  color: #6B7280;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+.uwa-suggestions-loading span {
+  font-size: 18px;
+  display: inline-block;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Input area */
 .uwa-input-container {
   display: flex;
@@ -400,6 +427,12 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   background: #374151;
 }
 
+.uwa-widget[data-theme="dark"] .uwa-suggestions-loading {
+  background: #374151;
+  color: #D1D5DB;
+  border-color: #4B5563;
+}
+
 /* Dark theme panel adjustments */
 .uwa-widget[data-theme="dark"] .uwa-panel {
   border-left-color: #374151;
@@ -445,6 +478,12 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   
   .uwa-widget[data-theme="auto"] .uwa-suggestion:hover {
     background: #374151;
+  }
+  
+  .uwa-widget[data-theme="auto"] .uwa-suggestions-loading {
+    background: #374151;
+    color: #D1D5DB;
+    border-color: #4B5563;
   }
   
   .uwa-widget[data-theme="auto"] .uwa-panel {

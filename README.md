@@ -4,25 +4,27 @@
 
 ![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-1.2.0-orange)
+![Version](https://img.shields.io/badge/version-1.3.0-orange)
 
 ## ✨ What is it?
 
-Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all in your preferred language. Browse websites in any language while chatting with the AI in French, English, Spanish, or German. Powered by your choice of AI providers including OpenRouter, Groq, Hugging Face, Albert (French government AI), OpenAI, Anthropic, or custom endpoints.
+Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all in your preferred language. Browse websites in any language while chatting with the AI in French, English, Spanish, German, Italian, Portuguese, or Dutch. Powered by your choice of AI providers including OpenRouter, Groq, Hugging Face, Albert (French government AI), OpenAI, Anthropic, or custom endpoints.
 
 ### 🎯 Key Features
 
 - **Works Everywhere**: Functions on any website without configuration
 - **Multi-Model Support**: Choose from 6+ AI providers including free options (OpenRouter, Groq, Hugging Face, Albert) and premium models (OpenAI, Anthropic)
 - **Smart Context**: Automatically adapts to different types of sites (news, shopping, docs, etc.)
-- **Multilingual Support**: Browse in any language, chat in your preferred language
+- **Contextual Suggestions**: 8 AI-generated questions (4 generic + 4 page-specific)
+- **Multilingual Support**: Browse in any language, chat in 7 languages (FR, EN, ES, DE, IT, PT, NL)
 - **Privacy First**: No data collection, all preferences stored locally
 - **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+A`
 - **Site Control**: Enable/disable per domain as needed
 
 ### 🆕 Latest Improvements
 
-- **Multilingual Chat**: Select your preferred language (French, English, Spanish, German) from settings
+- **Expanded Language Support**: Now supports 7 languages (French, English, Spanish, German, Italian, Portuguese, Dutch)
+- **Contextual Suggestions**: AI generates 8 smart questions - 4 generic + 4 specific to the current page
 - **Language Independence**: Browse websites in any language while chatting in your chosen language
 - **Instant Language Switching**: Change languages mid-conversation with automatic chat refresh
 - **Dynamic Model Loading**: OpenRouter models with `:free` suffix load automatically
@@ -190,7 +192,7 @@ API keys are stored securely in Chrome's sync storage. Configure through:
 5. Save settings
 
 ### Extension Settings
-- **Language**: Select your chat language (French, English, Spanish, German)
+- **Language**: Select your chat language (French, English, Spanish, German, Italian, Portuguese, Dutch)
 - **Position**: Choose where the chat bubble appears (bottom-right by default)
 - **Theme**: Light, Dark, or Auto (follows system)
 - **Blacklist**: Block specific domains via the extension popup
@@ -302,7 +304,7 @@ Universal Web Assistant offers a unique multilingual experience that adapts to y
 ### How It Works
 
 - **Browse in Any Language**: Visit websites in Chinese, Japanese, Arabic, Russian, or any other language
-- **Chat in Your Language**: Ask questions and receive responses in French, English, Spanish, or German
+- **Chat in Your Language**: Ask questions and receive responses in your preferred language (7 supported)
 - **Seamless Switching**: Change your chat language anytime from the extension settings
 - **Context Preservation**: The AI understands the page content regardless of its original language
 - **Smart Translations**: Get summaries and explanations of foreign content in your chosen language
@@ -327,6 +329,9 @@ Currently supported chat languages:
 - 🇬🇧 English
 - 🇪🇸 Spanish (Español)
 - 🇩🇪 German (Deutsch)
+- 🇮🇹 Italian (Italiano)
+- 🇵🇹 Portuguese (Português)
+- 🇳🇱 Dutch (Nederlands)
 
 ### Cross-Language Understanding
 

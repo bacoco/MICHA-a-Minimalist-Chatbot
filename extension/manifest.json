@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Universal Web Assistant",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "AI-powered assistant that provides contextual help on any website",
   "permissions": [
     "storage",
@@ -21,8 +21,7 @@
     "https://api-inference.huggingface.co/*"
   ],
   "background": {
-    "service_worker": "service-worker.js",
-    "type": "module"
+    "service_worker": "service-worker.js"
   },
   "content_scripts": [
     {

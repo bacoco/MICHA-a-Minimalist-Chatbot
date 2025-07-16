@@ -1,9 +1,0 @@
-{
-  "name": "universal-web-assistant-extension",
-  "version": "1.0.0",
-  "description": "Chrome extension for Universal Web Assistant",
-  "private": true,
-  "scripts": {
-    "build": "zip -r ../universal-assistant.zip ."
-  }
-}
