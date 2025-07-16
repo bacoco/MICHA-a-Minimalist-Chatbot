@@ -961,19 +961,69 @@
     const welcome = getTranslation('welcome');
     addMessage(welcome, 'assistant');
     
-    // Show loading state for suggestions
+    // Generic questions by language (show immediately)
+    const genericQuestions = {
+      fr: [
+        "Qu'est-ce que résume cette page?",
+        "Quels sont les points clés?",
+        "Quels sont les principaux sujets?",
+        "Expliquez simplement cette page?"
+      ],
+      en: [
+        "What does this page contain?",
+        "What are the key points?",
+        "What are the main topics?",
+        "Explain this page simply?"
+      ],
+      es: [
+        "¿Qué contiene esta página?",
+        "¿Cuáles son los puntos clave?",
+        "¿Cuáles son los temas principales?",
+        "¿Explica esta página simplemente?"
+      ],
+      de: [
+        "Was enthält diese Seite?",
+        "Was sind die wichtigsten Punkte?",
+        "Was sind die Hauptthemen?",
+        "Diese Seite einfach erklären?"
+      ],
+      it: [
+        "Cosa contiene questa pagina?",
+        "Quali sono i punti chiave?",
+        "Quali sono gli argomenti principali?",
+        "Spiega questa pagina semplicemente?"
+      ],
+      pt: [
+        "O que contém esta página?",
+        "Quais são os pontos-chave?",
+        "Quais são os tópicos principais?",
+        "Explique esta página simplesmente?"
+      ],
+      nl: [
+        "Wat bevat deze pagina?",
+        "Wat zijn de belangrijkste punten?",
+        "Wat zijn de hoofdonderwerpen?",
+        "Leg deze pagina eenvoudig uit?"
+      ]
+    };
+    
+    // Show generic questions immediately
+    const currentGenericQuestions = genericQuestions[settings.language] || genericQuestions.en;
+    addSuggestions(currentGenericQuestions, true);
+    
+    // Show loading state for page-specific suggestions
     const loadingEl = document.createElement('div');
     loadingEl.className = 'uwa-suggestions-loading';
     
     // Loading text in user's language
     const loadingTexts = {
-      en: 'Loading contextual suggestions...',
-      fr: 'Chargement des suggestions contextuelles...',
-      es: 'Cargando sugerencias contextuales...',
-      de: 'Lade kontextbezogene Vorschläge...',
-      it: 'Caricamento suggerimenti contestuali...',
-      pt: 'Carregando sugestões contextuais...',
-      nl: 'Contextuele suggesties laden...'
+      en: 'Loading page-specific suggestions...',
+      fr: 'Chargement des suggestions spécifiques...',
+      es: 'Cargando sugerencias específicas...',
+      de: 'Lade seitenspezifische Vorschläge...',
+      it: 'Caricamento suggerimenti specifici...',
+      pt: 'Carregando sugestões específicas...',
+      nl: 'Pagina-specifieke suggesties laden...'
     };
     const loadingText = loadingTexts[settings.language] || loadingTexts.en;
     loadingEl.innerHTML = `<span>⏳</span> ${loadingText}`;

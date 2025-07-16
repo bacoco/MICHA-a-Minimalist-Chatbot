@@ -298,18 +298,18 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Generic suggestions (first 4) */
+/* Generic suggestions (first 4) - Yellow theme */
 .uwa-suggestion.generic {
-  background: #F0F4FF;
-  border-color: #D4E2FC;
-  color: #5B6FDB;
-}
-
-/* Site-specific suggestions */
-.uwa-suggestion.site-specific {
   background: #FFF8E1;
   border-color: #FFE082;
   color: #F57C00;
+}
+
+/* Site-specific suggestions - Blue theme */
+.uwa-suggestion.site-specific {
+  background: #F0F4FF;
+  border-color: #D4E2FC;
+  color: #5B6FDB;
 }
 
 .uwa-suggestion:hover {
@@ -322,12 +322,12 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 
 /* Hover states for different types */
 .uwa-suggestion.generic:hover {
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #FF8A65 0%, #FF6F43 100%);
   color: white;
 }
 
 .uwa-suggestion.site-specific:hover {
-  background: linear-gradient(135deg, #FF8A65 0%, #FF6F43 100%);
+  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
   color: white;
 }
 
