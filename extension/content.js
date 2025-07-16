@@ -163,7 +163,12 @@
             <h3>Universal Assistant</h3>
             <div class="uwa-header-controls">
               <button class="uwa-minimize" aria-label="Minimize assistant">_</button>
-              <button class="uwa-close" aria-label="Close assistant">×</button>
+              <button class="uwa-settings" aria-label="Open settings">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10.0003 12.5C11.381 12.5 12.5003 11.3807 12.5003 10C12.5003 8.61929 11.381 7.5 10.0003 7.5C8.61957 7.5 7.50028 8.61929 7.50028 10C7.50028 11.3807 8.61957 12.5 10.0003 12.5Z" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M10 1L10 3M10 17L10 19M19 10L17 10M3 10L1 10M17.0711 2.92893L15.6569 4.34315M4.34315 15.6569L2.92893 17.0711M17.0711 17.0711L15.6569 15.6569M4.34315 4.34315L2.92893 2.92893" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
             </div>
           </div>
           <div class="uwa-messages"></div>
@@ -227,7 +232,7 @@
   // Attach event listeners
   function attachEventListeners() {
     const panelTab = widget.querySelector('.uwa-panel-tab');
-    const close = widget.querySelector('.uwa-close');
+    const settings = widget.querySelector('.uwa-settings');
     const minimize = widget.querySelector('.uwa-minimize');
     const input = widget.querySelector('.uwa-input');
     const send = widget.querySelector('.uwa-send');
@@ -235,7 +240,7 @@
     const panel = widget.querySelector('.uwa-panel');
     
     panelTab.addEventListener('click', toggleWidget);
-    close.addEventListener('click', toggleWidget);
+    settings.addEventListener('click', openSettings);
     minimize.addEventListener('click', minimizeWidget);
     send.addEventListener('click', sendMessage);
     input.addEventListener('keypress', (e) => {
@@ -314,6 +319,12 @@
     document.documentElement.style.setProperty('--uwa-panel-width', '0px');
     // Show panel tab when minimized
     panelTab.style.display = 'flex';
+  }
+  
+  // Open settings
+  function openSettings() {
+    // Send message to service worker to open options page
+    chrome.runtime.sendMessage({ action: 'openOptions' });
   }
   
   
@@ -674,6 +685,22 @@
     chrome.storage.onChanged.addListener((changes) => {
       if (changes[STORAGE_KEY]) {
         settings = { ...settings, ...changes[STORAGE_KEY].newValue };
+        
+        // Update language if changed
+        if (widget && settings.language) {
+          // Update the placeholder text
+          const input = widget.querySelector('.uwa-input');
+          if (input) {
+            input.placeholder = getTranslation('placeholder');
+          }
+          
+          // Clear all messages and show new welcome in new language
+          const messages = widget.querySelector('.uwa-messages');
+          if (messages) {
+            messages.innerHTML = ''; // Clear all existing messages
+            showInitialSuggestions(); // Show new welcome and suggestions in new language
+          }
+        }
         
         // Re-initialize if needed
         if (settings.enabled && !widget) {

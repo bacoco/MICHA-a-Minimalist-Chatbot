@@ -172,13 +172,11 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   align-items: center;
 }
 
-.uwa-close,
-.uwa-minimize,
-.uwa-mode-toggle {
+.uwa-settings,
+.uwa-minimize {
   background: none;
   border: none;
   color: white;
-  font-size: 28px;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -196,18 +194,18 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   font-weight: bold;
 }
 
-.uwa-mode-toggle {
-  font-size: 16px;
+.uwa-settings svg {
+  width: 20px;
+  height: 20px;
 }
 
-.uwa-close:hover,
-.uwa-minimize:hover,
-.uwa-mode-toggle:hover {
+.uwa-settings:hover,
+.uwa-minimize:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.uwa-close:hover {
-  transform: rotate(90deg);
+.uwa-settings:hover {
+  transform: rotate(45deg);
 }
 
 /* Messages area */

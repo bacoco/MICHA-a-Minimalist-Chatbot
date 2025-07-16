@@ -1,6 +1,6 @@
 # 🌐 Universal Web Assistant
 
-> Serverless AI-powered Chrome extension that provides contextual help on ANY website using Jina AI + Multiple AI Models (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, Custom)
+> Multilingual AI-powered Chrome extension that provides contextual help on ANY website in YOUR language. Browse in any language, chat in yours. Powered by Jina AI + Multiple AI Models (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, Custom)
 
 ![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -8,27 +8,27 @@
 
 ## ✨ What is it?
 
-Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all powered by your choice of AI providers including OpenRouter, Groq, Hugging Face, Albert (French government AI), OpenAI, Anthropic, or custom endpoints.
+Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all in your preferred language. Browse websites in any language while chatting with the AI in French, English, Spanish, or German. Powered by your choice of AI providers including OpenRouter, Groq, Hugging Face, Albert (French government AI), OpenAI, Anthropic, or custom endpoints.
 
 ### 🎯 Key Features
 
 - **Works Everywhere**: Functions on any website without configuration
 - **Multi-Model Support**: Choose from 6+ AI providers including free options (OpenRouter, Groq, Hugging Face, Albert) and premium models (OpenAI, Anthropic)
 - **Smart Context**: Automatically adapts to different types of sites (news, shopping, docs, etc.)
-- **French-First**: Always responds in French for consistent experience
+- **Multilingual Support**: Browse in any language, chat in your preferred language
 - **Privacy First**: No data collection, all preferences stored locally
 - **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+A`
 - **Site Control**: Enable/disable per domain as needed
 
 ### 🆕 Latest Improvements
 
-- **Instant Start**: Pre-configured with Albert AI - works immediately after installation
+- **Multilingual Chat**: Select your preferred language (French, English, Spanish, German) from settings
+- **Language Independence**: Browse websites in any language while chatting in your chosen language
+- **Instant Language Switching**: Change languages mid-conversation with automatic chat refresh
 - **Dynamic Model Loading**: OpenRouter models with `:free` suffix load automatically
-- **French Language Priority**: All responses are now in French regardless of webpage language
-- **French-First Interface**: Loading messages in French ("Conversion de la page, Je réfléchis...")
 - **Persistent Chat**: Conversations continue across page navigation
 - **Smart Provider Switching**: API key clears when changing providers for security
-- **Consistent Experience**: Unified French experience across all websites
+- **Pre-configured Start**: Works immediately with Albert AI after installation
 
 ## 🤖 Supported AI Models
 
@@ -190,6 +190,7 @@ API keys are stored securely in Chrome's sync storage. Configure through:
 5. Save settings
 
 ### Extension Settings
+- **Language**: Select your chat language (French, English, Spanish, German)
 - **Position**: Choose where the chat bubble appears (bottom-right by default)
 - **Theme**: Light, Dark, or Auto (follows system)
 - **Blacklist**: Block specific domains via the extension popup
@@ -292,6 +293,51 @@ cd extension
 zip -r universal-assistant.zip .
 ```
 
+## 🌍 Multilingual Capabilities
+
+### Break Language Barriers While Browsing
+
+Universal Web Assistant offers a unique multilingual experience that adapts to your needs, not the website's language. Whether you're researching international content, shopping on foreign sites, or reading documentation in different languages, you can always interact with the AI in your preferred language.
+
+### How It Works
+
+- **Browse in Any Language**: Visit websites in Chinese, Japanese, Arabic, Russian, or any other language
+- **Chat in Your Language**: Ask questions and receive responses in French, English, Spanish, or German
+- **Seamless Switching**: Change your chat language anytime from the extension settings
+- **Context Preservation**: The AI understands the page content regardless of its original language
+- **Smart Translations**: Get summaries and explanations of foreign content in your chosen language
+
+### Real-World Scenarios
+
+1. **International Research**: Reading a Japanese technical document? Ask questions in English and get clear explanations
+2. **Global Shopping**: Browsing a German e-commerce site? Get product comparisons in French
+3. **News Analysis**: Reading Arabic news? Get summaries and analysis in Spanish
+4. **Educational Content**: Studying a Russian tutorial? Ask for clarifications in your native language
+
+### Language Settings
+
+Configure your preferred language through:
+1. Click the extension icon in your toolbar
+2. Select your language from the dropdown menu
+3. The chat interface immediately switches to your chosen language
+4. All future responses will be in your selected language
+
+Currently supported chat languages:
+- 🇫🇷 French (Français) - Default
+- 🇬🇧 English
+- 🇪🇸 Spanish (Español)
+- 🇩🇪 German (Deutsch)
+
+### Cross-Language Understanding
+
+The extension leverages advanced AI to:
+- Extract content from pages in any language using Jina AI
+- Process and understand the context regardless of the source language
+- Generate responses exclusively in your selected language
+- Maintain conversation continuity even when switching languages
+
+This makes Universal Web Assistant your personal multilingual guide across the entire web, ensuring you're never limited by language barriers while browsing.
+
 ## 🐛 Troubleshooting
 
 ### Extension Not Appearing
@@ -336,10 +382,12 @@ We welcome contributions! Here's how:
 - [x] Multi-model AI support (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, Custom)
 - [x] Dynamic model loading for OpenRouter
 - [x] Default configuration with Albert AI
-- [x] French-first interface with internationalization
+- [x] Multilingual interface (French, English, Spanish, German)
+- [x] Language-independent browsing (browse in any language, chat in yours)
 - [ ] Firefox extension support
 - [ ] Voice input/output
 - [ ] Conversation export feature
+- [ ] Additional languages (Italian, Portuguese, Chinese, Japanese, etc.)
 - [ ] Team/Enterprise features
 - [ ] Additional AI providers (Gemini, etc.)
 

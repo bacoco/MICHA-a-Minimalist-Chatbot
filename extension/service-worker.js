@@ -191,17 +191,30 @@ try {
         });
       return true;
     }
+    
+    // Handle open options request
+    if (request.action === 'openOptions') {
+      chrome.runtime.openOptionsPage();
+      return false;
+    }
   });
 
   // Extract follow-up questions from AI response
-  function extractFollowUpQuestions(aiResponse) {
+  function extractFollowUpQuestions(aiResponse, language = 'fr') {
     const questions = [];
     
-    // Look for the questions section in the response
+    // Look for the questions section in the response - support multiple languages
     const questionPatterns = [
-      /Questions suggérées\s*:\s*([\s\S]*?)$/i,
+      // English
+      /Suggested questions?\s*:\s*([\s\S]*?)$/i,
       /Questions you might want to ask:\s*([\s\S]*?)$/i,
-      /Questions? (?:à poser|possibles?):\s*([\s\S]*?)$/i
+      // French
+      /Questions suggérées\s*:\s*([\s\S]*?)$/i,
+      /Questions? (?:à poser|possibles?):\s*([\s\S]*?)$/i,
+      // Spanish
+      /Preguntas sugeridas\s*:\s*([\s\S]*?)$/i,
+      // German
+      /Vorgeschlagene Fragen\s*:\s*([\s\S]*?)$/i
     ];
     
     for (const pattern of questionPatterns) {
@@ -331,11 +344,11 @@ try {
       const aiResponse = await generateAIResponse(prompt, context, config);
       
       // Extract follow-up questions from the AI response
-      const extractedQuestions = extractFollowUpQuestions(aiResponse);
+      const extractedQuestions = extractFollowUpQuestions(aiResponse, context?.language || 'fr');
       
       // Remove the questions section from the response to avoid duplication
       let cleanedResponse = aiResponse;
-      const questionSectionPattern = /\n*(?:Questions suggérées|Questions you might want to ask|Questions? (?:à poser|possibles?))\s*:\s*[\s\S]*$/i;
+      const questionSectionPattern = /\n*(?:Suggested questions?|Questions suggérées|Preguntas sugeridas|Vorgeschlagene Fragen|Questions you might want to ask|Questions? (?:à poser|possibles?))\s*:\s*[\s\S]*$/i;
       cleanedResponse = cleanedResponse.replace(questionSectionPattern, '').trim();
       
       console.log('Original response length:', aiResponse.length);
@@ -359,30 +372,61 @@ try {
         suggestions,
         context: {
           siteType: context?.siteType || 'general',
-          language: context?.language || 'en'
+          language: context?.language || 'fr'
         }
       };
     } catch (error) {
       console.error('Assist request failed:', error);
       
-      // Always provide error messages in French
-      let frenchError = error.message;
+      // Provide error messages in the user's language
+      const language = context?.language || 'fr';
+      let localizedError = error.message;
       
-      if (error.message.includes('API key not configured')) {
-        frenchError = 'Clé API non configurée. Veuillez la configurer dans les options de l\'extension.';
-      } else if (error.message.includes('Invalid API key')) {
-        frenchError = 'Clé API invalide. Veuillez vérifier votre configuration.';
-      } else if (error.message.includes('Rate limit exceeded')) {
-        frenchError = 'Limite de requêtes dépassée. Veuillez réessayer plus tard.';
-      } else if (error.message.includes('Service temporarily unavailable')) {
-        frenchError = 'Service temporairement indisponible. Veuillez réessayer plus tard.';
-      } else if (error.message.includes('Network error')) {
-        frenchError = 'Erreur réseau. Vérifiez votre connexion internet.';
-      } else if (error.message.includes('Failed to fetch')) {
-        frenchError = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+      const errorMessages = {
+        en: {
+          'API key not configured': 'API key not configured. Please set it in extension options.',
+          'Invalid API key': 'Invalid API key. Please check your configuration.',
+          'Rate limit exceeded': 'Rate limit exceeded. Please try again later.',
+          'Service temporarily unavailable': 'Service temporarily unavailable. Please try again later.',
+          'Network error': 'Network error. Check your internet connection.',
+          'Failed to fetch': 'Unable to contact server. Check your connection.'
+        },
+        fr: {
+          'API key not configured': 'Clé API non configurée. Veuillez la configurer dans les options de l\'extension.',
+          'Invalid API key': 'Clé API invalide. Veuillez vérifier votre configuration.',
+          'Rate limit exceeded': 'Limite de requêtes dépassée. Veuillez réessayer plus tard.',
+          'Service temporarily unavailable': 'Service temporairement indisponible. Veuillez réessayer plus tard.',
+          'Network error': 'Erreur réseau. Vérifiez votre connexion internet.',
+          'Failed to fetch': 'Impossible de contacter le serveur. Vérifiez votre connexion.'
+        },
+        es: {
+          'API key not configured': 'Clave API no configurada. Por favor, configúrela en las opciones de la extensión.',
+          'Invalid API key': 'Clave API inválida. Por favor, verifique su configuración.',
+          'Rate limit exceeded': 'Límite de solicitudes excedido. Intente de nuevo más tarde.',
+          'Service temporarily unavailable': 'Servicio temporalmente no disponible. Intente de nuevo más tarde.',
+          'Network error': 'Error de red. Verifique su conexión a internet.',
+          'Failed to fetch': 'No se puede contactar el servidor. Verifique su conexión.'
+        },
+        de: {
+          'API key not configured': 'API-Schlüssel nicht konfiguriert. Bitte in den Erweiterungsoptionen festlegen.',
+          'Invalid API key': 'Ungültiger API-Schlüssel. Bitte überprüfen Sie Ihre Konfiguration.',
+          'Rate limit exceeded': 'Anfragelimit überschritten. Bitte versuchen Sie es später erneut.',
+          'Service temporarily unavailable': 'Service vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.',
+          'Network error': 'Netzwerkfehler. Überprüfen Sie Ihre Internetverbindung.',
+          'Failed to fetch': 'Server konnte nicht kontaktiert werden. Überprüfen Sie Ihre Verbindung.'
+        }
+      };
+      
+      const langMessages = errorMessages[language] || errorMessages.en;
+      
+      for (const [key, value] of Object.entries(langMessages)) {
+        if (error.message.includes(key)) {
+          localizedError = value;
+          break;
+        }
       }
       
-      throw new Error(frenchError);
+      throw new Error(localizedError);
     }
   }
 
@@ -701,6 +745,7 @@ try {
 
   // Generate response using AI
   async function generateAIResponse(prompt, context, config) {
+    console.log('generateAIResponse context:', JSON.stringify(context, null, 2));
     console.log('generateAIResponse config:', JSON.stringify(config, null, 2));
     const { provider, endpoint, model, apiKey } = config;
     console.log('Destructured values:', { provider, endpoint, model, hasApiKey: !!apiKey, apiKeyLength: apiKey?.length });
@@ -866,52 +911,73 @@ try {
 
   // Build context-aware prompt
   function buildPrompt(userMessage, pageContent, context) {
-    const { siteType = 'general', language = 'en', title = '' } = context || {};
+    const { siteType = 'general', language = 'fr', title = '' } = context || {};
     
     // Language instruction based on user preference
     const languageInstructions = {
-      en: 'Please respond in English.',
-      fr: 'Répondez en français.',
-      es: 'Por favor responde en español.',
-      de: 'Bitte antworten Sie auf Deutsch.',
-      it: 'Per favore rispondi in italiano.',
-      pt: 'Por favor responda em português.',
-      nl: 'Antwoord alstublieft in het Nederlands.',
-      pl: 'Proszę odpowiedzieć po polsku.',
-      ru: 'Пожалуйста, ответьте на русском языке.',
-      zh: '请用中文回答。',
-      ja: '日本語でお答えください。',
-      ko: '한국어로 답변해 주세요.',
-      ar: 'الرجاء الرد باللغة العربية.'
+      en: 'IMPORTANT: You MUST respond ONLY in English. Do not use any other language.',
+      fr: 'IMPORTANT: Vous DEVEZ répondre UNIQUEMENT en français. N\'utilisez aucune autre langue.',
+      es: 'IMPORTANTE: DEBES responder ÚNICAMENTE en español. No uses ningún otro idioma.',
+      de: 'WICHTIG: Sie MÜSSEN NUR auf Deutsch antworten. Verwenden Sie keine andere Sprache.',
+      it: 'IMPORTANTE: DEVI rispondere SOLO in italiano. Non usare nessun\'altra lingua.',
+      pt: 'IMPORTANTE: Você DEVE responder APENAS em português. Não use nenhum outro idioma.',
+      nl: 'BELANGRIJK: Je MOET ALLEEN in het Nederlands antwoorden. Gebruik geen andere taal.',
+      pl: 'WAŻNE: MUSISZ odpowiadać TYLKO po polsku. Nie używaj żadnego innego języka.',
+      ru: 'ВАЖНО: Вы ДОЛЖНЫ отвечать ТОЛЬКО на русском языке. Не используйте никакой другой язык.',
+      zh: '重要：你必须只用中文回答。不要使用任何其他语言。',
+      ja: '重要：日本語でのみ回答してください。他の言語を使用しないでください。',
+      ko: '중요: 한국어로만 답변해야 합니다. 다른 언어를 사용하지 마십시오.',
+      ar: 'مهم: يجب أن ترد باللغة العربية فقط. لا تستخدم أي لغة أخرى.'
     };
     const languageInstruction = languageInstructions[language] || languageInstructions.en;
     
-    // English site contexts (kept for reference but not used)
-    const siteContexts = {
-      developer: 'This is a developer/programming website. Focus on technical aspects.',
-      educational: 'This is an educational website. Help with learning.',
-      ecommerce: 'This is an e-commerce website. Assist with shopping.',
-      article: 'This is an article or blog. Help with understanding content.',
-      video: 'This is a video platform. Assist with video content.',
-      social: 'This is a social media platform. Help with content discovery.',
-      general: 'Help the user with their query about this webpage.'
+    // Site contexts in multiple languages
+    const siteContextsByLanguage = {
+      en: {
+        developer: 'This is a developer/programming website. Focus on technical aspects.',
+        educational: 'This is an educational website. Help with learning.',
+        ecommerce: 'This is an e-commerce website. Assist with shopping.',
+        article: 'This is an article or blog. Help with understanding content.',
+        video: 'This is a video platform. Assist with video content.',
+        social: 'This is a social media platform. Help with content discovery.',
+        general: 'Help the user with their query about this webpage.'
+      },
+      fr: {
+        developer: 'Ceci est un site de développement/programmation. Concentrez-vous sur les aspects techniques.',
+        educational: 'Ceci est un site éducatif. Aidez à l\'apprentissage.',
+        ecommerce: 'Ceci est un site e-commerce. Assistez pour les achats.',
+        article: 'Ceci est un article ou blog. Aidez à comprendre le contenu.',
+        video: 'Ceci est une plateforme vidéo. Assistez avec le contenu vidéo.',
+        social: 'Ceci est un réseau social. Aidez à découvrir le contenu.',
+        general: 'Aidez l\'utilisateur avec sa question sur cette page web.'
+      },
+      es: {
+        developer: 'Este es un sitio web de desarrollo/programación. Enfócate en aspectos técnicos.',
+        educational: 'Este es un sitio web educativo. Ayuda con el aprendizaje.',
+        ecommerce: 'Este es un sitio web de comercio electrónico. Asiste con las compras.',
+        article: 'Este es un artículo o blog. Ayuda a entender el contenido.',
+        video: 'Esta es una plataforma de video. Asiste con el contenido del video.',
+        social: 'Esta es una plataforma de redes sociales. Ayuda con el descubrimiento de contenido.',
+        general: 'Ayuda al usuario con su consulta sobre esta página web.'
+      },
+      de: {
+        developer: 'Dies ist eine Entwickler-/Programmierwebsite. Konzentrieren Sie sich auf technische Aspekte.',
+        educational: 'Dies ist eine Bildungswebsite. Helfen Sie beim Lernen.',
+        ecommerce: 'Dies ist eine E-Commerce-Website. Unterstützen Sie beim Einkaufen.',
+        article: 'Dies ist ein Artikel oder Blog. Helfen Sie beim Verstehen des Inhalts.',
+        video: 'Dies ist eine Videoplattform. Unterstützen Sie bei Videoinhalten.',
+        social: 'Dies ist eine Social-Media-Plattform. Helfen Sie bei der Inhaltsentdeckung.',
+        general: 'Helfen Sie dem Benutzer bei seiner Anfrage zu dieser Webseite.'
+      }
     };
     
-    // Always use French site contexts
-    const siteContextsFr = {
-      developer: 'Ceci est un site de développement/programmation. Concentrez-vous sur les aspects techniques.',
-      educational: 'Ceci est un site éducatif. Aidez à l\'apprentissage.',
-      ecommerce: 'Ceci est un site e-commerce. Assistez pour les achats.',
-      article: 'Ceci est un article ou blog. Aidez à comprendre le contenu.',
-      video: 'Ceci est une plateforme vidéo. Assistez avec le contenu vidéo.',
-      social: 'Ceci est un réseau social. Aidez à découvrir le contenu.',
-      general: 'Aidez l\'utilisateur avec sa question sur cette page web.'
-    };
+    // Use site context in user's language
+    const langContexts = siteContextsByLanguage[language] || siteContextsByLanguage.en;
+    const siteContext = langContexts[siteType] || langContexts.general;
     
-    // Always use French contexts
-    const siteContext = siteContextsFr[siteType] || siteContextsFr.general;
-    
-    let prompt = `You are a helpful AI assistant integrated into a web browser. ${languageInstruction}
+    let prompt = `${languageInstruction}
+
+You are a helpful AI assistant integrated into a web browser.
 
 Context: ${siteContext}
 Page Title: ${title}
@@ -923,37 +989,59 @@ User Message: "${userMessage}"`;
       prompt += `\n\nPage Content Summary:\n${truncatedContent}${pageContent.length > 3000 ? '...' : ''}`;
     }
     
-    prompt += '\n\nProvide a helpful, concise response.';
+    prompt += `\n\nProvide a helpful, concise response. ${languageInstruction}`;
     
-    // Always add instruction for follow-up questions in French
-    prompt += `\n\nIMPORTANT: À la fin de votre réponse, ajoutez une section "Questions suggérées:" et proposez exactement 4 nouvelles questions pertinentes que l'utilisateur pourrait poser. Ces questions doivent:
+    // Add instruction for follow-up questions in the selected language
+    const questionInstructions = {
+      en: `\n\nIMPORTANT: At the end of your response, add a section "Suggested questions:" and propose exactly 4 relevant new questions the user might ask. These questions should:
+- Be directly related to the page content
+- Be related to the user's question
+- Allow exploring different aspects of the topic
+- Be formulated ONLY in English
+Format: Numbered list from 1 to 4. ALL QUESTIONS MUST BE IN ENGLISH.`,
+      fr: `\n\nIMPORTANT: À la fin de votre réponse, ajoutez une section "Questions suggérées:" et proposez exactement 4 nouvelles questions pertinentes que l'utilisateur pourrait poser. Ces questions doivent:
 - Être directement liées au contenu de la page
 - Être en rapport avec la question de l'utilisateur
 - Permettre d'approfondir différents aspects du sujet
-- Être formulées en français
-Format: Liste numérotée de 1 à 4.`;
+- Être formulées UNIQUEMENT en français
+Format: Liste numérotée de 1 à 4. TOUTES LES QUESTIONS DOIVENT ÊTRE EN FRANÇAIS.`,
+      es: `\n\nIMPORTANTE: Al final de su respuesta, agregue una sección "Preguntas sugeridas:" y proponga exactamente 4 nuevas preguntas relevantes que el usuario podría hacer. Estas preguntas deben:
+- Estar directamente relacionadas con el contenido de la página
+- Estar relacionadas con la pregunta del usuario
+- Permitir explorar diferentes aspectos del tema
+- Estar formuladas ÚNICAMENTE en español
+Formato: Lista numerada del 1 al 4. TODAS LAS PREGUNTAS DEBEN ESTAR EN ESPAÑOL.`,
+      de: `\n\nWICHTIG: Fügen Sie am Ende Ihrer Antwort einen Abschnitt "Vorgeschlagene Fragen:" hinzu und schlagen Sie genau 4 relevante neue Fragen vor, die der Benutzer stellen könnte. Diese Fragen sollten:
+- Direkt mit dem Seiteninhalt verbunden sein
+- Mit der Frage des Benutzers zusammenhängen
+- Das Erkunden verschiedener Aspekte des Themas ermöglichen
+- NUR auf Deutsch formuliert sein
+Format: Nummerierte Liste von 1 bis 4. ALLE FRAGEN MÜSSEN AUF DEUTSCH SEIN.`
+    };
+    
+    prompt += questionInstructions[language] || questionInstructions.en;
     
     return prompt;
   }
 
   // Get system prompt
   function getSystemPrompt(context) {
-    const { language = 'en' } = context || {};
+    const { language = 'fr' } = context || {};
     
     const systemPrompts = {
-      en: 'You are a helpful AI assistant in a browser extension. You help users understand and analyze the content of web pages they visit.',
-      fr: 'Vous êtes un assistant IA utile dans une extension de navigateur. Vous aidez les utilisateurs à comprendre et analyser le contenu des pages web qu\'ils visitent.',
-      es: 'Eres un asistente de IA útil en una extensión del navegador. Ayudas a los usuarios a entender y analizar el contenido de las páginas web que visitan.',
-      de: 'Sie sind ein hilfreicher KI-Assistent in einer Browser-Erweiterung. Sie helfen Benutzern, den Inhalt der von ihnen besuchten Webseiten zu verstehen und zu analysieren.',
-      it: 'Sei un assistente AI utile in un\'estensione del browser. Aiuti gli utenti a comprendere e analizzare il contenuto delle pagine web che visitano.',
-      pt: 'Você é um assistente de IA útil em uma extensão do navegador. Você ajuda os usuários a entender e analisar o conteúdo das páginas da web que visitam.',
-      nl: 'Je bent een behulpzame AI-assistent in een browserextensie. Je helpt gebruikers de inhoud van webpagina\'s die ze bezoeken te begrijpen en te analyseren.',
-      pl: 'Jesteś pomocnym asystentem AI w rozszerzeniu przeglądarki. Pomagasz użytkownikom zrozumieć i analizować treść odwiedzanych stron internetowych.',
-      ru: 'Вы полезный ИИ-помощник в расширении браузера. Вы помогаете пользователям понимать и анализировать содержимое веб-страниц, которые они посещают.',
-      zh: '你是浏览器扩展中的有用AI助手。你帮助用户理解和分析他们访问的网页内容。',
-      ja: 'あなたはブラウザ拡張機能の便利なAIアシスタントです。ユーザーが訪問するウェブページのコンテンツを理解し、分析するのを手伝います。',
-      ko: '당신은 브라우저 확장 프로그램의 유용한 AI 어시스턴트입니다. 사용자가 방문하는 웹 페이지의 내용을 이해하고 분석하는 데 도움을 줍니다.',
-      ar: 'أنت مساعد ذكاء اصطناعي مفيد في ملحق متصفح. تساعد المستخدمين على فهم وتحليل محتوى صفحات الويب التي يزورونها.'
+      en: 'You are a helpful AI assistant in a browser extension. You MUST respond ONLY in English. You help users understand and analyze the content of web pages they visit. Always respond in English, regardless of the input language.',
+      fr: 'Vous êtes un assistant IA utile dans une extension de navigateur. Vous DEVEZ répondre UNIQUEMENT en français. Vous aidez les utilisateurs à comprendre et analyser le contenu des pages web qu\'ils visitent. Répondez toujours en français, quelle que soit la langue de la question.',
+      es: 'Eres un asistente de IA útil en una extensión del navegador. DEBES responder ÚNICAMENTE en español. Ayudas a los usuarios a entender y analizar el contenido de las páginas web que visitan. Responde siempre en español, sin importar el idioma de entrada.',
+      de: 'Sie sind ein hilfreicher KI-Assistent in einer Browser-Erweiterung. Sie MÜSSEN NUR auf Deutsch antworten. Sie helfen Benutzern, den Inhalt der von ihnen besuchten Webseiten zu verstehen und zu analysieren. Antworten Sie immer auf Deutsch, unabhängig von der Eingabesprache.',
+      it: 'Sei un assistente AI utile in un\'estensione del browser. DEVI rispondere SOLO in italiano. Aiuti gli utenti a comprendere e analizzare il contenuto delle pagine web che visitano. Rispondi sempre in italiano, indipendentemente dalla lingua di input.',
+      pt: 'Você é um assistente de IA útil em uma extensão do navegador. Você DEVE responder APENAS em português. Você ajuda os usuários a entender e analisar o conteúdo das páginas da web que visitam. Responda sempre em português, independentemente do idioma de entrada.',
+      nl: 'Je bent een behulpzame AI-assistent in een browserextensie. Je MOET ALLEEN in het Nederlands antwoorden. Je helpt gebruikers de inhoud van webpagina\'s die ze bezoeken te begrijpen en te analyseren. Antwoord altijd in het Nederlands, ongeacht de invoertaal.',
+      pl: 'Jesteś pomocnym asystentem AI w rozszerzeniu przeglądarki. MUSISZ odpowiadać TYLKO po polsku. Pomagasz użytkownikom zrozumieć i analizować treść odwiedzanych stron internetowych. Zawsze odpowiadaj po polsku, niezależnie od języka wejściowego.',
+      ru: 'Вы полезный ИИ-помощник в расширении браузера. Вы ДОЛЖНЫ отвечать ТОЛЬКО на русском языке. Вы помогаете пользователям понимать и анализировать содержимое веб-страниц, которые они посещают. Всегда отвечайте на русском языке, независимо от языка ввода.',
+      zh: '你是浏览器扩展中的有用AI助手。你必须只用中文回答。你帮助用户理解和分析他们访问的网页内容。无论输入语言是什么，始终用中文回答。',
+      ja: 'あなたはブラウザ拡張機能の便利なAIアシスタントです。日本語でのみ回答してください。ユーザーが訪問するウェブページのコンテンツを理解し、分析するのを手伝います。入力言語に関係なく、常に日本語で回答してください。',
+      ko: '당신은 브라우저 확장 프로그램의 유용한 AI 어시스턴트입니다. 한국어로만 답변해야 합니다. 사용자가 방문하는 웹 페이지의 내용을 이해하고 분석하는 데 도움을 줍니다. 입력 언어에 관계없이 항상 한국어로 답변하십시오.',
+      ar: 'أنت مساعد ذكاء اصطناعي مفيد في ملحق متصفح. يجب أن ترد باللغة العربية فقط. تساعد المستخدمين على فهم وتحليل محتوى صفحات الويب التي يزورونها. رد دائمًا باللغة العربية، بغض النظر عن لغة الإدخال.'
     };
     
     return systemPrompts[language] || systemPrompts.en;
@@ -961,7 +1049,7 @@ Format: Liste numérotée de 1 à 4.`;
 
   // Generate suggestions based on language
   function generateSuggestions(context) {
-    const { siteType = 'general', language = 'en' } = context || {};
+    const { siteType = 'general', language = 'fr' } = context || {};
     
     // Simplified suggestions for service worker fallback
     const allSuggestions = {

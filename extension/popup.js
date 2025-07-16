@@ -5,6 +5,7 @@ const enableToggle = document.getElementById('enableToggle');
 const shortcutsToggle = document.getElementById('shortcutsToggle');
 const positionSelect = document.getElementById('positionSelect');
 const themeSelect = document.getElementById('themeSelect');
+const languageSelect = document.getElementById('languageSelect');
 const blacklistInput = document.getElementById('blacklistInput');
 const addBlacklistButton = document.getElementById('addBlacklistButton');
 const blacklistItems = document.getElementById('blacklistItems');
@@ -119,13 +120,15 @@ async function loadSettings() {
       enabled: true,
       position: 'bottom-right',
       shortcuts: true,
-      theme: 'auto'
+      theme: 'auto',
+      language: 'fr'
     };
     
     if (enableToggle) enableToggle.checked = settings.enabled;
     if (shortcutsToggle) shortcutsToggle.checked = settings.shortcuts;
     if (positionSelect) positionSelect.value = settings.position;
     if (themeSelect) themeSelect.value = settings.theme;
+    if (languageSelect) languageSelect.value = settings.language || 'fr';
     
     // Load blacklist
     const blacklist = data[BLACKLIST_KEY] || [];
@@ -143,7 +146,8 @@ async function saveSettings() {
     enabled: enableToggle.checked,
     position: positionSelect.value,
     shortcuts: shortcutsToggle.checked,
-    theme: themeSelect.value
+    theme: themeSelect.value,
+    language: languageSelect.value
   };
   
   await chrome.storage.sync.set({ [SETTINGS_KEY]: settings });
@@ -269,6 +273,7 @@ if (enableToggle) enableToggle.addEventListener('change', saveSettings);
 if (shortcutsToggle) shortcutsToggle.addEventListener('change', saveSettings);
 if (positionSelect) positionSelect.addEventListener('change', saveSettings);
 if (themeSelect) themeSelect.addEventListener('change', saveSettings);
+if (languageSelect) languageSelect.addEventListener('change', saveSettings);
 if (addBlacklistButton) addBlacklistButton.addEventListener('click', addDomain);
 
 // Enter key on blacklist input
