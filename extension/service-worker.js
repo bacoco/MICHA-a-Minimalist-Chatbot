@@ -4,13 +4,17 @@
 // Import crypto utils and supabase utils
 importScripts('crypto-utils.js', 'supabase-utils.js');
 
+// Initialize DEFAULT_CONFIG
+let DEFAULT_CONFIG;
+
 // Try to import default config if it exists
 try {
   importScripts('default-config.js');
+  console.log('Successfully loaded default-config.js');
 } catch (error) {
   console.log('No default-config.js found, using fallback configuration');
   // Define fallback configuration
-  const DEFAULT_CONFIG = {
+  DEFAULT_CONFIG = {
     provider: 'albert',
     endpoint: 'https://albert.api.etalab.gouv.fr/v1',
     model: 'albert-large',
@@ -25,17 +29,12 @@ try {
       keyboardShortcuts: true
     }
   };
-  // Make it available globally
-  if (typeof window !== 'undefined') {
-    window.DEFAULT_CONFIG = DEFAULT_CONFIG;
-  } else {
-    globalThis.DEFAULT_CONFIG = DEFAULT_CONFIG;
-  }
 }
 
 // Wrap everything in try-catch to prevent registration failures
 try {
   console.log('Service Worker: Starting initialization...');
+  console.log('DEFAULT_CONFIG loaded:', !!DEFAULT_CONFIG, DEFAULT_CONFIG ? 'with provider: ' + DEFAULT_CONFIG.provider : '');
 
   // Configuration
   const CONFIG = {
@@ -174,9 +173,22 @@ try {
     
     // Handle API requests
     if (request.action === 'assist') {
+      console.log('Service Worker: Handling assist request', request.data);
       handleAssistRequest(request.data)
-        .then(response => sendResponse({ success: true, data: response }))
-        .catch(error => sendResponse({ success: false, error: error.message }));
+        .then(response => {
+          console.log('Service Worker: Assist request successful');
+          sendResponse({ success: true, data: response });
+        })
+        .catch(error => {
+          console.error('Service Worker: Assist request failed', error);
+          console.error('Error stack:', error.stack);
+          const errorMessage = error.message || 'Unknown error occurred';
+          sendResponse({ 
+            success: false, 
+            error: errorMessage,
+            details: error.stack || error.toString()
+          });
+        });
       return true;
     }
   });
@@ -220,39 +232,89 @@ try {
 
   // Main assist handler
   async function handleAssistRequest({ message, url, context }) {
+    console.log('handleAssistRequest called with:', { message, url, context });
+    console.log('DEFAULT_CONFIG available:', !!DEFAULT_CONFIG);
+    
     try {
       // Get model configuration from storage
       const { modelConfig, apiKey } = await chrome.storage.sync.get(['modelConfig', 'apiKey']);
+      console.log('Retrieved config from storage:', { 
+        hasModelConfig: !!modelConfig, 
+        hasApiKey: !!apiKey,
+        provider: modelConfig?.provider,
+        modelConfigDetails: modelConfig
+      });
       
-      // Use modelConfig if available, otherwise fall back to legacy apiKey
-      let config = modelConfig || {
-        provider: CONFIG.DEFAULT_PROVIDER,
-        endpoint: CONFIG.DEFAULT_ENDPOINT,
-        model: CONFIG.DEFAULT_MODEL,
-        apiKey: apiKey
-      };
+      // Use modelConfig if available, otherwise fall back to default config
+      let config;
+      if (modelConfig && modelConfig.provider) {
+        console.log('Using stored modelConfig');
+        config = { ...modelConfig };
+      } else if (apiKey) {
+        console.log('Using legacy apiKey with default provider');
+        config = {
+          provider: CONFIG.DEFAULT_PROVIDER,
+          endpoint: CONFIG.DEFAULT_ENDPOINT,
+          model: CONFIG.DEFAULT_MODEL,
+          apiKey: apiKey
+        };
+      } else {
+        console.log('No stored config, will use default');
+        config = {
+          provider: CONFIG.DEFAULT_PROVIDER,
+          endpoint: CONFIG.DEFAULT_ENDPOINT,
+          model: CONFIG.DEFAULT_MODEL,
+          apiKey: null
+        };
+      }
       
       // Decrypt API key if encrypted
-      if (config.apiKey) {
+      if (config.apiKey && config.apiKey !== '') {
         try {
+          const originalKey = config.apiKey;
           config.apiKey = decrypt(config.apiKey);
+          console.log('Successfully decrypted user API key');
+          // Validate decrypted key format
+          if (!config.apiKey || !config.apiKey.startsWith('sk-')) {
+            console.warn('Decrypted API key has invalid format, clearing it');
+            config.apiKey = null;
+          }
         } catch (error) {
-          console.warn('Failed to decrypt API key, using as-is for backward compatibility');
+          console.warn('Failed to decrypt API key, clearing it', error);
+          config.apiKey = null;
         }
       }
       
       if (!config.apiKey) {
+        console.log('No user API key configured, checking for default config...');
+        console.log('DEFAULT_CONFIG exists:', !!DEFAULT_CONFIG);
+        console.log('DEFAULT_CONFIG.encryptedApiKey exists:', !!(DEFAULT_CONFIG && DEFAULT_CONFIG.encryptedApiKey));
+        
         // Use default encrypted API key if none configured
         if (DEFAULT_CONFIG && DEFAULT_CONFIG.encryptedApiKey) {
-          console.log('Using default API key');
-          config.apiKey = decrypt(DEFAULT_CONFIG.encryptedApiKey);
-          config.provider = DEFAULT_CONFIG.provider;
-          config.endpoint = DEFAULT_CONFIG.endpoint;
-          config.model = DEFAULT_CONFIG.model;
+          console.log('Using default Albert config from .env');
+          try {
+            config.apiKey = decrypt(DEFAULT_CONFIG.encryptedApiKey);
+            config.provider = DEFAULT_CONFIG.provider || 'albert';
+            config.endpoint = DEFAULT_CONFIG.endpoint || 'https://albert.api.etalab.gouv.fr/v1';
+            config.model = DEFAULT_CONFIG.model || 'albert-large';
+            console.log('Successfully decrypted and configured Albert as default');
+          } catch (error) {
+            console.error('Failed to decrypt default API key:', error);
+            throw new Error('Failed to decrypt default API key. Please configure your own API key.');
+          }
         } else {
+          console.error('No API key available and no default config found');
           throw new Error('API key not configured. Please set it in extension options.');
         }
       }
+      
+      console.log('Final config:', {
+        provider: config.provider,
+        endpoint: config.endpoint,
+        model: config.model,
+        hasApiKey: !!config.apiKey
+      });
       
       // Fetch page content using Jina with hash-based caching
       let pageContent = null;
@@ -302,6 +364,31 @@ try {
       };
     } catch (error) {
       console.error('Assist request failed:', error);
+      
+      // Check if the error message should be in French
+      const isFrench = context?.language === 'fr' || context?.language === 'fr-FR' || context?.language?.startsWith('fr');
+      
+      // Translate common error messages to French if needed
+      if (isFrench) {
+        let frenchError = error.message;
+        
+        if (error.message.includes('API key not configured')) {
+          frenchError = 'Clé API non configurée. Veuillez la configurer dans les options de l\'extension.';
+        } else if (error.message.includes('Invalid API key')) {
+          frenchError = 'Clé API invalide. Veuillez vérifier votre configuration.';
+        } else if (error.message.includes('Rate limit exceeded')) {
+          frenchError = 'Limite de requêtes dépassée. Veuillez réessayer plus tard.';
+        } else if (error.message.includes('Service temporarily unavailable')) {
+          frenchError = 'Service temporairement indisponible. Veuillez réessayer plus tard.';
+        } else if (error.message.includes('Network error')) {
+          frenchError = 'Erreur réseau. Vérifiez votre connexion internet.';
+        } else if (error.message.includes('Failed to fetch')) {
+          frenchError = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+        }
+        
+        throw new Error(frenchError);
+      }
+      
       throw error;
     }
   }
@@ -621,7 +708,9 @@ try {
 
   // Generate response using AI
   async function generateAIResponse(prompt, context, config) {
+    console.log('generateAIResponse config:', JSON.stringify(config, null, 2));
     const { provider, endpoint, model, apiKey } = config;
+    console.log('Destructured values:', { provider, endpoint, model, hasApiKey: !!apiKey, apiKeyLength: apiKey?.length });
     
     let requestBody;
     let apiUrl;
@@ -744,18 +833,29 @@ try {
         break;
     }
     
+    console.log('Making API request to:', apiUrl);
+    console.log('Headers:', JSON.stringify(headers, null, 2));
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(requestBody)
     });
     
+    console.log('Response status:', response.status);
+    
     if (!response.ok) {
       const error = await response.text();
+      console.error('API error response:', error);
+      console.error('Response headers:', response.headers);
+      
       if (response.status === 401) {
         throw new Error('Invalid API key. Please check your configuration.');
       } else if (response.status === 429) {
         throw new Error('Rate limit exceeded. Please try again later.');
+      } else if (response.status === 503) {
+        throw new Error('Service temporarily unavailable. Please try again later.');
       }
       throw new Error(`${provider} API error: ${error}`);
     }

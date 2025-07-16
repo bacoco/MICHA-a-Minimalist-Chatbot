@@ -4,7 +4,7 @@
 
 ![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-1.0.0-orange)
+![Version](https://img.shields.io/badge/version-1.1.0-orange)
 
 ## ✨ What is it?
 
@@ -20,6 +20,15 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 - **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+A`
 - **Site Control**: Enable/disable per domain as needed
 
+### 🆕 Latest Improvements
+
+- **Instant Start**: Pre-configured with Albert AI - works immediately after installation
+- **Dynamic Model Loading**: OpenRouter models with `:free` suffix load automatically
+- **French-First Interface**: Loading messages in French ("Conversion de la page, Je réfléchis...")
+- **Persistent Chat**: Conversations continue across page navigation
+- **Smart Provider Switching**: API key clears when changing providers for security
+- **Language-Neutral UI**: Removed English status messages for better internationalization
+
 ## 🤖 Supported AI Models
 
 The extension supports multiple AI providers to give you flexibility in choosing the model that best fits your needs:
@@ -29,9 +38,9 @@ The extension supports multiple AI providers to give you flexibility in choosing
 #### 🌐 OpenRouter (Recommended - Free Models Available)
 - **Provider**: OpenRouter aggregator platform
 - **Cost**: Free tier available (10 requests/minute)
-- **Best for**: Access to multiple cutting-edge models, no API key required for free models
-- **Models**: Llama 3.1 8B, Mixtral 8x7B, Qwen 2.5 7B, Gemma 2 9B, and more
-- **Get API Key**: [openrouter.ai](https://openrouter.ai) (optional for free models)
+- **Best for**: Access to multiple cutting-edge models with dynamic loading
+- **Models**: Automatically loads all available free models with `:free` suffix
+- **Get API Key**: [openrouter.ai](https://openrouter.ai) (required)
 
 #### ⚡ Groq (Free - High Speed)
 - **Provider**: Groq inference engine
@@ -47,12 +56,13 @@ The extension supports multiple AI providers to give you flexibility in choosing
 - **Models**: Mistral 7B, Zephyr 7B, CodeLlama 7B
 - **Get API Key**: [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
 
-#### 🇫🇷 Albert (Free - French Government)
+#### 🇫🇷 Albert (Free - French Government) - Default Provider
 - **Provider**: French Government AI
 - **Cost**: Completely free
 - **Best for**: General assistance, French language support, privacy-conscious users
-- **Models**: albert-large, albert-base, albert-light
+- **Models**: albert-large (default), albert-base, albert-light
 - **Get API Key**: [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
+- **Note**: Extension comes pre-configured with Albert for immediate use
 
 ### 💰 Premium AI Providers
 
@@ -323,6 +333,9 @@ We welcome contributions! Here's how:
 ## 🔮 Roadmap
 
 - [x] Multi-model AI support (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, Custom)
+- [x] Dynamic model loading for OpenRouter
+- [x] Default configuration with Albert AI
+- [x] French-first interface with internationalization
 - [ ] Firefox extension support
 - [ ] Voice input/output
 - [ ] Conversation export feature

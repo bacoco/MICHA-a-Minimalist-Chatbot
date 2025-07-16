@@ -45,8 +45,26 @@ const DEFAULT_CONFIG = {
   encryptedApiKey: '${encryptedKey}',
   provider: 'albert',
   endpoint: 'https://albert.api.etalab.gouv.fr/v1',
-  model: 'albert-large'
+  model: 'albert-large',
+  enabledByDefault: true,
+  cacheEnabled: true,
+  cacheTTL: 3600000,
+  features: {
+    supabaseCache: true,
+    chatHistory: true,
+    contextualHelp: true,
+    keyboardShortcuts: true
+  }
 };
+
+// Make available globally in service worker context
+if (typeof globalThis !== 'undefined') {
+  globalThis.DEFAULT_CONFIG = DEFAULT_CONFIG;
+} else if (typeof self !== 'undefined') {
+  self.DEFAULT_CONFIG = DEFAULT_CONFIG;
+} else if (typeof window !== 'undefined') {
+  window.DEFAULT_CONFIG = DEFAULT_CONFIG;
+}
 `;
   
   const configPath = path.join(__dirname, 'extension', 'default-config.js');

@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Disable button during save
     saveButton.disabled = true;
-    saveButton.textContent = 'Saving...';
+    saveButton.textContent = '...';
     
     try {
       // Test the API key first

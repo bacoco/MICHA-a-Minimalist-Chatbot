@@ -5,7 +5,7 @@ const MODEL_CONFIGS = {
   openrouter: {
     endpoint: 'https://openrouter.ai/api/v1',
     models: [], // Will be populated dynamically
-    help: 'Free models available: Llama 3.1 8B, Mixtral 8x7B, Qwen 2.5 7B, Gemma 2 9B. Rate limit: 10 requests/minute.',
+    help: 'Free models are loaded dynamically. Models with :free suffix have no cost but may have rate limits.',
     keyHelp: 'Get your free API key from openrouter.ai',
     isFree: true,
     rateLimits: { requests: 10, period: 'minute' }
@@ -71,12 +71,7 @@ const MODEL_CONFIGS = {
 // Free model configurations for each provider
 const FREE_MODEL_CONFIGS = {
   openrouter: {
-    freeModels: [
-      { id: 'meta-llama/llama-3.1-8b-instruct:free', name: 'Llama 3.1 8B (Free)', provider: 'OpenRouter' },
-      { id: 'mistralai/mixtral-8x7b-instruct:free', name: 'Mixtral 8x7B (Free)', provider: 'OpenRouter' },
-      { id: 'qwen/qwen-2.5-7b-instruct:free', name: 'Qwen 2.5 7B (Free)', provider: 'OpenRouter' },
-      { id: 'google/gemma-2-9b-it:free', name: 'Gemma 2 9B (Free)', provider: 'OpenRouter' }
-    ]
+    freeModels: [] // Will be populated dynamically from API
   },
   groq: {
     freeModels: [
@@ -97,8 +92,8 @@ const FREE_MODEL_CONFIGS = {
 
 // Default free model selection
 const DEFAULT_FREE_MODEL = {
-  provider: 'openrouter',
-  model: 'meta-llama/llama-3.1-8b-instruct:free'
+  provider: 'albert',
+  model: 'albert-large'
 };
 
 // Function to retrieve all free models from providers
@@ -136,14 +131,15 @@ async function getFreeModels() {
     // Try to fetch dynamic models from OpenRouter API
     try {
       const openRouterModels = await fetchOpenRouterModels();
+      // Filter models that have :free suffix
       const freeOpenRouterModels = openRouterModels.filter(model => 
-        model.pricing?.prompt === 0 && model.pricing?.completion === 0
+        model.id.includes(':free')
       );
       
       freeOpenRouterModels.forEach(model => {
         allFreeModels.push({
           id: model.id,
-          name: `${model.name} (Free)`,
+          name: model.name, // API already includes "(free)" in name
           provider: 'openrouter',
           isFree: true
         });
@@ -219,8 +215,9 @@ async function cacheFreeModels(models) {
 // Fallback free models if all dynamic fetching fails
 function getFallbackFreeModels() {
   return [
-    { id: 'meta-llama/llama-3.1-8b-instruct:free', name: 'Llama 3.1 8B (Free)', provider: 'openrouter', isFree: true },
-    { id: 'mistralai/mixtral-8x7b-instruct:free', name: 'Mixtral 8x7B (Free)', provider: 'openrouter', isFree: true },
+    { id: 'meta-llama/llama-3.2-3b-instruct:free', name: 'Llama 3.2 3B (free)', provider: 'openrouter', isFree: true },
+    { id: 'google/gemma-2-9b-it:free', name: 'Google Gemma 2 9B (free)', provider: 'openrouter', isFree: true },
+    { id: 'qwen/qwen3-4b:free', name: 'Qwen 3 4B (free)', provider: 'openrouter', isFree: true },
     { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B (Free)', provider: 'groq', isFree: true },
     { id: 'albert-large', name: 'albert-large (Free)', provider: 'albert', isFree: true }
   ];
@@ -317,9 +314,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
   
-  // Load saved settings
-  await loadSettings();
-  
   // Ensure first tab is active
   const modelTab = document.getElementById('modelTab');
   const firstTab = document.querySelector('.tab[data-tab="model"]');
@@ -330,17 +324,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     firstTab.classList.add('active');
   }
   
-  // Set default free provider configuration if nothing is loaded
-  if (!elements.apiEndpoint.value) {
-    const defaultFreeModel = getDefaultFreeModel();
-    elements.provider.value = defaultFreeModel.provider;
-    elements.provider.dispatchEvent(new Event('change'));
-  }
+  // Load saved settings
+  await loadSettings();
   
   // Provider change handler
   elements.provider.addEventListener('change', async () => {
     const provider = elements.provider.value;
     const config = MODEL_CONFIGS[provider];
+    
+    // Clear API key when changing providers
+    elements.apiKey.value = '';
+    updateApiKeyStatus(false);
+    
+    // Show loading state
+    elements.modelHelp.textContent = '...';
+    elements.model.disabled = true;
     
     if (provider === 'custom') {
       // For custom, make endpoint editable and convert model to input
@@ -355,8 +353,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       modelInput.value = elements.model.value || '';
       elements.model.parentNode.replaceChild(modelInput, elements.model);
       elements.model = modelInput;
+      elements.model.disabled = false;
     } else {
-      // For predefined providers
+      // For predefined providers - update endpoint FIRST
       elements.apiEndpoint.value = config.endpoint;
       elements.apiEndpoint.setAttribute('readonly', 'readonly');
       
@@ -368,34 +367,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.model = modelSelect;
       }
       
-      // Update model options
-      elements.model.innerHTML = '';
+      // Clear and update model options
+      elements.model.innerHTML = '<option value="">...</option>';
       
       // If this is a free provider with dynamic models, populate them
       if (config.isFree && config.models.length === 0) {
         try {
           const freeModels = await populateProviderWithFreeModels(provider);
-          freeModels.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model.value;
-            option.textContent = model.text;
-            elements.model.appendChild(option);
-          });
           
-          // Set default model for this provider
-          if (provider === getDefaultFreeModel().provider) {
-            elements.model.value = getDefaultFreeModel().model;
+          // Clear loading option
+          elements.model.innerHTML = '';
+          
+          if (freeModels.length > 0) {
+            freeModels.forEach(model => {
+              const option = document.createElement('option');
+              option.value = model.value;
+              option.textContent = model.text;
+              elements.model.appendChild(option);
+            });
+            
+            // Set default model for this provider
+            if (provider === getDefaultFreeModel().provider) {
+              elements.model.value = getDefaultFreeModel().model;
+            }
+          } else {
+            // No models found
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No models available';
+            elements.model.appendChild(option);
           }
         } catch (error) {
           console.error('Error loading free models for provider:', provider, error);
           // Add a fallback option
+          elements.model.innerHTML = '';
           const option = document.createElement('option');
-          option.value = 'error';
-          option.textContent = 'Error loading models';
+          option.value = '';
+          option.textContent = '⚠️';
           elements.model.appendChild(option);
         }
       } else {
         // Use static models
+        elements.model.innerHTML = '';
         config.models.forEach(model => {
           const option = document.createElement('option');
           option.value = model.value;
@@ -403,6 +416,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           elements.model.appendChild(option);
         });
       }
+      
+      elements.model.disabled = false;
     }
     
     // Update help text with free indicator
@@ -411,6 +426,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       helpText = `🆓 FREE - ${helpText}`;
     }
     elements.modelHelp.textContent = helpText;
+    
+    // Update key help text
+    const keyHelpElement = document.querySelector('.api-key-help');
+    if (keyHelpElement && config.keyHelp) {
+      keyHelpElement.textContent = config.keyHelp;
+    }
   });
   
   // Auto-hide slider
@@ -426,26 +447,85 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Test connection button
   elements.testButton.addEventListener('click', async () => {
     const apiKey = elements.apiKey.value.trim();
+    const provider = elements.provider.value;
+    const endpoint = elements.apiEndpoint.value.trim();
+    const model = elements.model.value;
+    
     if (!apiKey) {
       showError('Please enter an API key first');
       return;
     }
     
+    if (!endpoint) {
+      showError('Please select a provider or enter an endpoint');
+      return;
+    }
+    
+    if (!model && provider !== 'huggingface' && provider !== 'anthropic') {
+      showError('Please select a model');
+      return;
+    }
+    
     elements.testButton.disabled = true;
-    elements.testButton.textContent = 'Testing...';
+    elements.testButton.textContent = '...';
+    elements.testButton.classList.add('testing');
     
     try {
       const isValid = await testApiKey();
       if (isValid) {
-        showSuccess('Connection successful! API key is valid.');
+        showSuccess(`✅ Connection successful! ${provider.charAt(0).toUpperCase() + provider.slice(1)} API key is valid.`);
+        elements.testButton.textContent = '✅ Connected';
+        elements.testButton.classList.add('success');
+        setTimeout(() => {
+          elements.testButton.textContent = 'Test Connection';
+          elements.testButton.classList.remove('success');
+        }, 3000);
       } else {
-        showError('Connection failed. Please check your API key and settings.');
+        showError(`❌ Connection failed. Please check your ${provider} API key and try again.`);
+        elements.testButton.textContent = '❌ Failed';
+        elements.testButton.classList.add('error');
+        setTimeout(() => {
+          elements.testButton.textContent = 'Test Connection';
+          elements.testButton.classList.remove('error');
+        }, 3000);
       }
     } catch (error) {
-      showError('Test failed: ' + error.message);
+      console.error('Test connection error:', error);
+      console.error('Error details:', error.stack);
+      
+      let errorMsg = 'Test failed: ';
+      if (error.message.includes('Failed to fetch')) {
+        errorMsg = `❌ Network error - Could not reach ${provider} API. Check your internet connection.`;
+      } else if (error.message.includes('401')) {
+        errorMsg = `❌ Authentication failed - Invalid ${provider} API key.`;
+      } else if (error.message.includes('timeout')) {
+        errorMsg = `❌ Connection timeout - ${provider} API is not responding.`;
+      } else if (error.message.includes('404')) {
+        errorMsg = `❌ API endpoint not found - Check if ${provider} API is available.`;
+      } else if (error.message.includes('500')) {
+        errorMsg = `❌ Server error - ${provider} API is experiencing issues.`;
+      } else {
+        errorMsg += error.message;
+      }
+      
+      // Show error with details
+      showError(errorMsg, true);
+      console.log('Full error for debugging:', {
+        provider,
+        endpoint: elements.apiEndpoint.value,
+        error: error.message,
+        stack: error.stack
+      });
+      
+      elements.testButton.textContent = '❌ Failed';
+      elements.testButton.classList.add('error');
+      setTimeout(() => {
+        elements.testButton.textContent = 'Test Connection';
+        elements.testButton.classList.remove('error');
+      }, 3000);
     } finally {
       elements.testButton.disabled = false;
-      elements.testButton.textContent = 'Test Connection';
+      elements.testButton.classList.remove('testing');
     }
   });
   
@@ -483,7 +563,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     elements.saveButton.disabled = true;
-    elements.saveButton.textContent = 'Saving...';
+    elements.saveButton.textContent = '...';
     
     try {
       // Encrypt sensitive data before storage
@@ -501,6 +581,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       showSuccess('Model configuration saved successfully!');
       updateApiKeyStatus(true);
+      
+      // Auto-close after successful save
+      setTimeout(() => {
+        chrome.windows.getCurrent((currentWindow) => {
+          if (currentWindow.type === 'popup') {
+            chrome.windows.remove(currentWindow.id);
+          } else {
+            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+              if (tabs[0]) {
+                chrome.tabs.remove(tabs[0].id);
+              }
+            });
+          }
+        });
+      }, 1500);
     } catch (error) {
       showError('Failed to save settings: ' + error.message);
     } finally {
@@ -516,6 +611,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         await chrome.storage.sync.remove(['modelConfig', 'apiKey']);
         elements.apiKey.value = '';
         updateApiKeyStatus(false);
+        
+        // Reset to default Albert provider
+        const defaultFreeModel = getDefaultFreeModel();
+        elements.provider.value = defaultFreeModel.provider;
+        elements.provider.dispatchEvent(new Event('change'));
+        
         showSuccess('Credentials cleared successfully');
       } catch (error) {
         showError('Failed to clear credentials: ' + error.message);
@@ -587,7 +688,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     elements.testSupabaseButton.disabled = true;
-    elements.testSupabaseButton.textContent = 'Testing...';
+    elements.testSupabaseButton.textContent = '...';
     
     try {
       const isValid = await testSupabaseConnection(supabaseUrl, supabaseKey);
@@ -638,7 +739,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     elements.saveStorageButton.disabled = true;
-    elements.saveStorageButton.textContent = 'Saving...';
+    elements.saveStorageButton.textContent = '...';
     
     try {
       // Encrypt sensitive data before storage
@@ -710,26 +811,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Load model configuration
       if (data.modelConfig) {
         elements.provider.value = data.modelConfig.provider || 'albert';
-        elements.provider.dispatchEvent(new Event('change'));
+        // Trigger change event and wait for it to complete
+        await new Promise(resolve => {
+          elements.provider.addEventListener('change', resolve, { once: true });
+          elements.provider.dispatchEvent(new Event('change'));
+        });
         
-        setTimeout(() => {
-          if (data.modelConfig.endpoint) {
-            elements.apiEndpoint.value = data.modelConfig.endpoint;
+        // Now set the other values after the provider change has completed
+        if (data.modelConfig.endpoint) {
+          elements.apiEndpoint.value = data.modelConfig.endpoint;
+        }
+        if (data.modelConfig.model && elements.model) {
+          elements.model.value = data.modelConfig.model;
+        }
+        if (data.modelConfig.apiKey) {
+          try {
+            // Decrypt API key
+            elements.apiKey.value = decrypt(data.modelConfig.apiKey);
+          } catch (error) {
+            console.error('Failed to decrypt API key:', error);
+            // Fall back to unencrypted for backward compatibility
+            elements.apiKey.value = data.modelConfig.apiKey;
           }
-          if (data.modelConfig.model && elements.model) {
-            elements.model.value = data.modelConfig.model;
-          }
-          if (data.modelConfig.apiKey) {
-            try {
-              // Decrypt API key
-              elements.apiKey.value = decrypt(data.modelConfig.apiKey);
-            } catch (error) {
-              console.error('Failed to decrypt API key:', error);
-              // Fall back to unencrypted for backward compatibility
-              elements.apiKey.value = data.modelConfig.apiKey;
-            }
-          }
-        }, 100);
+        }
         
         updateApiKeyStatus(!!data.modelConfig.apiKey);
       } else if (data.apiKey) {
@@ -743,7 +847,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         updateApiKeyStatus(true);
       } else {
-        updateApiKeyStatus(false);
+        // Check if we have a default configuration from .env
+        let hasDefaultConfig = false;
+        
+        if (typeof DEFAULT_CONFIG !== 'undefined' && DEFAULT_CONFIG && DEFAULT_CONFIG.encryptedApiKey) {
+          try {
+            // Decrypt the default API key
+            const defaultApiKey = decrypt(DEFAULT_CONFIG.encryptedApiKey);
+            if (defaultApiKey && defaultApiKey.startsWith('sk-')) {
+              // Load default configuration
+              elements.provider.value = DEFAULT_CONFIG.provider || 'albert';
+              elements.provider.dispatchEvent(new Event('change'));
+              
+              // Wait for provider change to complete
+              setTimeout(() => {
+                elements.apiEndpoint.value = DEFAULT_CONFIG.endpoint || 'https://albert.api.etalab.gouv.fr/v1';
+                elements.model.value = DEFAULT_CONFIG.model || 'albert-large';
+                elements.apiKey.value = defaultApiKey;
+                updateApiKeyStatus(true, true); // isConfigured=true, isDefault=true
+                showSuccess('Default Albert API key loaded from configuration');
+              }, 100);
+              
+              hasDefaultConfig = true;
+            }
+          } catch (error) {
+            console.error('Failed to load default config:', error);
+          }
+        }
+        
+        if (!hasDefaultConfig) {
+          updateApiKeyStatus(false);
+          
+          // Set default free provider configuration if nothing is loaded
+          const defaultFreeModel = getDefaultFreeModel();
+          elements.provider.value = defaultFreeModel.provider;
+          elements.provider.dispatchEvent(new Event('change'));
+        }
       }
       
       // Load appearance settings
@@ -859,9 +998,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     try {
+      console.log('Testing API connection:', {
+        provider,
+        endpoint,
+        testUrl,
+        hasApiKey: !!apiKey
+      });
+      
       // Create AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log('API test timed out after 10 seconds');
+      }, 10000); // 10 second timeout
       
       const response = await fetch(testUrl, { 
         headers,
@@ -869,9 +1018,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       
       clearTimeout(timeoutId);
-      return response.ok;
+      
+      console.log('API test response:', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'No error details');
+        console.error('API test failed:', errorText);
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
+      
+      return true;
     } catch (error) {
       console.error('API test error:', error);
+      if (error.name === 'AbortError') {
+        throw new Error('Connection timeout - API took too long to respond');
+      }
       throw error;
     }
   }
@@ -918,10 +1083,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   // Update API key status
-  function updateApiKeyStatus(isConfigured) {
+  function updateApiKeyStatus(isConfigured, isDefault = false) {
     if (isConfigured) {
-      elements.apiKeyStatus.textContent = 'Configured';
-      elements.apiKeyStatus.className = 'api-key-status configured';
+      if (isDefault) {
+        elements.apiKeyStatus.textContent = 'Default key loaded';
+        elements.apiKeyStatus.className = 'api-key-status configured';
+      } else {
+        elements.apiKeyStatus.textContent = 'Configured';
+        elements.apiKeyStatus.className = 'api-key-status configured';
+      }
     } else {
       elements.apiKeyStatus.textContent = 'Not configured';
       elements.apiKeyStatus.className = 'api-key-status not-configured';
@@ -929,24 +1099,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   // Show success message
-  function showSuccess(message) {
+  function showSuccess(message, persistent = false) {
     elements.successMessage.textContent = message;
     elements.successMessage.style.display = 'block';
     elements.errorMessage.style.display = 'none';
     
-    setTimeout(() => {
-      elements.successMessage.style.display = 'none';
-    }, 3000);
+    if (!persistent) {
+      setTimeout(() => {
+        elements.successMessage.style.display = 'none';
+      }, 5000);
+    }
   }
   
   // Show error message
-  function showError(message) {
+  function showError(message, persistent = false) {
     elements.errorMessage.textContent = message;
     elements.errorMessage.style.display = 'block';
     elements.successMessage.style.display = 'none';
     
-    setTimeout(() => {
-      elements.errorMessage.style.display = 'none';
-    }, 5000);
+    if (!persistent) {
+      setTimeout(() => {
+        elements.errorMessage.style.display = 'none';
+      }, 8000);
+    }
   }
 });

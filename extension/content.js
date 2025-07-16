@@ -76,7 +76,7 @@
             <path d="M8 10h4M8 7h4M8 13h4" stroke="currentColor" stroke-width="1.5"/>
           </svg>
         </button>
-        <div class="uwa-panel" style="display: none; width: ${settings.panelWidth}px; height: ${settings.panelHeight}px;">
+        <div class="uwa-panel" style="display: none; width: ${settings.panelWidth}px;">
           <div class="uwa-header">
             <h3>Universal Assistant</h3>
             <div class="uwa-header-controls">
@@ -178,12 +178,15 @@
       
       // In panel mode, use stored dimensions
       if (settings.panelMode) {
-        panel.style.height = settings.panelHeight + 'px';
+        // Don't set height for panel mode - let CSS handle it (100vh)
         panel.style.width = settings.panelWidth + 'px';
         // Update webpage offset when opening
         document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
         // Hide panel tab when expanded
         panelTab.style.display = 'none';
+      } else {
+        // Only set height for floating mode
+        panel.style.height = settings.panelHeight + 'px';
       }
       
       widget.querySelector('.uwa-input').focus();
@@ -269,7 +272,8 @@
     const panel = widget.querySelector('.uwa-panel');
     if (settings.panelMode) {
       panel.style.width = settings.panelWidth + 'px';
-      panel.style.height = settings.panelHeight + 'px';
+      // Don't set height for panel mode - let CSS handle it (100vh)
+      panel.style.removeProperty('height');
     } else {
       panel.style.width = settings.panelWidth + 'px';
       panel.style.height = settings.panelHeight + 'px';
@@ -389,8 +393,8 @@
     addMessage(message, 'user');
     input.value = '';
     
-    // Show loading
-    const loadingId = addMessage('Thinking...', 'assistant', true);
+    // Show loading message in French
+    const loadingId = addMessage('Conversion de la page, Je réfléchis...', 'assistant', true);
     
     try {
       // Send message to service worker
@@ -412,9 +416,21 @@
       removeMessage(loadingId);
       
       if (!response.success) {
-        const errorMessage = response.error === 'API key not configured. Please set it in extension options.' 
-          ? '⚠️ API key not configured!\n\n1. Right-click the extension icon\n2. Select "Options"\n3. Get your free API key from albert.api.etalab.gouv.fr\n4. Save it in the extension settings\n\nThis takes just 2 minutes!'
-          : 'Sorry, I encountered an error. Please try again.';
+        console.error('Chat error:', response.error);
+        if (response.details) {
+          console.error('Error details:', response.details);
+        }
+        
+        let errorMessage;
+        if (response.error === 'API key not configured. Please set it in extension options.') {
+          errorMessage = '⚠️ API key not configured!\n\n1. Right-click the extension icon\n2. Select "Options"\n3. Get your free API key from albert.api.etalab.gouv.fr\n4. Save it in the extension settings\n\nThis takes just 2 minutes!';
+        } else if (response.error && response.error.includes('decrypt')) {
+          errorMessage = '🔒 Error decrypting API key. Please reconfigure your API key in settings.';
+        } else if (response.error && response.error.includes('Network')) {
+          errorMessage = '🌐 Network error. Please check your internet connection.';
+        } else {
+          errorMessage = `❌ Error: ${response.error || 'Unknown error occurred'}\n\nPlease check the console for details.`;
+        }
         addMessage(errorMessage, 'assistant');
       } else {
         const data = response.data;
@@ -438,7 +454,15 @@
     } catch (error) {
       removeMessage(loadingId);
       console.error('Error communicating with service worker:', error);
-      addMessage('Failed to connect to the assistant. Please reload the extension.', 'assistant');
+      console.error('Error stack:', error.stack);
+      
+      let errorMsg = 'Failed to connect to the assistant. ';
+      if (error.message && error.message.includes('Extension context invalidated')) {
+        errorMsg += 'Please reload the page or reinstall the extension.';
+      } else {
+        errorMsg += 'Please check the console for details.';
+      }
+      addMessage(errorMsg, 'assistant');
     }
   }
   
@@ -672,11 +696,9 @@
     if (widget && settings.panelMode && isExpanded) {
       const panel = widget.querySelector('.uwa-panel');
       if (panel) {
-        // Keep panel height within viewport
-        const maxHeight = window.innerHeight;
-        if (settings.panelHeight > maxHeight) {
-          panel.style.height = maxHeight + 'px';
-        }
+        // In panel mode, height is always 100vh via CSS
+        // Only need to update width offset
+        document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
       }
     }
   });

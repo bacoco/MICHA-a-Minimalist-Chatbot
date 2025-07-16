@@ -71,7 +71,7 @@ function validateApiKey(apiKey) {
  * @param {HTMLElement} button - The button element
  * @param {string} loadingText - Text to show during loading
  */
-function showLoadingState(button, loadingText = 'Loading...') {
+function showLoadingState(button, loadingText = '...') {
   if (!button) return;
   
   button.dataset.originalText = button.textContent;
@@ -317,7 +317,7 @@ if (saveApiKeyButton) {
       return;
     }
     
-    showLoadingState(saveApiKeyButton, 'Saving...');
+    showLoadingState(saveApiKeyButton, '...');
     
     try {
       // Save API key with default Albert configuration

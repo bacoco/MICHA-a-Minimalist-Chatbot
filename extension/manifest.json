@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Universal Web Assistant",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AI-powered assistant that provides contextual help on any website",
   "permissions": [
     "storage",
@@ -15,7 +15,10 @@
     "https://albert.api.etalab.gouv.fr/*",
     "https://*.supabase.co/*",
     "https://api.openai.com/*",
-    "https://api.anthropic.com/*"
+    "https://api.anthropic.com/*",
+    "https://openrouter.ai/*",
+    "https://api.groq.com/*",
+    "https://api-inference.huggingface.co/*"
   ],
   "background": {
     "service_worker": "service-worker.js"
