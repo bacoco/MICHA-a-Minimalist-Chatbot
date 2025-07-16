@@ -41,7 +41,7 @@
         developer: ['Explain this code', 'How to debug this?', 'What are the best practices?', 'Analyze complexity'],
         educational: ['Summarize this topic', 'Explain simply', 'What are the key concepts?', 'Give examples'],
         ecommerce: ['Compare similar products', 'Is this a good deal?', 'What do reviews say?', 'Analyze value for money'],
-        article: ['Summarize this article', 'Main points?', 'Verify this claim', 'What\'s the thesis?'],
+        article: ['Summarize this article', 'Main points?', 'Key takeaways?', 'What\'s the conclusion?'],
         video: ['Summarize this video', 'Key moments?', 'Similar videos?', 'What\'s the main message?'],
         social: ['What\'s trending?', 'Summarize comments', 'Related discussions?', 'Analyze overall sentiment'],
         general: ['Summarize this page', 'Key points in bullets', 'What is this about?', 'Explain the context']
@@ -61,7 +61,7 @@
         developer: ['Expliquer ce code', 'Comment déboguer ceci?', 'Quelles sont les meilleures pratiques?', 'Analyser la complexité'],
         educational: ['Résumer ce sujet', 'Expliquer simplement', 'Quels sont les concepts clés?', 'Donner des exemples'],
         ecommerce: ['Comparer les produits similaires', 'Est-ce une bonne affaire?', 'Que disent les avis?', 'Analyser le rapport qualité-prix'],
-        article: ['Résumer cet article', 'Points principaux?', 'Vérifier cette affirmation', 'Quelle est la thèse principale?'],
+        article: ['Résumer cet article', 'Points principaux?', 'Points clés?', 'Quelle est la conclusion?'],
         video: ['Résumer cette vidéo', 'Moments clés?', 'Vidéos similaires?', 'Quel est le message principal?'],
         social: ['Qu\'est-ce qui est tendance?', 'Résumer les commentaires', 'Discussions connexes?', 'Analyser le sentiment général'],
         general: ['Résumer cette page', 'Points clés en bullet points', 'De quoi s\'agit-il?', 'Expliquer le contexte']

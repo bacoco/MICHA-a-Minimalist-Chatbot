@@ -913,23 +913,14 @@ try {
   function buildPrompt(userMessage, pageContent, context) {
     const { siteType = 'general', language = 'fr', title = '' } = context || {};
     
-    // Language instruction based on user preference
-    const languageInstructions = {
-      en: 'IMPORTANT: You MUST respond ONLY in English. Do not use any other language.',
-      fr: 'IMPORTANT: Vous DEVEZ répondre UNIQUEMENT en français. N\'utilisez aucune autre langue.',
-      es: 'IMPORTANTE: DEBES responder ÚNICAMENTE en español. No uses ningún otro idioma.',
-      de: 'WICHTIG: Sie MÜSSEN NUR auf Deutsch antworten. Verwenden Sie keine andere Sprache.',
-      it: 'IMPORTANTE: DEVI rispondere SOLO in italiano. Non usare nessun\'altra lingua.',
-      pt: 'IMPORTANTE: Você DEVE responder APENAS em português. Não use nenhum outro idioma.',
-      nl: 'BELANGRIJK: Je MOET ALLEEN in het Nederlands antwoorden. Gebruik geen andere taal.',
-      pl: 'WAŻNE: MUSISZ odpowiadać TYLKO po polsku. Nie używaj żadnego innego języka.',
-      ru: 'ВАЖНО: Вы ДОЛЖНЫ отвечать ТОЛЬКО на русском языке. Не используйте никакой другой язык.',
-      zh: '重要：你必须只用中文回答。不要使用任何其他语言。',
-      ja: '重要：日本語でのみ回答してください。他の言語を使用しないでください。',
-      ko: '중요: 한국어로만 답변해야 합니다. 다른 언어를 사용하지 마십시오.',
-      ar: 'مهم: يجب أن ترد باللغة العربية فقط. لا تستخدم أي لغة أخرى.'
+    // Simple language instruction
+    const languageMap = {
+      en: 'English',
+      fr: 'French',
+      es: 'Spanish',
+      de: 'German'
     };
-    const languageInstruction = languageInstructions[language] || languageInstructions.en;
+    const targetLanguage = languageMap[language] || 'French';
     
     // Site contexts in multiple languages
     const siteContextsByLanguage = {
@@ -975,9 +966,7 @@ try {
     const langContexts = siteContextsByLanguage[language] || siteContextsByLanguage.en;
     const siteContext = langContexts[siteType] || langContexts.general;
     
-    let prompt = `${languageInstruction}
-
-You are a helpful AI assistant integrated into a web browser.
+    let prompt = `You are a helpful AI assistant integrated into a web browser. Respond ONLY in ${targetLanguage}.
 
 Context: ${siteContext}
 Page Title: ${title}
@@ -989,37 +978,10 @@ User Message: "${userMessage}"`;
       prompt += `\n\nPage Content Summary:\n${truncatedContent}${pageContent.length > 3000 ? '...' : ''}`;
     }
     
-    prompt += `\n\nProvide a helpful, concise response. ${languageInstruction}`;
+    prompt += `\n\nProvide a helpful, concise response in ${targetLanguage}.`;
     
-    // Add instruction for follow-up questions in the selected language
-    const questionInstructions = {
-      en: `\n\nIMPORTANT: At the end of your response, add a section "Suggested questions:" and propose exactly 4 relevant new questions the user might ask. These questions should:
-- Be directly related to the page content
-- Be related to the user's question
-- Allow exploring different aspects of the topic
-- Be formulated ONLY in English
-Format: Numbered list from 1 to 4. ALL QUESTIONS MUST BE IN ENGLISH.`,
-      fr: `\n\nIMPORTANT: À la fin de votre réponse, ajoutez une section "Questions suggérées:" et proposez exactement 4 nouvelles questions pertinentes que l'utilisateur pourrait poser. Ces questions doivent:
-- Être directement liées au contenu de la page
-- Être en rapport avec la question de l'utilisateur
-- Permettre d'approfondir différents aspects du sujet
-- Être formulées UNIQUEMENT en français
-Format: Liste numérotée de 1 à 4. TOUTES LES QUESTIONS DOIVENT ÊTRE EN FRANÇAIS.`,
-      es: `\n\nIMPORTANTE: Al final de su respuesta, agregue una sección "Preguntas sugeridas:" y proponga exactamente 4 nuevas preguntas relevantes que el usuario podría hacer. Estas preguntas deben:
-- Estar directamente relacionadas con el contenido de la página
-- Estar relacionadas con la pregunta del usuario
-- Permitir explorar diferentes aspectos del tema
-- Estar formuladas ÚNICAMENTE en español
-Formato: Lista numerada del 1 al 4. TODAS LAS PREGUNTAS DEBEN ESTAR EN ESPAÑOL.`,
-      de: `\n\nWICHTIG: Fügen Sie am Ende Ihrer Antwort einen Abschnitt "Vorgeschlagene Fragen:" hinzu und schlagen Sie genau 4 relevante neue Fragen vor, die der Benutzer stellen könnte. Diese Fragen sollten:
-- Direkt mit dem Seiteninhalt verbunden sein
-- Mit der Frage des Benutzers zusammenhängen
-- Das Erkunden verschiedener Aspekte des Themas ermöglichen
-- NUR auf Deutsch formuliert sein
-Format: Nummerierte Liste von 1 bis 4. ALLE FRAGEN MÜSSEN AUF DEUTSCH SEIN.`
-    };
-    
-    prompt += questionInstructions[language] || questionInstructions.en;
+    // Simple instruction for follow-up questions
+    prompt += `\n\nAt the end, add 4 short follow-up questions (5-7 words each) in ${targetLanguage}.`;
     
     return prompt;
   }
@@ -1028,23 +990,15 @@ Format: Nummerierte Liste von 1 bis 4. ALLE FRAGEN MÜSSEN AUF DEUTSCH SEIN.`
   function getSystemPrompt(context) {
     const { language = 'fr' } = context || {};
     
-    const systemPrompts = {
-      en: 'You are a helpful AI assistant in a browser extension. You MUST respond ONLY in English. You help users understand and analyze the content of web pages they visit. Always respond in English, regardless of the input language.',
-      fr: 'Vous êtes un assistant IA utile dans une extension de navigateur. Vous DEVEZ répondre UNIQUEMENT en français. Vous aidez les utilisateurs à comprendre et analyser le contenu des pages web qu\'ils visitent. Répondez toujours en français, quelle que soit la langue de la question.',
-      es: 'Eres un asistente de IA útil en una extensión del navegador. DEBES responder ÚNICAMENTE en español. Ayudas a los usuarios a entender y analizar el contenido de las páginas web que visitan. Responde siempre en español, sin importar el idioma de entrada.',
-      de: 'Sie sind ein hilfreicher KI-Assistent in einer Browser-Erweiterung. Sie MÜSSEN NUR auf Deutsch antworten. Sie helfen Benutzern, den Inhalt der von ihnen besuchten Webseiten zu verstehen und zu analysieren. Antworten Sie immer auf Deutsch, unabhängig von der Eingabesprache.',
-      it: 'Sei un assistente AI utile in un\'estensione del browser. DEVI rispondere SOLO in italiano. Aiuti gli utenti a comprendere e analizzare il contenuto delle pagine web che visitano. Rispondi sempre in italiano, indipendentemente dalla lingua di input.',
-      pt: 'Você é um assistente de IA útil em uma extensão do navegador. Você DEVE responder APENAS em português. Você ajuda os usuários a entender e analisar o conteúdo das páginas da web que visitam. Responda sempre em português, independentemente do idioma de entrada.',
-      nl: 'Je bent een behulpzame AI-assistent in een browserextensie. Je MOET ALLEEN in het Nederlands antwoorden. Je helpt gebruikers de inhoud van webpagina\'s die ze bezoeken te begrijpen en te analyseren. Antwoord altijd in het Nederlands, ongeacht de invoertaal.',
-      pl: 'Jesteś pomocnym asystentem AI w rozszerzeniu przeglądarki. MUSISZ odpowiadać TYLKO po polsku. Pomagasz użytkownikom zrozumieć i analizować treść odwiedzanych stron internetowych. Zawsze odpowiadaj po polsku, niezależnie od języka wejściowego.',
-      ru: 'Вы полезный ИИ-помощник в расширении браузера. Вы ДОЛЖНЫ отвечать ТОЛЬКО на русском языке. Вы помогаете пользователям понимать и анализировать содержимое веб-страниц, которые они посещают. Всегда отвечайте на русском языке, независимо от языка ввода.',
-      zh: '你是浏览器扩展中的有用AI助手。你必须只用中文回答。你帮助用户理解和分析他们访问的网页内容。无论输入语言是什么，始终用中文回答。',
-      ja: 'あなたはブラウザ拡張機能の便利なAIアシスタントです。日本語でのみ回答してください。ユーザーが訪問するウェブページのコンテンツを理解し、分析するのを手伝います。入力言語に関係なく、常に日本語で回答してください。',
-      ko: '당신은 브라우저 확장 프로그램의 유용한 AI 어시스턴트입니다. 한국어로만 답변해야 합니다. 사용자가 방문하는 웹 페이지의 내용을 이해하고 분석하는 데 도움을 줍니다. 입력 언어에 관계없이 항상 한국어로 답변하십시오.',
-      ar: 'أنت مساعد ذكاء اصطناعي مفيد في ملحق متصفح. يجب أن ترد باللغة العربية فقط. تساعد المستخدمين على فهم وتحليل محتوى صفحات الويب التي يزورونها. رد دائمًا باللغة العربية، بغض النظر عن لغة الإدخال.'
+    const languageMap = {
+      en: 'English',
+      fr: 'French',
+      es: 'Spanish',
+      de: 'German'
     };
+    const targetLanguage = languageMap[language] || 'French';
     
-    return systemPrompts[language] || systemPrompts.en;
+    return `You are a helpful AI assistant. Always respond in ${targetLanguage} only.`;
   }
 
   // Generate suggestions based on language
