@@ -21,9 +21,108 @@
     panelHeight: window.innerHeight,
     fontSize: 'medium',
     panelMode: true,  // Always use panel mode
-    isExpanded: false  // Add expanded state to persisted settings
+    isExpanded: false,  // Add expanded state to persisted settings
+    language: 'fr'  // Default language
   };
   
+  // Language translations
+  const TRANSLATIONS = {
+    en: {
+      welcome: 'Hello! I\'m your AI assistant. How can I help you with this page?',
+      loading: 'Processing page, thinking...',
+      placeholder: 'Ask me anything about this page...',
+      error: {
+        apiKey: '⚠️ API key not configured!\n\n1. Right-click the extension icon\n2. Select "Options"\n3. Get your free API key from albert.api.etalab.gouv.fr\n4. Save it in the extension settings\n\nThis takes just 2 minutes!',
+        decrypt: '🔒 Error decrypting API key. Please reconfigure your API key in settings.',
+        network: '🌐 Network error. Please check your internet connection.',
+        generic: '❌ Error: {error}\n\nPlease check the console for details.'
+      },
+      suggestions: {
+        developer: ['Explain this code', 'How to debug this?', 'What are the best practices?', 'Analyze complexity'],
+        educational: ['Summarize this topic', 'Explain simply', 'What are the key concepts?', 'Give examples'],
+        ecommerce: ['Compare similar products', 'Is this a good deal?', 'What do reviews say?', 'Analyze value for money'],
+        article: ['Summarize this article', 'Main points?', 'Verify this claim', 'What\'s the thesis?'],
+        video: ['Summarize this video', 'Key moments?', 'Similar videos?', 'What\'s the main message?'],
+        social: ['What\'s trending?', 'Summarize comments', 'Related discussions?', 'Analyze overall sentiment'],
+        general: ['Summarize this page', 'Key points in bullets', 'What is this about?', 'Explain the context']
+      }
+    },
+    fr: {
+      welcome: 'Bonjour! Je suis votre assistant IA. Comment puis-je vous aider avec cette page?',
+      loading: 'Conversion de la page, Je réfléchis...',
+      placeholder: 'Posez-moi une question sur cette page...',
+      error: {
+        apiKey: '⚠️ Clé API non configurée!\n\n1. Clic droit sur l\'icône de l\'extension\n2. Sélectionnez "Options"\n3. Obtenez votre clé API gratuite sur albert.api.etalab.gouv.fr\n4. Enregistrez-la dans les paramètres\n\nCela ne prend que 2 minutes!',
+        decrypt: '🔒 Erreur de déchiffrement de la clé API. Veuillez reconfigurer votre clé API dans les paramètres.',
+        network: '🌐 Erreur réseau. Veuillez vérifier votre connexion internet.',
+        generic: '❌ Erreur: {error}\n\nVeuillez consulter la console pour plus de détails.'
+      },
+      suggestions: {
+        developer: ['Expliquer ce code', 'Comment déboguer ceci?', 'Quelles sont les meilleures pratiques?', 'Analyser la complexité'],
+        educational: ['Résumer ce sujet', 'Expliquer simplement', 'Quels sont les concepts clés?', 'Donner des exemples'],
+        ecommerce: ['Comparer les produits similaires', 'Est-ce une bonne affaire?', 'Que disent les avis?', 'Analyser le rapport qualité-prix'],
+        article: ['Résumer cet article', 'Points principaux?', 'Vérifier cette affirmation', 'Quelle est la thèse principale?'],
+        video: ['Résumer cette vidéo', 'Moments clés?', 'Vidéos similaires?', 'Quel est le message principal?'],
+        social: ['Qu\'est-ce qui est tendance?', 'Résumer les commentaires', 'Discussions connexes?', 'Analyser le sentiment général'],
+        general: ['Résumer cette page', 'Points clés en bullet points', 'De quoi s\'agit-il?', 'Expliquer le contexte']
+      }
+    },
+    es: {
+      welcome: '¡Hola! Soy tu asistente de IA. ¿Cómo puedo ayudarte con esta página?',
+      loading: 'Procesando página, pensando...',
+      placeholder: 'Pregúntame cualquier cosa sobre esta página...',
+      error: {
+        apiKey: '⚠️ ¡Clave API no configurada!\n\n1. Haz clic derecho en el icono de la extensión\n2. Selecciona "Opciones"\n3. Obtén tu clave API gratuita en albert.api.etalab.gouv.fr\n4. Guárdala en la configuración\n\n¡Solo toma 2 minutos!',
+        decrypt: '🔒 Error al descifrar la clave API. Por favor, reconfigura tu clave API en la configuración.',
+        network: '🌐 Error de red. Por favor, verifica tu conexión a internet.',
+        generic: '❌ Error: {error}\n\nPor favor, consulta la consola para más detalles.'
+      },
+      suggestions: {
+        developer: ['Explicar este código', '¿Cómo depurar esto?', '¿Cuáles son las mejores prácticas?', 'Analizar complejidad'],
+        educational: ['Resumir este tema', 'Explicar simplemente', '¿Cuáles son los conceptos clave?', 'Dar ejemplos'],
+        ecommerce: ['Comparar productos similares', '¿Es una buena oferta?', '¿Qué dicen las reseñas?', 'Analizar relación calidad-precio'],
+        article: ['Resumir este artículo', '¿Puntos principales?', 'Verificar esta afirmación', '¿Cuál es la tesis?'],
+        video: ['Resumir este video', '¿Momentos clave?', '¿Videos similares?', '¿Cuál es el mensaje principal?'],
+        social: ['¿Qué es tendencia?', 'Resumir comentarios', '¿Discusiones relacionadas?', 'Analizar sentimiento general'],
+        general: ['Resumir esta página', 'Puntos clave en viñetas', '¿De qué trata esto?', 'Explicar el contexto']
+      }
+    },
+    de: {
+      welcome: 'Hallo! Ich bin Ihr KI-Assistent. Wie kann ich Ihnen bei dieser Seite helfen?',
+      loading: 'Seite wird verarbeitet, denke nach...',
+      placeholder: 'Fragen Sie mich alles über diese Seite...',
+      error: {
+        apiKey: '⚠️ API-Schlüssel nicht konfiguriert!\n\n1. Rechtsklick auf das Erweiterungssymbol\n2. "Optionen" auswählen\n3. Kostenlosen API-Schlüssel von albert.api.etalab.gouv.fr erhalten\n4. In den Einstellungen speichern\n\nDauert nur 2 Minuten!',
+        decrypt: '🔒 Fehler beim Entschlüsseln des API-Schlüssels. Bitte konfigurieren Sie Ihren API-Schlüssel neu.',
+        network: '🌐 Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.',
+        generic: '❌ Fehler: {error}\n\nBitte prüfen Sie die Konsole für Details.'
+      },
+      suggestions: {
+        developer: ['Code erklären', 'Wie debuggen?', 'Best Practices?', 'Komplexität analysieren'],
+        educational: ['Thema zusammenfassen', 'Einfach erklären', 'Schlüsselkonzepte?', 'Beispiele geben'],
+        ecommerce: ['Ähnliche Produkte vergleichen', 'Gutes Angebot?', 'Was sagen Bewertungen?', 'Preis-Leistung analysieren'],
+        article: ['Artikel zusammenfassen', 'Hauptpunkte?', 'Behauptung prüfen', 'Was ist die These?'],
+        video: ['Video zusammenfassen', 'Schlüsselmomente?', 'Ähnliche Videos?', 'Hauptbotschaft?'],
+        social: ['Was ist im Trend?', 'Kommentare zusammenfassen', 'Verwandte Diskussionen?', 'Stimmung analysieren'],
+        general: ['Seite zusammenfassen', 'Wichtige Punkte', 'Worum geht es?', 'Kontext erklären']
+      }
+    }
+  };
+
+  // Get translation for current language
+  function getTranslation(key, language = settings.language) {
+    const lang = TRANSLATIONS[language] || TRANSLATIONS.en;
+    const keys = key.split('.');
+    let value = lang;
+    
+    for (const k of keys) {
+      value = value[k];
+      if (!value) return TRANSLATIONS.en[keys[0]][keys[1]] || key;
+    }
+    
+    return value;
+  }
+
   // Website type detection
   function detectWebsiteType() {
     const domain = window.location.hostname.toLowerCase();
@@ -47,19 +146,6 @@
     return 'general';
   }
   
-  // Language detection
-  function detectLanguage() {
-    // Check document language
-    const docLang = document.documentElement.lang;
-    if (docLang) return docLang.split('-')[0];
-    
-    // Check for French indicators
-    const domain = window.location.hostname.toLowerCase();
-    if (domain.endsWith('.fr') || domain.includes('france')) return 'fr';
-    
-    // Fallback to browser language
-    return navigator.language.split('-')[0] || 'en';
-  }
   
   // Create widget HTML
   function createWidgetHTML() {
@@ -82,7 +168,7 @@
           </div>
           <div class="uwa-messages"></div>
           <div class="uwa-input-container">
-            <input type="text" class="uwa-input" placeholder="Ask me anything about this page..." />
+            <input type="text" class="uwa-input" placeholder="${getTranslation('placeholder')}" />
             <button class="uwa-send" aria-label="Send message">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M2 10l15-8v16L2 10z" fill="currentColor"/>
@@ -306,8 +392,8 @@
     addMessage(message, 'user');
     input.value = '';
     
-    // Show loading message in French
-    const loadingId = addMessage('Conversion de la page, Je réfléchis...', 'assistant', true);
+    // Show loading message in user's language
+    const loadingId = addMessage(getTranslation('loading'), 'assistant', true);
     
     try {
       // Send message to service worker
@@ -318,7 +404,7 @@
           url: window.location.href,
           context: {
             siteType: detectWebsiteType(),
-            language: detectLanguage(),
+            language: settings.language,
             domain: window.location.hostname,
             title: document.title
           }
@@ -336,13 +422,13 @@
         
         let errorMessage;
         if (response.error === 'API key not configured. Please set it in extension options.') {
-          errorMessage = '⚠️ API key not configured!\n\n1. Right-click the extension icon\n2. Select "Options"\n3. Get your free API key from albert.api.etalab.gouv.fr\n4. Save it in the extension settings\n\nThis takes just 2 minutes!';
+          errorMessage = getTranslation('error.apiKey');
         } else if (response.error && response.error.includes('decrypt')) {
-          errorMessage = '🔒 Error decrypting API key. Please reconfigure your API key in settings.';
+          errorMessage = getTranslation('error.decrypt');
         } else if (response.error && response.error.includes('Network')) {
-          errorMessage = '🌐 Network error. Please check your internet connection.';
+          errorMessage = getTranslation('error.network');
         } else {
-          errorMessage = `❌ Error: ${response.error || 'Unknown error occurred'}\n\nPlease check the console for details.`;
+          errorMessage = getTranslation('error.generic').replace('{error}', response.error || 'Unknown error occurred');
         }
         addMessage(errorMessage, 'assistant');
       } else {
@@ -432,22 +518,12 @@
   function showInitialSuggestions() {
     const siteType = detectWebsiteType();
     
-    // Welcome message - French only
-    const welcome = 'Bonjour! Je suis votre assistant IA. Comment puis-je vous aider avec cette page?';
+    // Welcome message in user's language
+    const welcome = getTranslation('welcome');
     addMessage(welcome, 'assistant');
     
-    // Context-aware suggestions - French only
-    const suggestionSets = {
-      developer: ['Expliquer ce code', 'Comment déboguer ceci?', 'Quelles sont les meilleures pratiques?', 'Analyser la complexité'],
-      educational: ['Résumer ce sujet', 'Expliquer simplement', 'Quels sont les concepts clés?', 'Donner des exemples'],
-      ecommerce: ['Comparer les produits similaires', 'Est-ce une bonne affaire?', 'Que disent les avis?', 'Analyser le rapport qualité-prix'],
-      article: ['Résumer cet article', 'Points principaux?', 'Vérifier cette affirmation', 'Quelle est la thèse principale?'],
-      video: ['Résumer cette vidéo', 'Moments clés?', 'Vidéos similaires?', 'Quel est le message principal?'],
-      social: ['Qu\'est-ce qui est tendance?', 'Résumer les commentaires', 'Discussions connexes?', 'Analyser le sentiment général'],
-      general: ['Résumer cette page', 'Points clés en bullet points', 'De quoi s\'agit-il?', 'Expliquer le contexte']
-    };
-    
-    const suggestions = suggestionSets[siteType] || suggestionSets.general;
+    // Context-aware suggestions in user's language
+    const suggestions = getTranslation(`suggestions.${siteType}`) || getTranslation('suggestions.general');
     addSuggestions(suggestions);
   }
   
@@ -464,6 +540,10 @@
           settings = { ...settings, ...result[STORAGE_KEY] };
           // Update isExpanded from saved settings
           isExpanded = settings.isExpanded || false;
+          // Ensure language is set
+          if (!settings.language) {
+            settings.language = 'fr'; // Default to French
+          }
         }
         resolve();
       });
@@ -573,7 +653,7 @@
           context: {
             url: window.location.href,
             siteType: detectWebsiteType(),
-            language: detectLanguage()
+            language: settings.language
           }
         }).catch(() => {
           // Extension context invalidated, ignore

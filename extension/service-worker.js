@@ -868,8 +868,23 @@ try {
   function buildPrompt(userMessage, pageContent, context) {
     const { siteType = 'general', language = 'en', title = '' } = context || {};
     
-    // Always respond in French regardless of page language
-    const languageInstruction = 'Répondez en français.';
+    // Language instruction based on user preference
+    const languageInstructions = {
+      en: 'Please respond in English.',
+      fr: 'Répondez en français.',
+      es: 'Por favor responde en español.',
+      de: 'Bitte antworten Sie auf Deutsch.',
+      it: 'Per favore rispondi in italiano.',
+      pt: 'Por favor responda em português.',
+      nl: 'Antwoord alstublieft in het Nederlands.',
+      pl: 'Proszę odpowiedzieć po polsku.',
+      ru: 'Пожалуйста, ответьте на русском языке.',
+      zh: '请用中文回答。',
+      ja: '日本語でお答えください。',
+      ko: '한국어로 답변해 주세요.',
+      ar: 'الرجاء الرد باللغة العربية.'
+    };
+    const languageInstruction = languageInstructions[language] || languageInstructions.en;
     
     // English site contexts (kept for reference but not used)
     const siteContexts = {
@@ -925,30 +940,47 @@ Format: Liste numérotée de 1 à 4.`;
   function getSystemPrompt(context) {
     const { language = 'en' } = context || {};
     
-    let systemPrompt = 'You are a helpful AI assistant in a browser extension.';
-    
-    if (language === 'fr' || language === 'fr-FR') {
-      systemPrompt = 'Vous êtes un assistant IA utile dans une extension de navigateur. Répondez toujours en français. Vous aidez les utilisateurs à comprendre et analyser le contenu des pages web qu\'ils visitent.';
-    }
-    
-    return systemPrompt;
-  }
-
-  // Generate suggestions - French only
-  function generateSuggestions(context) {
-    const { siteType = 'general' } = context || {};
-    
-    const suggestionSets = {
-      developer: ['Expliquer ce code', 'Comment déboguer?', 'Meilleures pratiques?'],
-      educational: ['Résumer ce sujet', 'Expliquer simplement', 'Concepts clés?'],
-      ecommerce: ['Comparer les produits', 'Bonne affaire?', 'Résumé des avis?'],
-      article: ['Résumer l\'article', 'Points principaux?', 'Vérifier les faits?'],
-      video: ['Résumer la vidéo', 'Moments clés?', 'Vidéos similaires?'],
-      social: ['Tendances actuelles?', 'Résumer commentaires', 'Posts connexes?'],
-      general: ['Résumer la page', 'De quoi s\'agit-il?', 'Informations clés?']
+    const systemPrompts = {
+      en: 'You are a helpful AI assistant in a browser extension. You help users understand and analyze the content of web pages they visit.',
+      fr: 'Vous êtes un assistant IA utile dans une extension de navigateur. Vous aidez les utilisateurs à comprendre et analyser le contenu des pages web qu\'ils visitent.',
+      es: 'Eres un asistente de IA útil en una extensión del navegador. Ayudas a los usuarios a entender y analizar el contenido de las páginas web que visitan.',
+      de: 'Sie sind ein hilfreicher KI-Assistent in einer Browser-Erweiterung. Sie helfen Benutzern, den Inhalt der von ihnen besuchten Webseiten zu verstehen und zu analysieren.',
+      it: 'Sei un assistente AI utile in un\'estensione del browser. Aiuti gli utenti a comprendere e analizzare il contenuto delle pagine web che visitano.',
+      pt: 'Você é um assistente de IA útil em uma extensão do navegador. Você ajuda os usuários a entender e analisar o conteúdo das páginas da web que visitam.',
+      nl: 'Je bent een behulpzame AI-assistent in een browserextensie. Je helpt gebruikers de inhoud van webpagina\'s die ze bezoeken te begrijpen en te analyseren.',
+      pl: 'Jesteś pomocnym asystentem AI w rozszerzeniu przeglądarki. Pomagasz użytkownikom zrozumieć i analizować treść odwiedzanych stron internetowych.',
+      ru: 'Вы полезный ИИ-помощник в расширении браузера. Вы помогаете пользователям понимать и анализировать содержимое веб-страниц, которые они посещают.',
+      zh: '你是浏览器扩展中的有用AI助手。你帮助用户理解和分析他们访问的网页内容。',
+      ja: 'あなたはブラウザ拡張機能の便利なAIアシスタントです。ユーザーが訪問するウェブページのコンテンツを理解し、分析するのを手伝います。',
+      ko: '당신은 브라우저 확장 프로그램의 유용한 AI 어시스턴트입니다. 사용자가 방문하는 웹 페이지의 내용을 이해하고 분석하는 데 도움을 줍니다.',
+      ar: 'أنت مساعد ذكاء اصطناعي مفيد في ملحق متصفح. تساعد المستخدمين على فهم وتحليل محتوى صفحات الويب التي يزورونها.'
     };
     
-    return suggestionSets[siteType] || suggestionSets.general;
+    return systemPrompts[language] || systemPrompts.en;
+  }
+
+  // Generate suggestions based on language
+  function generateSuggestions(context) {
+    const { siteType = 'general', language = 'en' } = context || {};
+    
+    // Simplified suggestions for service worker fallback
+    const allSuggestions = {
+      en: {
+        general: ['Summarize this page', 'What is this about?', 'Key information?']
+      },
+      fr: {
+        general: ['Résumer la page', 'De quoi s\'agit-il?', 'Informations clés?']
+      },
+      es: {
+        general: ['Resumir la página', '¿De qué trata esto?', '¿Información clave?']
+      },
+      de: {
+        general: ['Seite zusammenfassen', 'Worum geht es?', 'Wichtige Informationen?']
+      }
+    };
+    
+    const langSuggestions = allSuggestions[language] || allSuggestions.en;
+    return langSuggestions.general;
   }
 
   // Cache helpers

@@ -271,6 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearButton: document.getElementById('clearButton'),
     
     // Appearance
+    language: document.getElementById('language'),
     position: document.getElementById('position'),
     theme: document.getElementById('theme'),
     fontSize: document.getElementById('fontSize'),
@@ -627,6 +628,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Save appearance settings
   elements.saveAppearanceButton.addEventListener('click', async () => {
     const appearance = {
+      language: elements.language.value,
       position: elements.position.value,
       theme: elements.theme.value,
       fontSize: elements.fontSize.value,
@@ -887,6 +889,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Load appearance settings
       const prefs = data.preferences || data.universalAssistantSettings || {};
+      if (prefs.language) elements.language.value = prefs.language;
       if (prefs.position) elements.position.value = prefs.position;
       if (prefs.theme) elements.theme.value = prefs.theme;
       if (prefs.fontSize) elements.fontSize.value = prefs.fontSize;
