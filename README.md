@@ -16,8 +16,8 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 - **Multi-Model Support**: Choose from 6+ AI providers including free options (OpenRouter, Groq, Hugging Face, Albert) and premium models (OpenAI, Anthropic)
 - **Smart Context**: Automatically adapts to different types of sites (news, shopping, docs, etc.)
 - **Contextual Suggestions**: 8 AI-generated questions with color coding:
-  - 🔵 Generic questions (blue) - Common questions for any page
-  - 🟠 Site-specific questions (yellow/orange) - Tailored to current page content
+  - 🟡 Generic questions (yellow) - Common questions for any page, displayed immediately
+  - 🔵 Site-specific questions (blue) - Tailored to current page content
 - **Multilingual Support**: Browse in any language, chat in 7 languages (FR, EN, ES, DE, IT, PT, NL)
 - **Privacy First**: No data collection, all preferences stored locally
 - **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+A`
@@ -27,7 +27,8 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 
 - **Expanded Language Support**: Now supports 7 languages (French, English, Spanish, German, Italian, Portuguese, Dutch)
 - **Contextual Suggestions**: AI generates 8 smart questions - 4 generic + 4 specific to the current page
-- **Color-Coded Suggestions**: Visual distinction between generic questions (blue) and site-specific questions (yellow/orange)
+- **Color-Coded Suggestions**: Visual distinction between generic questions (yellow) and site-specific questions (blue)
+- **Improved Loading UX**: Generic questions appear instantly while page-specific ones load with animation
 - **Language Independence**: Browse websites in any language while chatting in your chosen language
 - **Instant Language Switching**: Change languages mid-conversation with automatic chat refresh
 - **Dynamic Model Loading**: OpenRouter models with `:free` suffix load automatically
