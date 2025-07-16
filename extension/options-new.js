@@ -539,6 +539,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       apiKey: elements.apiKey.value.trim()
     };
     
+    // Save language preference
+    const language = elements.language.value;
+    
     // Input validation
     if (!modelConfig.apiKey) {
       showError('Please enter an API key');
@@ -573,11 +576,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         apiKey: encrypt(modelConfig.apiKey)
       };
       
+      // Get current preferences and update language
+      const { preferences, universalAssistantSettings } = await chrome.storage.sync.get(['preferences', 'universalAssistantSettings']);
+      const currentPrefs = preferences || universalAssistantSettings || {};
+      const updatedPreferences = {
+        ...currentPrefs,
+        language: language
+      };
+      
       // Save to storage
       await chrome.storage.sync.set({ 
         modelConfig: encryptedConfig,
         // Keep backward compatibility with encrypted key
-        apiKey: encrypt(modelConfig.apiKey)
+        apiKey: encrypt(modelConfig.apiKey),
+        preferences: updatedPreferences,
+        universalAssistantSettings: updatedPreferences // Backward compatibility
       });
       
       showSuccess('Model configuration saved successfully!');
@@ -628,7 +641,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Save appearance settings
   elements.saveAppearanceButton.addEventListener('click', async () => {
     const appearance = {
-      language: elements.language.value,
       position: elements.position.value,
       theme: elements.theme.value,
       fontSize: elements.fontSize.value,
@@ -889,7 +901,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Load appearance settings
       const prefs = data.preferences || data.universalAssistantSettings || {};
-      if (prefs.language) elements.language.value = prefs.language;
+      // Set language with French as default
+      elements.language.value = prefs.language || 'fr';
       if (prefs.position) elements.position.value = prefs.position;
       if (prefs.theme) elements.theme.value = prefs.theme;
       if (prefs.fontSize) elements.fontSize.value = prefs.fontSize;
