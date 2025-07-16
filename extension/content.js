@@ -106,6 +106,66 @@
         social: ['Was ist im Trend?', 'Kommentare zusammenfassen', 'Verwandte Diskussionen?', 'Stimmung analysieren'],
         general: ['Seite zusammenfassen', 'Wichtige Punkte', 'Worum geht es?', 'Kontext erklären']
       }
+    },
+    it: {
+      welcome: 'Ciao! Sono il tuo assistente IA. Come posso aiutarti con questa pagina?',
+      loading: 'Elaborazione pagina, sto pensando...',
+      placeholder: 'Chiedimi qualsiasi cosa su questa pagina...',
+      error: {
+        apiKey: '⚠️ Chiave API non configurata!\n\n1. Clic destro sull\'icona dell\'estensione\n2. Seleziona "Opzioni"\n3. Ottieni la tua chiave API gratuita su albert.api.etalab.gouv.fr\n4. Salvala nelle impostazioni\n\nCi vogliono solo 2 minuti!',
+        decrypt: '🔒 Errore nel decifrare la chiave API. Riconfigura la chiave API nelle impostazioni.',
+        network: '🌐 Errore di rete. Controlla la tua connessione internet.',
+        generic: '❌ Errore: {error}\n\nControlla la console per i dettagli.'
+      },
+      suggestions: {
+        developer: ['Spiega questo codice', 'Come fare debug?', 'Best practice?', 'Analizza complessità'],
+        educational: ['Riassumi argomento', 'Spiega semplicemente', 'Concetti chiave?', 'Esempi?'],
+        ecommerce: ['Confronta prodotti', 'Buon affare?', 'Cosa dicono le recensioni?', 'Analisi valore'],
+        article: ['Riassumi articolo', 'Punti principali?', 'Punti chiave?', 'Conclusione?'],
+        video: ['Riassumi video', 'Momenti chiave?', 'Video simili?', 'Messaggio principale?'],
+        social: ['Cosa è di tendenza?', 'Riassumi commenti', 'Post correlati?', 'Sentimento generale'],
+        general: ['Riassumi pagina', 'Punti chiave', 'Di cosa si tratta?', 'Spiega il contesto']
+      }
+    },
+    pt: {
+      welcome: 'Olá! Sou seu assistente de IA. Como posso ajudá-lo com esta página?',
+      loading: 'Processando página, pensando...',
+      placeholder: 'Pergunte-me qualquer coisa sobre esta página...',
+      error: {
+        apiKey: '⚠️ Chave API não configurada!\n\n1. Clique direito no ícone da extensão\n2. Selecione "Opções"\n3. Obtenha sua chave API gratuita em albert.api.etalab.gouv.fr\n4. Salve nas configurações\n\nLeva apenas 2 minutos!',
+        decrypt: '🔒 Erro ao descriptografar chave API. Reconfigure sua chave API nas configurações.',
+        network: '🌐 Erro de rede. Verifique sua conexão com a internet.',
+        generic: '❌ Erro: {error}\n\nVerifique o console para detalhes.'
+      },
+      suggestions: {
+        developer: ['Explicar código', 'Como debugar?', 'Boas práticas?', 'Analisar complexidade'],
+        educational: ['Resumir tópico', 'Explicar simplesmente', 'Conceitos-chave?', 'Exemplos?'],
+        ecommerce: ['Comparar produtos', 'Bom negócio?', 'O que dizem as avaliações?', 'Análise de valor'],
+        article: ['Resumir artigo', 'Pontos principais?', 'Pontos-chave?', 'Conclusão?'],
+        video: ['Resumir vídeo', 'Momentos-chave?', 'Vídeos similares?', 'Mensagem principal?'],
+        social: ['O que está em alta?', 'Resumir comentários', 'Posts relacionados?', 'Sentimento geral'],
+        general: ['Resumir página', 'Pontos-chave', 'Sobre o que é?', 'Explicar contexto']
+      }
+    },
+    nl: {
+      welcome: 'Hallo! Ik ben je AI-assistent. Hoe kan ik je helpen met deze pagina?',
+      loading: 'Pagina verwerken, aan het denken...',
+      placeholder: 'Vraag me alles over deze pagina...',
+      error: {
+        apiKey: '⚠️ API-sleutel niet geconfigureerd!\n\n1. Rechtsklik op het extensie-icoon\n2. Selecteer "Opties"\n3. Krijg je gratis API-sleutel op albert.api.etalab.gouv.fr\n4. Sla op in instellingen\n\nDuurt slechts 2 minuten!',
+        decrypt: '🔒 Fout bij ontsleutelen API-sleutel. Configureer je API-sleutel opnieuw in instellingen.',
+        network: '🌐 Netwerkfout. Controleer je internetverbinding.',
+        generic: '❌ Fout: {error}\n\nControleer de console voor details.'
+      },
+      suggestions: {
+        developer: ['Leg code uit', 'Hoe debuggen?', 'Best practices?', 'Analyseer complexiteit'],
+        educational: ['Vat onderwerp samen', 'Leg simpel uit', 'Kernconcepten?', 'Voorbeelden?'],
+        ecommerce: ['Vergelijk producten', 'Goede deal?', 'Wat zeggen reviews?', 'Waarde analyse'],
+        article: ['Vat artikel samen', 'Hoofdpunten?', 'Kernpunten?', 'Conclusie?'],
+        video: ['Vat video samen', 'Belangrijke momenten?', 'Vergelijkbare video\'s?', 'Hoofdboodschap?'],
+        social: ['Wat is trending?', 'Vat reacties samen', 'Gerelateerde posts?', 'Algemeen sentiment'],
+        general: ['Vat pagina samen', 'Kernpunten', 'Waar gaat dit over?', 'Leg context uit']
+      }
     }
   };
 

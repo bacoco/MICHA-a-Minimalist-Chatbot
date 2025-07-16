@@ -21,7 +21,8 @@
     "https://api-inference.huggingface.co/*"
   ],
   "background": {
-    "service_worker": "service-worker.js"
+    "service_worker": "service-worker.js",
+    "type": "module"
   },
   "content_scripts": [
     {
