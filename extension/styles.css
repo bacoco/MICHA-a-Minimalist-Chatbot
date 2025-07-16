@@ -36,29 +36,10 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   width: calc(100% - var(--uwa-panel-width, 400px)) !important;
 }
 
-/* Position classes */
-.uwa-widget.bottom-right {
-  bottom: 20px;
-  right: 20px;
-}
+/* Panel mode is always used - no position classes needed */
 
-.uwa-widget.bottom-left {
-  bottom: 20px;
-  left: 20px;
-}
-
-.uwa-widget.top-right {
-  top: 20px;
-  right: 20px;
-}
-
-.uwa-widget.top-left {
-  top: 20px;
-  left: 20px;
-}
-
-/* Panel mode */
-.uwa-widget.panel-mode {
+/* Panel mode (default and only mode) */
+.uwa-widget {
   top: 0;
   right: 0;
   bottom: 0;
@@ -66,7 +47,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   height: 100vh;
 }
 
-.uwa-widget.panel-mode .uwa-panel {
+.uwa-panel {
   position: relative;
   top: 0;
   right: 0;
@@ -79,13 +60,24 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   border-left: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: -4px 0 12px rgba(0, 0, 0, 0.08);
   animation: slideInRight 0.3s ease;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
 }
 
-.uwa-widget.panel-mode .uwa-toggle {
-  display: none;
+.uwa-panel.resizing {
+  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.16);
+  user-select: none;
 }
 
-/* Panel tab button */
+/* Always hide the bottom-right toggle button */
+.uwa-toggle {
+  display: none !important;
+}
+
+/* Panel tab button - Middle right extender */
 .uwa-panel-tab {
   position: fixed;
   top: 50%;
@@ -111,11 +103,12 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   box-shadow: -4px 0 12px rgba(102, 126, 234, 0.4);
 }
 
-.uwa-widget.panel-mode .uwa-panel-tab {
+/* Panel tab is controlled by JavaScript */
+.uwa-panel-tab {
   display: flex;
 }
 
-.uwa-widget.panel-mode .uwa-resize-handle {
+.uwa-resize-handle {
   cursor: nwse-resize;
   width: 16px;
   height: 16px;
@@ -123,9 +116,13 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   right: 0;
   left: auto;
   top: auto;
+  position: absolute;
+  z-index: 10;
 }
 
-.uwa-widget.panel-mode .uwa-resize-handle::before {
+.uwa-resize-handle::before {
+  content: '';
+  position: absolute;
   bottom: 4px;
   right: 4px;
   left: auto;
@@ -149,79 +146,8 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   }
 }
 
-/* Toggle button */
-.uwa-toggle {
-  width: 56px;
-  height: 56px;
-  border-radius: 28px;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-  transition: all 0.3s ease;
-}
 
-.uwa-toggle:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
 
-.uwa-widget.expanded .uwa-toggle {
-  display: none;
-}
-
-/* Ensure toggle button is always visible when not expanded */
-.uwa-widget:not(.expanded) .uwa-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Panel */
-.uwa-panel {
-  position: absolute;
-  min-width: 300px;
-  min-height: 400px;
-  max-width: 600px;
-  max-height: 800px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.3s ease;
-}
-
-.uwa-panel.resizing {
-  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.16);
-  user-select: none;
-}
-
-.uwa-widget.bottom-right .uwa-panel,
-.uwa-widget.bottom-left .uwa-panel {
-  bottom: 0;
-}
-
-.uwa-widget.top-right .uwa-panel,
-.uwa-widget.top-left .uwa-panel {
-  top: 0;
-}
-
-.uwa-widget.bottom-right .uwa-panel,
-.uwa-widget.top-right .uwa-panel {
-  right: 0;
-}
-
-.uwa-widget.bottom-left .uwa-panel,
-.uwa-widget.top-left .uwa-panel {
-  left: 0;
-}
 
 /* Header */
 .uwa-header {
@@ -476,8 +402,8 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   background: #374151;
 }
 
-/* Dark theme panel mode adjustments */
-.uwa-widget[data-theme="dark"].panel-mode .uwa-panel {
+/* Dark theme panel adjustments */
+.uwa-widget[data-theme="dark"] .uwa-panel {
   border-left-color: #374151;
 }
 
@@ -523,7 +449,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
     background: #374151;
   }
   
-  .uwa-widget[data-theme="auto"].panel-mode .uwa-panel {
+  .uwa-widget[data-theme="auto"] .uwa-panel {
     border-left-color: #374151;
   }
 }
@@ -562,72 +488,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   background: #94A3B8;
 }
 
-/* Resize handle */
-.uwa-resize-handle {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  cursor: nwse-resize;
-  z-index: 10;
-}
-
-.uwa-widget.bottom-right .uwa-resize-handle {
-  bottom: 0;
-  right: 0;
-  cursor: nwse-resize;
-  border-bottom-right-radius: 16px;
-}
-
-.uwa-widget.bottom-left .uwa-resize-handle {
-  bottom: 0;
-  left: 0;
-  cursor: nesw-resize;
-  border-bottom-left-radius: 16px;
-}
-
-.uwa-widget.top-right .uwa-resize-handle {
-  top: 0;
-  right: 0;
-  cursor: nesw-resize;
-  border-top-right-radius: 16px;
-}
-
-.uwa-widget.top-left .uwa-resize-handle {
-  top: 0;
-  left: 0;
-  cursor: nwse-resize;
-  border-top-left-radius: 16px;
-}
-
-.uwa-resize-handle::before {
-  content: '';
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: #CBD5E1;
-  border-radius: 50%;
-}
-
-.uwa-widget.bottom-right .uwa-resize-handle::before {
-  bottom: 4px;
-  right: 4px;
-}
-
-.uwa-widget.bottom-left .uwa-resize-handle::before {
-  bottom: 4px;
-  left: 4px;
-}
-
-.uwa-widget.top-right .uwa-resize-handle::before {
-  top: 4px;
-  right: 4px;
-}
-
-.uwa-widget.top-left .uwa-resize-handle::before {
-  top: 4px;
-  left: 4px;
-}
-
+/* Resize handle hover */
 .uwa-resize-handle:hover::before {
   background: #94A3B8;
 }
@@ -660,12 +521,12 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 /* Responsive design for panel mode */
 @media (max-width: 768px) {
   /* On mobile, panel takes full width */
-  .uwa-widget.panel-mode .uwa-panel {
+  .uwa-panel {
     width: 100vw !important;
     max-width: 100vw;
   }
   
-  .uwa-widget.panel-mode .uwa-resize-handle {
+  .uwa-resize-handle {
     display: none;
   }
   
@@ -684,7 +545,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 
 /* Medium screens */
 @media (max-width: 1024px) {
-  .uwa-widget.panel-mode .uwa-panel {
+  .uwa-panel {
     max-width: 50vw;
   }
 }

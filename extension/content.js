@@ -20,7 +20,7 @@
     panelWidth: 380,
     panelHeight: window.innerHeight,
     fontSize: 'medium',
-    panelMode: false,
+    panelMode: true,  // Always use panel mode
     isExpanded: false  // Add expanded state to persisted settings
   };
   
@@ -63,15 +63,10 @@
   
   // Create widget HTML
   function createWidgetHTML() {
-    const panelClass = settings.panelMode ? 'panel-mode' : '';
+    // Always use panel mode
     return `
-      <div id="${WIDGET_ID}" class="uwa-widget ${settings.position} ${panelClass}" data-theme="${settings.theme}" data-font-size="${settings.fontSize || 'medium'}">
-        <button class="uwa-toggle" aria-label="Toggle Universal Assistant">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="currentColor"/>
-          </svg>
-        </button>
-        <button class="uwa-panel-tab" aria-label="Open chat panel" style="display: none;">
+      <div id="${WIDGET_ID}" class="uwa-widget ${settings.position} panel-mode" data-theme="${settings.theme}" data-font-size="${settings.fontSize || 'medium'}">
+        <button class="uwa-panel-tab" aria-label="Open chat panel">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M4 3h12v14H4z" stroke="currentColor" stroke-width="2"/>
             <path d="M8 10h4M8 7h4M8 13h4" stroke="currentColor" stroke-width="1.5"/>
@@ -81,16 +76,6 @@
           <div class="uwa-header">
             <h3>Universal Assistant</h3>
             <div class="uwa-header-controls">
-              <button class="uwa-mode-toggle" aria-label="Toggle panel mode" title="Toggle panel mode">
-                <svg class="dock-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="10" y="2" width="4" height="12" rx="1" fill="currentColor"/>
-                  <rect x="2" y="2" width="6" height="12" rx="1" fill="currentColor" opacity="0.3"/>
-                </svg>
-                <svg class="float-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display: none;">
-                  <rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                  <path d="M6 3V1M10 3V1M3 6H1M3 10H1" stroke="currentColor" stroke-width="1.5"/>
-                </svg>
-              </button>
               <button class="uwa-minimize" aria-label="Minimize assistant">_</button>
               <button class="uwa-close" aria-label="Close assistant">×</button>
             </div>
@@ -122,55 +107,50 @@
     attachEventListeners();
     
     // Apply saved expanded state
+    const panelTab = widget.querySelector('.uwa-panel-tab');
     if (settings.isExpanded) {
       isExpanded = true;
       const panel = widget.querySelector('.uwa-panel');
-      const panelTab = widget.querySelector('.uwa-panel-tab');
       panel.style.display = 'flex';
       widget.classList.add('expanded');
       
-      // In panel mode, apply dimensions
-      if (settings.panelMode) {
-        panel.style.width = settings.panelWidth + 'px';
-        // Always hide panel tab - we only use the main toggle button
-        panelTab.style.display = 'none';
-      } else {
-        panel.style.height = settings.panelHeight + 'px';
-        // Also hide panel tab in floating mode
-        panelTab.style.display = 'none';
-      }
+      // Apply panel dimensions
+      panel.style.width = settings.panelWidth + 'px';
+      // Hide panel tab when expanded
+      panelTab.style.display = 'none';
       
       // Show initial suggestions if no messages yet
       const messages = widget.querySelector('.uwa-messages');
       if (messages.children.length === 0) {
         showInitialSuggestions();
       }
+    } else {
+      // Show panel tab when minimized
+      panelTab.style.display = 'flex';
     }
     
-    // If panel mode is already enabled, apply webpage transformation
-    if (settings.panelMode) {
-      document.documentElement.classList.add('uwa-panel-active');
+    // Always apply webpage transformation for panel mode
+    document.documentElement.classList.add('uwa-panel-active');
+    if (settings.isExpanded) {
       document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
+    } else {
+      document.documentElement.style.setProperty('--uwa-panel-width', '0px');
     }
   }
   
   // Attach event listeners
   function attachEventListeners() {
-    const toggle = widget.querySelector('.uwa-toggle');
     const panelTab = widget.querySelector('.uwa-panel-tab');
     const close = widget.querySelector('.uwa-close');
     const minimize = widget.querySelector('.uwa-minimize');
-    const modeToggle = widget.querySelector('.uwa-mode-toggle');
     const input = widget.querySelector('.uwa-input');
     const send = widget.querySelector('.uwa-send');
     const resizeHandle = widget.querySelector('.uwa-resize-handle');
     const panel = widget.querySelector('.uwa-panel');
     
-    toggle.addEventListener('click', toggleWidget);
     panelTab.addEventListener('click', toggleWidget);
     close.addEventListener('click', toggleWidget);
     minimize.addEventListener('click', minimizeWidget);
-    modeToggle.addEventListener('click', togglePanelMode);
     send.addEventListener('click', sendMessage);
     input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') sendMessage();
@@ -207,20 +187,12 @@
       panel.style.display = 'flex';
       widget.classList.add('expanded');
       
-      // In panel mode, use stored dimensions
-      if (settings.panelMode) {
-        // Don't set height for panel mode - let CSS handle it (100vh)
-        panel.style.width = settings.panelWidth + 'px';
-        // Update webpage offset when opening
-        document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
-        // Always hide panel tab - we only use the main toggle button
-        panelTab.style.display = 'none';
-      } else {
-        // Only set height for floating mode
-        panel.style.height = settings.panelHeight + 'px';
-        // Also hide panel tab in floating mode
-        panelTab.style.display = 'none';
-      }
+      // Apply panel dimensions
+      panel.style.width = settings.panelWidth + 'px';
+      // Update webpage offset when opening
+      document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
+      // Hide panel tab when expanded
+      panelTab.style.display = 'none';
       
       widget.querySelector('.uwa-input').focus();
       
@@ -233,12 +205,10 @@
       panel.style.display = 'none';
       widget.classList.remove('expanded');
       
-      // In panel mode, remove webpage offset when closing
-      if (settings.panelMode) {
-        document.documentElement.style.setProperty('--uwa-panel-width', '0px');
-        // Don't show panel tab - only the main toggle button should be visible
-        panelTab.style.display = 'none';
-      }
+      // Remove webpage offset when closing
+      document.documentElement.style.setProperty('--uwa-panel-width', '0px');
+      // Show panel tab when minimized
+      panelTab.style.display = 'flex';
     }
   }
   
@@ -254,69 +224,12 @@
     // Save the minimized state
     chrome.storage.sync.set({ [STORAGE_KEY]: settings });
     
-    // In panel mode, remove webpage offset when minimizing
-    if (settings.panelMode) {
-      document.documentElement.style.setProperty('--uwa-panel-width', '0px');
-      // Don't show panel tab - only the main toggle button should be visible
-      panelTab.style.display = 'none';
-    }
+    // Remove webpage offset when minimizing
+    document.documentElement.style.setProperty('--uwa-panel-width', '0px');
+    // Show panel tab when minimized
+    panelTab.style.display = 'flex';
   }
   
-  // Toggle between panel and floating mode
-  function togglePanelMode() {
-    settings.panelMode = !settings.panelMode;
-    
-    // Update widget classes
-    if (settings.panelMode) {
-      widget.classList.add('panel-mode');
-      // Keep the floating toggle button visible in panel mode
-      widget.querySelector('.uwa-toggle').style.display = '';
-      // Never show panel tab - only use the main toggle button
-      widget.querySelector('.uwa-panel-tab').style.display = 'none';
-      // Add class to body to shift webpage content
-      document.documentElement.classList.add('uwa-panel-active');
-      // Only set the panel width if the panel is expanded
-      if (isExpanded) {
-        document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
-      } else {
-        document.documentElement.style.setProperty('--uwa-panel-width', '0px');
-      }
-    } else {
-      widget.classList.remove('panel-mode');
-      // Show the floating toggle button when in floating mode
-      widget.querySelector('.uwa-toggle').style.display = '';
-      // Hide panel tab
-      widget.querySelector('.uwa-panel-tab').style.display = 'none';
-      // Remove class from body to restore normal layout
-      document.documentElement.classList.remove('uwa-panel-active');
-      document.documentElement.style.removeProperty('--uwa-panel-width');
-    }
-    
-    // Toggle icon visibility
-    const dockIcon = widget.querySelector('.dock-icon');
-    const floatIcon = widget.querySelector('.float-icon');
-    if (settings.panelMode) {
-      dockIcon.style.display = 'none';
-      floatIcon.style.display = 'block';
-    } else {
-      dockIcon.style.display = 'block';
-      floatIcon.style.display = 'none';
-    }
-    
-    // Reset panel dimensions for panel mode
-    const panel = widget.querySelector('.uwa-panel');
-    if (settings.panelMode) {
-      panel.style.width = settings.panelWidth + 'px';
-      // Don't set height for panel mode - let CSS handle it (100vh)
-      panel.style.removeProperty('height');
-    } else {
-      panel.style.width = settings.panelWidth + 'px';
-      panel.style.height = settings.panelHeight + 'px';
-    }
-    
-    // Save preference
-    saveSettings();
-  }
   
   // Start resizing
   function startResize(e) {
@@ -342,59 +255,24 @@
     
     const panel = widget.querySelector('.uwa-panel');
     
-    if (settings.panelMode) {
-      // In panel mode, resize both width and height from bottom-right corner
-      let newWidth = startWidth - (e.clientX - startX);
-      let newHeight = startHeight - (e.clientY - startY);
-      
-      // Apply constraints for panel mode
-      newWidth = Math.max(300, Math.min(800, newWidth));
-      newHeight = Math.max(400, Math.min(window.innerHeight, newHeight));
-      
-      // Apply new dimensions
-      panel.style.width = newWidth + 'px';
-      panel.style.height = newHeight + 'px';
-      
-      // Update the webpage offset
-      document.documentElement.style.setProperty('--uwa-panel-width', newWidth + 'px');
-      
-      // Save to settings
-      settings.panelWidth = newWidth;
-      settings.panelHeight = newHeight;
-    } else {
-      // In floating mode, resize both width and height
-      const position = settings.position;
-      
-      // Calculate new dimensions
-      let newWidth = startWidth;
-      let newHeight = startHeight;
-      
-      // Adjust width based on position
-      if (position.includes('right')) {
-        newWidth = startWidth - (e.clientX - startX);
-      } else {
-        newWidth = startWidth + (e.clientX - startX);
-      }
-      
-      // Adjust height based on position
-      if (position.includes('bottom')) {
-        newHeight = startHeight - (e.clientY - startY);
-      } else {
-        newHeight = startHeight + (e.clientY - startY);
-      }
-      
-      // Apply constraints
-      newWidth = Math.max(300, Math.min(600, newWidth));
-      newHeight = Math.max(400, Math.min(800, newHeight));
-      
-      // Apply new dimensions
-      panel.style.width = newWidth + 'px';
-      panel.style.height = newHeight + 'px';
-      
-      // Save to settings
-      settings.panelWidth = newWidth;
-      settings.panelHeight = newHeight;
-    }
+    // In panel mode, resize both width and height from bottom-right corner
+    let newWidth = startWidth - (e.clientX - startX);
+    let newHeight = startHeight - (e.clientY - startY);
+    
+    // Apply constraints for panel mode
+    newWidth = Math.max(300, Math.min(800, newWidth));
+    newHeight = Math.max(400, Math.min(window.innerHeight, newHeight));
+    
+    // Apply new dimensions
+    panel.style.width = newWidth + 'px';
+    panel.style.height = newHeight + 'px';
+    
+    // Update the webpage offset
+    document.documentElement.style.setProperty('--uwa-panel-width', newWidth + 'px');
+    
+    // Save to settings
+    settings.panelWidth = newWidth;
+    settings.panelHeight = newHeight;
   }
   
   // Stop resizing
@@ -730,7 +608,7 @@
   
   // Handle window resize for panel mode
   window.addEventListener('resize', () => {
-    if (widget && settings.panelMode && isExpanded) {
+    if (widget && isExpanded) {
       const panel = widget.querySelector('.uwa-panel');
       if (panel) {
         // In panel mode, height is always 100vh via CSS
