@@ -365,31 +365,24 @@ try {
     } catch (error) {
       console.error('Assist request failed:', error);
       
-      // Check if the error message should be in French
-      const isFrench = context?.language === 'fr' || context?.language === 'fr-FR' || context?.language?.startsWith('fr');
+      // Always provide error messages in French
+      let frenchError = error.message;
       
-      // Translate common error messages to French if needed
-      if (isFrench) {
-        let frenchError = error.message;
-        
-        if (error.message.includes('API key not configured')) {
-          frenchError = 'Clé API non configurée. Veuillez la configurer dans les options de l\'extension.';
-        } else if (error.message.includes('Invalid API key')) {
-          frenchError = 'Clé API invalide. Veuillez vérifier votre configuration.';
-        } else if (error.message.includes('Rate limit exceeded')) {
-          frenchError = 'Limite de requêtes dépassée. Veuillez réessayer plus tard.';
-        } else if (error.message.includes('Service temporarily unavailable')) {
-          frenchError = 'Service temporairement indisponible. Veuillez réessayer plus tard.';
-        } else if (error.message.includes('Network error')) {
-          frenchError = 'Erreur réseau. Vérifiez votre connexion internet.';
-        } else if (error.message.includes('Failed to fetch')) {
-          frenchError = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
-        }
-        
-        throw new Error(frenchError);
+      if (error.message.includes('API key not configured')) {
+        frenchError = 'Clé API non configurée. Veuillez la configurer dans les options de l\'extension.';
+      } else if (error.message.includes('Invalid API key')) {
+        frenchError = 'Clé API invalide. Veuillez vérifier votre configuration.';
+      } else if (error.message.includes('Rate limit exceeded')) {
+        frenchError = 'Limite de requêtes dépassée. Veuillez réessayer plus tard.';
+      } else if (error.message.includes('Service temporarily unavailable')) {
+        frenchError = 'Service temporairement indisponible. Veuillez réessayer plus tard.';
+      } else if (error.message.includes('Network error')) {
+        frenchError = 'Erreur réseau. Vérifiez votre connexion internet.';
+      } else if (error.message.includes('Failed to fetch')) {
+        frenchError = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
       }
       
-      throw error;
+      throw new Error(frenchError);
     }
   }
 
@@ -875,12 +868,10 @@ try {
   function buildPrompt(userMessage, pageContent, context) {
     const { siteType = 'general', language = 'en', title = '' } = context || {};
     
-    const languageInstruction = (language === 'fr' || language === 'fr-FR' || language.startsWith('fr'))
-      ? 'Répondez en français.' 
-      : language !== 'en' 
-      ? `Please respond in ${language} language.` 
-      : '';
+    // Always respond in French regardless of page language
+    const languageInstruction = 'Répondez en français.';
     
+    // English site contexts (kept for reference but not used)
     const siteContexts = {
       developer: 'This is a developer/programming website. Focus on technical aspects.',
       educational: 'This is an educational website. Help with learning.',
@@ -891,6 +882,7 @@ try {
       general: 'Help the user with their query about this webpage.'
     };
     
+    // Always use French site contexts
     const siteContextsFr = {
       developer: 'Ceci est un site de développement/programmation. Concentrez-vous sur les aspects techniques.',
       educational: 'Ceci est un site éducatif. Aidez à l\'apprentissage.',
@@ -901,9 +893,8 @@ try {
       general: 'Aidez l\'utilisateur avec sa question sur cette page web.'
     };
     
-    const isFrenchLanguage = language === 'fr' || language === 'fr-FR' || language.startsWith('fr');
-    const contextMap = isFrenchLanguage ? siteContextsFr : siteContexts;
-    const siteContext = contextMap[siteType] || contextMap.general;
+    // Always use French contexts
+    const siteContext = siteContextsFr[siteType] || siteContextsFr.general;
     
     let prompt = `You are a helpful AI assistant integrated into a web browser. ${languageInstruction}
 
@@ -919,15 +910,13 @@ User Message: "${userMessage}"`;
     
     prompt += '\n\nProvide a helpful, concise response.';
     
-    // Add instruction for follow-up questions in French
-    if (isFrenchLanguage) {
-      prompt += `\n\nIMPORTANT: À la fin de votre réponse, ajoutez une section "Questions suggérées:" et proposez exactement 4 nouvelles questions pertinentes que l'utilisateur pourrait poser. Ces questions doivent:
+    // Always add instruction for follow-up questions in French
+    prompt += `\n\nIMPORTANT: À la fin de votre réponse, ajoutez une section "Questions suggérées:" et proposez exactement 4 nouvelles questions pertinentes que l'utilisateur pourrait poser. Ces questions doivent:
 - Être directement liées au contenu de la page
 - Être en rapport avec la question de l'utilisateur
 - Permettre d'approfondir différents aspects du sujet
 - Être formulées en français
 Format: Liste numérotée de 1 à 4.`;
-    }
     
     return prompt;
   }
