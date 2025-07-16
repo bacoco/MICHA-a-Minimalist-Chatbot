@@ -871,27 +871,30 @@
   }
   
   // Add suggestions
-  function addSuggestions(suggestions, skipSave = false) {
-    console.log('[UWA DEBUG] Adding suggestions:', suggestions);
+  function addSuggestions(suggestions, skipSave = false, isGeneric = false) {
+    console.log('[UWA DEBUG] Adding suggestions:', suggestions, 'isGeneric:', isGeneric);
     const messages = widget.querySelector('.uwa-messages');
     
-    // Check if suggestions already exist and remove them
-    const existingSuggestions = messages.querySelector('.uwa-suggestions');
-    if (existingSuggestions) {
-      existingSuggestions.remove();
+    // Check if we're adding to existing suggestions or creating new
+    let existingSuggestions = messages.querySelector('.uwa-suggestions');
+    let suggestionsEl;
+    
+    if (existingSuggestions && !isGeneric) {
+      // We're adding site-specific suggestions to existing generic ones
+      suggestionsEl = existingSuggestions;
+    } else {
+      // Remove any existing suggestions and create new
+      if (existingSuggestions) {
+        existingSuggestions.remove();
+      }
+      suggestionsEl = document.createElement('div');
+      suggestionsEl.className = 'uwa-suggestions';
     }
     
-    const suggestionsEl = document.createElement('div');
-    suggestionsEl.className = 'uwa-suggestions';
-    
-    suggestions.forEach((suggestion, index) => {
+    suggestions.forEach((suggestion) => {
       const button = document.createElement('button');
-      // First 4 are generic, rest are site-specific
-      if (index < 4) {
-        button.className = 'uwa-suggestion generic';
-      } else {
-        button.className = 'uwa-suggestion site-specific';
-      }
+      // Apply class based on isGeneric parameter
+      button.className = isGeneric ? 'uwa-suggestion generic' : 'uwa-suggestion site-specific';
       button.textContent = suggestion;
       button.addEventListener('click', () => {
         console.log('[UWA DEBUG] Suggestion clicked:', suggestion);
@@ -901,7 +904,10 @@
       suggestionsEl.appendChild(button);
     });
     
-    messages.appendChild(suggestionsEl);
+    // Only append if we created a new container
+    if (!existingSuggestions || isGeneric) {
+      messages.appendChild(suggestionsEl);
+    }
     messages.scrollTop = messages.scrollHeight;
     
     // When restoring from saved session, we don't want to save again
@@ -1009,7 +1015,7 @@
     
     // Show generic questions immediately
     const currentGenericQuestions = genericQuestions[settings.language] || genericQuestions.en;
-    addSuggestions(currentGenericQuestions, true);
+    addSuggestions(currentGenericQuestions, true, true); // skipSave=true, isGeneric=true
     
     // Show loading state for page-specific suggestions
     const loadingEl = document.createElement('div');
