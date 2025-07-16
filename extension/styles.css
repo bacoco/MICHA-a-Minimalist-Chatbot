@@ -298,12 +298,37 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* Generic suggestions (first 4) */
+.uwa-suggestion.generic {
+  background: #F0F4FF;
+  border-color: #D4E2FC;
+  color: #5B6FDB;
+}
+
+/* Site-specific suggestions */
+.uwa-suggestion.site-specific {
+  background: #FFF8E1;
+  border-color: #FFE082;
+  color: #F57C00;
+}
+
 .uwa-suggestion:hover {
   background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
   color: white;
   border-color: transparent;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Hover states for different types */
+.uwa-suggestion.generic:hover {
+  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  color: white;
+}
+
+.uwa-suggestion.site-specific:hover {
+  background: linear-gradient(135deg, #FF8A65 0%, #FF6F43 100%);
+  color: white;
 }
 
 /* Suggestions loading state */

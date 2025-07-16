@@ -15,7 +15,9 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 - **Works Everywhere**: Functions on any website without configuration
 - **Multi-Model Support**: Choose from 6+ AI providers including free options (OpenRouter, Groq, Hugging Face, Albert) and premium models (OpenAI, Anthropic)
 - **Smart Context**: Automatically adapts to different types of sites (news, shopping, docs, etc.)
-- **Contextual Suggestions**: 8 AI-generated questions (4 generic + 4 page-specific)
+- **Contextual Suggestions**: 8 AI-generated questions with color coding:
+  - 🔵 Generic questions (blue) - Common questions for any page
+  - 🟠 Site-specific questions (yellow/orange) - Tailored to current page content
 - **Multilingual Support**: Browse in any language, chat in 7 languages (FR, EN, ES, DE, IT, PT, NL)
 - **Privacy First**: No data collection, all preferences stored locally
 - **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+A`
@@ -25,12 +27,14 @@ Universal Web Assistant is a Chrome extension that adds an AI assistant to every
 
 - **Expanded Language Support**: Now supports 7 languages (French, English, Spanish, German, Italian, Portuguese, Dutch)
 - **Contextual Suggestions**: AI generates 8 smart questions - 4 generic + 4 specific to the current page
+- **Color-Coded Suggestions**: Visual distinction between generic questions (blue) and site-specific questions (yellow/orange)
 - **Language Independence**: Browse websites in any language while chatting in your chosen language
 - **Instant Language Switching**: Change languages mid-conversation with automatic chat refresh
 - **Dynamic Model Loading**: OpenRouter models with `:free` suffix load automatically
 - **Persistent Chat**: Conversations continue across page navigation
 - **Smart Provider Switching**: API key clears when changing providers for security
 - **Pre-configured Start**: Works immediately with Albert AI after installation
+- **Enhanced Stability**: Improved error handling for Chrome extension context invalidation
 
 ## 🤖 Supported AI Models
 
