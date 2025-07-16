@@ -20,7 +20,8 @@
     panelWidth: 380,
     panelHeight: window.innerHeight,
     fontSize: 'medium',
-    panelMode: false
+    panelMode: false,
+    isExpanded: false  // Add expanded state to persisted settings
   };
   
   // Website type detection
@@ -120,6 +121,32 @@
     widget = document.getElementById(WIDGET_ID);
     attachEventListeners();
     
+    // Apply saved expanded state
+    if (settings.isExpanded) {
+      isExpanded = true;
+      const panel = widget.querySelector('.uwa-panel');
+      const panelTab = widget.querySelector('.uwa-panel-tab');
+      panel.style.display = 'flex';
+      widget.classList.add('expanded');
+      
+      // In panel mode, apply dimensions
+      if (settings.panelMode) {
+        panel.style.width = settings.panelWidth + 'px';
+        // Always hide panel tab - we only use the main toggle button
+        panelTab.style.display = 'none';
+      } else {
+        panel.style.height = settings.panelHeight + 'px';
+        // Also hide panel tab in floating mode
+        panelTab.style.display = 'none';
+      }
+      
+      // Show initial suggestions if no messages yet
+      const messages = widget.querySelector('.uwa-messages');
+      if (messages.children.length === 0) {
+        showInitialSuggestions();
+      }
+    }
+    
     // If panel mode is already enabled, apply webpage transformation
     if (settings.panelMode) {
       document.documentElement.classList.add('uwa-panel-active');
@@ -171,6 +198,10 @@
     const panel = widget.querySelector('.uwa-panel');
     const panelTab = widget.querySelector('.uwa-panel-tab');
     isExpanded = !isExpanded;
+    settings.isExpanded = isExpanded;  // Update settings
+    
+    // Save the expanded state
+    chrome.storage.sync.set({ [STORAGE_KEY]: settings });
     
     if (isExpanded) {
       panel.style.display = 'flex';
@@ -182,11 +213,13 @@
         panel.style.width = settings.panelWidth + 'px';
         // Update webpage offset when opening
         document.documentElement.style.setProperty('--uwa-panel-width', settings.panelWidth + 'px');
-        // Hide panel tab when expanded
+        // Always hide panel tab - we only use the main toggle button
         panelTab.style.display = 'none';
       } else {
         // Only set height for floating mode
         panel.style.height = settings.panelHeight + 'px';
+        // Also hide panel tab in floating mode
+        panelTab.style.display = 'none';
       }
       
       widget.querySelector('.uwa-input').focus();
@@ -203,8 +236,8 @@
       // In panel mode, remove webpage offset when closing
       if (settings.panelMode) {
         document.documentElement.style.setProperty('--uwa-panel-width', '0px');
-        // Show panel tab when collapsed
-        panelTab.style.display = 'block';
+        // Don't show panel tab - only the main toggle button should be visible
+        panelTab.style.display = 'none';
       }
     }
   }
@@ -216,12 +249,16 @@
     panel.style.display = 'none';
     widget.classList.remove('expanded');
     isExpanded = false;
+    settings.isExpanded = false;  // Update settings
+    
+    // Save the minimized state
+    chrome.storage.sync.set({ [STORAGE_KEY]: settings });
     
     // In panel mode, remove webpage offset when minimizing
     if (settings.panelMode) {
       document.documentElement.style.setProperty('--uwa-panel-width', '0px');
-      // Show panel tab when minimized
-      panelTab.style.display = 'block';
+      // Don't show panel tab - only the main toggle button should be visible
+      panelTab.style.display = 'none';
     }
   }
   
@@ -232,12 +269,10 @@
     // Update widget classes
     if (settings.panelMode) {
       widget.classList.add('panel-mode');
-      // Hide the floating toggle button when in panel mode
-      widget.querySelector('.uwa-toggle').style.display = 'none';
-      // Show panel tab when panel is minimized
-      if (!isExpanded) {
-        widget.querySelector('.uwa-panel-tab').style.display = 'block';
-      }
+      // Keep the floating toggle button visible in panel mode
+      widget.querySelector('.uwa-toggle').style.display = '';
+      // Never show panel tab - only use the main toggle button
+      widget.querySelector('.uwa-panel-tab').style.display = 'none';
       // Add class to body to shift webpage content
       document.documentElement.classList.add('uwa-panel-active');
       // Only set the panel width if the panel is expanded
@@ -549,6 +584,8 @@
       chrome.storage.sync.get(STORAGE_KEY, (result) => {
         if (result[STORAGE_KEY]) {
           settings = { ...settings, ...result[STORAGE_KEY] };
+          // Update isExpanded from saved settings
+          isExpanded = settings.isExpanded || false;
         }
         resolve();
       });
