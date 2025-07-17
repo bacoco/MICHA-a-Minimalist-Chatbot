@@ -85,7 +85,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   transform: translateY(-50%);
   width: 32px;
   height: 80px;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #1E4D7B 0%, #2E6DAB 100%);
   border: none;
   border-radius: 16px 0 0 16px;
   color: white;
@@ -155,7 +155,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #1E4D7B 0%, #2E6DAB 100%);
   color: white;
 }
 
@@ -227,7 +227,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 }
 
 .uwa-message.user {
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #1E4D7B 0%, #2E6DAB 100%);
   color: white;
   margin-left: auto;
   border-bottom-right-radius: 4px;
@@ -252,12 +252,12 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 }
 
 .uwa-message.assistant ul li::marker {
-  color: #667EEA;
+  color: #1E4D7B;
 }
 
 /* Links in messages */
 .uwa-message a {
-  color: #667EEA;
+  color: #1E4D7B;
   text-decoration: underline;
   font-weight: 500;
 }
@@ -291,7 +291,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   border: 1.5px solid #E5E7EB;
   border-radius: 20px;
   font-size: 13px;
-  color: #667EEA;
+  color: #1E4D7B;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
@@ -313,7 +313,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 }
 
 .uwa-suggestion:hover {
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #1E4D7B 0%, #2E6DAB 100%);
   color: white;
   border-color: transparent;
   transform: translateY(-2px);
@@ -327,7 +327,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 }
 
 .uwa-suggestion.site-specific:hover {
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #1E4D7B 0%, #2E6DAB 100%);
   color: white;
 }
 
@@ -379,7 +379,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 }
 
 .uwa-input:focus {
-  border-color: #667EEA;
+  border-color: #1E4D7B;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -391,7 +391,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   width: 40px;
   height: 40px;
   border: none;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #1E4D7B 0%, #2E6DAB 100%);
   color: white;
   border-radius: 20px;
   cursor: pointer;
@@ -439,7 +439,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 }
 
 .uwa-widget[data-theme="dark"] .uwa-input:focus {
-  border-color: #4F46E5;
+  border-color: #1E4D7B;
 }
 
 .uwa-widget[data-theme="dark"] .uwa-suggestion {
@@ -492,7 +492,7 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   }
   
   .uwa-widget[data-theme="auto"] .uwa-input:focus {
-    border-color: #4F46E5;
+    border-color: #1E4D7B;
   }
   
   .uwa-widget[data-theme="auto"] .uwa-suggestion {
