@@ -1329,10 +1329,12 @@
             
             // Clear session data for this page when language changes
             chatHistory = [];
+            currentPageSuggestions = null; // Clear cached suggestions to force re-fetch in new language
             sessionData = {
               suggestionsShown: false,
               messages: [],
-              lastUpdated: Date.now()
+              lastUpdated: Date.now(),
+              cachedSuggestions: null
             };
             saveChatSession();
             

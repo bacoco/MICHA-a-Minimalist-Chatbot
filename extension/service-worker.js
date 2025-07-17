@@ -590,7 +590,7 @@ Requirements:
       prompt += `Page Content:\n${truncatedContent}${pageContent.length > 2000 ? '...' : ''}\n\n`;
     }
     
-    prompt += `Generate 8 questions (4 generic + 4 specific) in ${targetLanguage}:`;
+    prompt += `Generate exactly 4 specific questions about this page in ${targetLanguage}:`;
     
     return prompt;
   }
