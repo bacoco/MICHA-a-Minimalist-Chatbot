@@ -198,6 +198,37 @@ We welcome contributions! Whether it's:
 - Internet connection
 - API key from your chosen AI provider (or use free Albert)
 
+## 🤖 Supported AI Models
+
+MiCha supports multiple AI providers to give you the best multilingual experience:
+
+### Default Model
+- **Albert** (French Government AI) - Optimized for French and European languages
+  - Model: `albert-large`
+  - Free API key from: https://albert.api.etalab.gouv.fr
+
+### Alternative Models
+Configure your preferred AI provider in the extension settings:
+
+- **OpenAI** - GPT-3.5/GPT-4
+  - Models: `gpt-3.5-turbo`, `gpt-4`, `gpt-4-turbo`
+  - API: https://api.openai.com
+  
+- **Anthropic** - Claude
+  - Models: `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`
+  - API: https://api.anthropic.com
+  
+- **Groq** - Ultra-fast inference
+  - Models: `mixtral-8x7b`, `llama2-70b`
+  - API: https://api.groq.com
+  
+- **Hugging Face** - Open source models
+  - Various models available
+  - API: https://api-inference.huggingface.co
+  
+- **Custom** - Any OpenAI-compatible endpoint
+  - Configure your own endpoint and model
+
 ## 📄 License
 
 MiCha is open source under the MIT License. Fork it, modify it, make it yours!
