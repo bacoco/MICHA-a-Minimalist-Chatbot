@@ -108,19 +108,37 @@ The extension automatically detects website types to provide contextual response
 
 ## Environment Configuration
 
-The extension supports multiple AI providers:
+The extension supports multiple AI providers. Free models are automatically proposed, but users must obtain an API key (even for free services).
 
-### Default: Albert (French Government AI)
-1. Get a free API key from https://albert.api.etalab.gouv.fr
-2. Right-click the extension icon and select "Options"
-3. Enter the API key in the settings page
+### 🆓 Free AI Providers
 
-### Alternative Providers
+#### Default: Albert (French Government AI)
+- **Completely FREE** - No credit card required
+- Get API key: https://albert.api.etalab.gouv.fr
+- Right-click extension icon → Options → Enter API key
+- Optimized for French and European languages
+
+#### Groq (Free Tier)
+- **FREE tier** with generous rate limits
+- Get API key: https://console.groq.com
+- Models: `mixtral-8x7b-32768`, `llama2-70b-4096`
+- Ultra-fast inference speeds
+
+#### Hugging Face (Free Tier)
+- **FREE tier** for community models
+- Get API key: https://huggingface.co/settings/tokens
+- Access to open source models like Mistral, Llama, etc.
+
+#### OpenRouter
+- **Automatic free model selection**
+- Get API key: https://openrouter.ai/keys
+- Smart routing to available free models
+- Optional pay-as-you-go for premium models
+
+### 💳 Paid AI Providers
 Configure in the Model Configuration section:
-- **OpenAI**: GPT-3.5/GPT-4 models
-- **Anthropic**: Claude models
-- **Groq**: Fast inference with open models
-- **Hugging Face**: Various open source models
+- **OpenAI**: GPT-3.5/GPT-4 models (requires payment)
+- **Anthropic**: Claude models (requires payment)
 - **Custom**: Any OpenAI-compatible endpoint
 
 ## Important Features

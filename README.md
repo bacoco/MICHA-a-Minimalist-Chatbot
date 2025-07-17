@@ -6,7 +6,8 @@
 
 <p align="center">
   <strong>Break every language barrier on the internet.</strong><br>
-  Chat in YOUR language while browsing in ANY language. Powered by cutting-edge AI.
+  Chat in YOUR language while browsing in ANY language. Powered by cutting-edge AI.<br>
+  <em>🆓 Free AI models available - No credit card required!</em>
 </p>
 
 <p align="center">
@@ -110,7 +111,13 @@ cd MiCha
 3. Click "Load unpacked"
 4. Select the `extension` folder
 
-### 3️⃣ Start Chatting!
+### 3️⃣ Get Your Free API Key (Required)
+- Right-click MiCha icon → "Options"
+- Get a free API key from [Albert](https://albert.api.etalab.gouv.fr) (recommended)
+- Or choose another free provider (Groq, Hugging Face, OpenRouter)
+- Enter your API key and save
+
+### 4️⃣ Start Chatting!
 - Click the MiCha icon or press `Ctrl+Shift+A`
 - Choose your language
 - Ask anything about any webpage!
@@ -200,15 +207,36 @@ We welcome contributions! Whether it's:
 
 ## 🤖 Supported AI Models
 
-MiCha supports multiple AI providers to give you the best multilingual experience:
+MiCha supports multiple AI providers to give you the best multilingual experience. Free models are automatically proposed, but you'll need to obtain an API key (even for free services).
 
-### Default Model
-- **Albert** (French Government AI) - Optimized for French and European languages
-  - Model: `albert-large`
-  - Free API key from: https://albert.api.etalab.gouv.fr
+### 🆓 Free Models
 
-### Alternative Models
-Configure your preferred AI provider in the extension settings:
+#### Default: Albert (French Government AI)
+- **Completely FREE** - Optimized for French and European languages
+- Model: `albert-large`
+- Get your free API key: https://albert.api.etalab.gouv.fr
+- No credit card required, unlimited usage
+
+#### Groq
+- **FREE tier available** - Ultra-fast inference
+- Models: `mixtral-8x7b-32768`, `llama2-70b-4096`
+- Get your free API key: https://console.groq.com
+- Generous free tier with high rate limits
+
+#### Hugging Face
+- **FREE tier available** - Open source models
+- Various models: `mistralai/Mistral-7B-Instruct-v0.2`, etc.
+- Get your free API key: https://huggingface.co/settings/tokens
+- Community models available at no cost
+
+#### OpenRouter
+- **Automatic free model selection** - Smart routing to free models
+- Models: Automatically selects from available free models
+- Get your API key: https://openrouter.ai/keys
+- Pay-as-you-go for premium models, free models included
+
+### 💳 Paid Models
+Configure these premium providers in the extension settings:
 
 - **OpenAI** - GPT-3.5/GPT-4
   - Models: `gpt-3.5-turbo`, `gpt-4`, `gpt-4-turbo`
