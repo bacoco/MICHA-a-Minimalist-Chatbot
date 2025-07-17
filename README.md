@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="extension/icons/micha-logo.png" alt="MiCha Logo" width="400">
+  <img src="https://raw.githubusercontent.com/bacoco/MICHA-a-Minimalist-Chatbot/main/extension/icons/micha-logo.png" alt="MiCha Logo" width="400">
 </p>
 
 <h1 align="center">MiCha - Your Minimalist Chatbot for the Multilingual Web</h1>
