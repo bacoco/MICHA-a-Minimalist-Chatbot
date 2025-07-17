@@ -9,190 +9,221 @@ MiCha (Minimalist Chatbot) is an AI-powered Chrome extension that provides conte
 - **Multiple AI Providers** for generating contextual responses (Albert default, OpenAI, Anthropic, Groq, etc.)
 - **Chrome Extension Manifest V3** for universal website compatibility
 
-## Key Development Commands
+## Key Commands
 
-### Extension Development
+### Build & Development
 ```bash
 # Build extension for production
-cd extension
-zip -r micha-extension.zip .
+npm run build
+# Or manually:
+cd extension && zip -r ../micha-extension.zip .
 
-# Load unpacked extension in Chrome:
-# 1. Open chrome://extensions/
-# 2. Enable "Developer mode"
-# 3. Click "Load unpacked"
-# 4. Select the extension/ folder
+# Development workflow:
+# 1. Make changes to extension files
+# 2. Reload extension in chrome://extensions/
+# 3. Test on various websites
+# 4. Check console for debug logs (look for [MiCha DEBUG])
 ```
+
+### Load Extension in Chrome
+1. Open `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the `extension/` folder
+5. Right-click extension icon → Options → Configure API key
 
 ## Architecture & Code Structure
 
 ### High-Level Architecture
-The system follows a serverless architecture:
-1. **Browser Extension** → Injects UI on all websites, detects context
-2. **Service Worker** → Directly calls Jina + AI APIs, handles caching
-3. **External Services** → Jina AI for content extraction, Multiple AI providers for responses
+```
+User Interaction → Content Script → Service Worker → External APIs
+                        ↓                ↓               ↓
+                   DOM Injection    Message Passing   Jina + AI
+                        ↓                ↓               ↓
+                   UI Rendering    Response/Cache    Content/Chat
+```
 
-### Key Implementation Details
+### Core Components
 
-#### Website Type Detection (content.js)
-The extension automatically detects website types to provide contextual responses:
-- `developer`: GitHub, GitLab domains
-- `educational`: Wikipedia, .edu domains  
-- `ecommerce`: Amazon, eBay, shops
-- `article`: News sites, Medium, blogs
-- `video`: YouTube, Vimeo
-- `social`: Twitter, Facebook, LinkedIn
-- `general`: Everything else
+#### 1. Content Script (`content.js`) - ~1400 lines
+- **Widget Injection**: Creates floating chat UI on all websites
+- **Session Management**: Persists chat history per URL (24hr retention)
+- **Language Detection**: Auto-detects page language and user preference
+- **Suggestion System**: 
+  - 4 hardcoded generic questions per language
+  - 4 AI-generated page-specific questions (cached)
+- **Keyboard Shortcuts**: Ctrl+Shift+A to toggle widget
+- **State Management**: Handles minimize/maximize with full state preservation
 
-#### API Flow (service-worker.js)
-1. Content script sends: `{ message, url, context: { siteType, language, domain } }`
-2. Service worker fetches page content via Jina: `GET https://r.jina.ai/{encodedUrl}`
-3. Service worker builds context-aware prompt for selected AI provider
-4. AI returns response adapted to site type and language
-5. Service worker extracts follow-up questions from AI response
+#### 2. Service Worker (`service-worker.js`) - ~1300 lines
+- **API Gateway**: Routes requests to appropriate AI provider
+- **Caching Layer**: 
+  - Jina responses: 1-hour TTL with hash-based keys
+  - Chrome storage fallback for Supabase failures
+- **Multi-Provider Support**: Handles API differences between providers
+- **Security**: Encrypts/decrypts API keys using crypto-utils
+- **Prompt Engineering**: Builds context-aware prompts with page content
 
-#### Chrome Storage Structure
+#### 3. Configuration (`manifest.json`)
+- **Permissions**: storage, tabs, contextMenus, activeTab
+- **Host Permissions**: All AI provider endpoints
+- **Web Accessible Resources**: Logo files for UI display
+
+### Data Flow
+
+1. **User Types Message**:
+   ```
+   content.js → sendMessage() → chrome.runtime.sendMessage({action: 'assist'})
+   → service-worker.js → handleAssistRequest()
+   → fetchPageContent() [checks cache] → Jina AI
+   → buildPrompt() → generateAIResponse() → Selected AI Provider
+   → extractFollowUpQuestions() → Return to content.js
+   ```
+
+2. **Suggestion Generation**:
+   ```
+   Page Load → showInitialSuggestions() → Check cached suggestions
+   → If not cached: chrome.runtime.sendMessage({action: 'getSuggestions'})
+   → service-worker.js → buildSuggestionsPrompt() → AI Provider
+   → Cache suggestions → Display (4 yellow generic + 4 blue specific)
+   ```
+
+### Chrome Storage Structure
 ```javascript
 {
-  enabled: true,
-  blacklist: ['example.com'],  // Sites where assistant is disabled
-  preferences: {
+  // Sync Storage (small, synced across devices)
+  uwa_preferences: {
+    enabled: true,
+    language: 'fr',
     position: 'bottom-right',
+    theme: 'auto',
+    fontSize: 'medium',
     shortcuts: true,
     autoHide: false,
-    theme: 'auto',
-    language: 'fr',  // User's preferred language
     isExpanded: false,
-    panelWidth: 400,
-    fontSize: 'medium'
+    panelWidth: 400
   },
+  uwa_blacklist: ['example.com'],
   modelConfig: {
-    provider: 'albert',  // or 'openai', 'anthropic', 'groq', etc.
+    provider: 'albert',
     endpoint: 'https://albert.api.etalab.gouv.fr/v1',
     model: 'albert-large',
-    apiKey: 'encrypted_key_here'
+    apiKey: 'encrypted_key'
   },
+  
+  // Local Storage (larger, device-specific)
   chatSessions: {
     'https://example.com': {
-      messages: [...],
+      messages: [{id, text, type, timestamp, suggestions}],
       lastUpdated: timestamp,
       suggestionsShown: true,
-      cachedSuggestions: [...]  // AI suggestions cached per page
+      cachedSuggestions: ['Question 1?', 'Question 2?', ...]
     }
+  },
+  uwa_cache_https://example.com: {
+    data: 'Jina extracted content...',
+    expires: timestamp
   }
 }
 ```
 
-### Critical Files to Understand
+### Security & Encryption
 
-1. **extension/content.js**: Main injection script
-   - Handles website type detection
-   - Manages UI injection and positioning
-   - Implements keyboard shortcuts (Ctrl+Shift+A)
-   - Manages chat session persistence
-   - Handles language switching
-   - Caches AI suggestions per page
+- **API Keys**: Encrypted using Web Crypto API (AES-GCM)
+- **Key Derivation**: PBKDF2 with salt from extension ID
+- **Storage**: Encrypted keys in Chrome sync storage
+- **Supabase**: Optional integration with row-level security
 
-2. **extension/service-worker.js**: Background service worker
-   - Calls Jina AI for page content extraction (with caching)
-   - Supports multiple AI providers (Albert, OpenAI, Anthropic, Groq, etc.)
-   - Implements caching for Jina responses (1hr TTL)
-   - Extracts follow-up questions from AI responses
-   - Handles API key encryption/decryption
+### AI Provider Integration
 
-3. **extension/manifest.json**: Extension configuration
-   - Uses `<all_urls>` for universal compatibility
-   - Service worker for background tasks
-   - Storage API for preferences
-   - Web accessible resources for logo
+Each provider requires specific request formatting:
 
-## Environment Configuration
+```javascript
+// Albert (Default - Free)
+{
+  endpoint: 'https://albert.api.etalab.gouv.fr/v1/chat/completions',
+  headers: { Authorization: 'Bearer API_KEY' },
+  body: { model: 'albert-large', messages: [...], max_tokens: 500 }
+}
 
-The extension supports multiple AI providers. Free models are automatically proposed, but users must obtain an API key (even for free services).
+// OpenRouter (Auto-selects free models)
+{
+  endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+  headers: { Authorization: 'Bearer API_KEY', 'HTTP-Referer': 'chrome-extension://...' }
+}
 
-### 🆓 Free AI Providers
+// Anthropic (Different format)
+{
+  endpoint: 'https://api.anthropic.com/v1/messages',
+  headers: { 'x-api-key': 'API_KEY', 'anthropic-version': '2023-06-01' },
+  body: { model: 'claude-3-haiku', messages: [...], max_tokens: 500 }
+}
+```
 
-#### Default: Albert (French Government AI)
-- **Completely FREE** - No credit card required
-- Get API key: https://albert.api.etalab.gouv.fr
-- Right-click extension icon → Options → Enter API key
-- Optimized for French and European languages
+### Critical Implementation Details
 
-#### Groq (Free Tier)
-- **FREE tier** with generous rate limits
-- Get API key: https://console.groq.com
-- Models: `mixtral-8x7b-32768`, `llama2-70b-4096`
-- Ultra-fast inference speeds
+#### Language System
+- **Supported**: FR, EN, ES, DE, IT, PT, NL
+- **Detection Order**: User preference → Page language → Browser language → Default (FR)
+- **Dynamic Switching**: Clears cache and regenerates content
 
-#### Hugging Face (Free Tier)
-- **FREE tier** for community models
-- Get API key: https://huggingface.co/settings/tokens
-- Access to open source models like Mistral, Llama, etc.
+#### Performance Optimizations
+- **Debouncing**: Input handling and resize events
+- **Lazy Loading**: Suggestions only generated when widget opened
+- **Cache Strategy**: URL-based for Jina, page-based for suggestions
+- **Session Cleanup**: Automatic removal after 24 hours
 
-#### OpenRouter
-- **Automatic free model selection**
-- Get API key: https://openrouter.ai/keys
-- Smart routing to available free models
-- Optional pay-as-you-go for premium models
+#### Error Handling
+- **Extension Context**: Validates chrome.runtime?.id before API calls
+- **Network Failures**: Graceful degradation with user-friendly messages
+- **API Key Issues**: Specific error messages per provider
+- **Loading States**: Filtered from history to prevent persistence
 
-### 💳 Paid AI Providers
-Configure in the Model Configuration section:
-- **OpenAI**: GPT-3.5/GPT-4 models (requires payment)
-- **Anthropic**: Claude models (requires payment)
-- **Custom**: Any OpenAI-compatible endpoint
+### Testing Considerations
 
-## Important Features
+1. **Multi-Site Testing**: 
+   - SPAs (React, Vue)
+   - Static sites
+   - Sites with strict CSP
+   - Sites with iframes
 
-### Multilingual Support
-- **7 Languages**: French, English, Spanish, German, Italian, Portuguese, Dutch
-- Dynamic language detection from page
-- User can chat in their language regardless of page language
-- Suggestions generated in user's preferred language
+2. **State Persistence**:
+   - Minimize/maximize retention
+   - Page reload behavior
+   - Language switching
 
-### Visual Design
-- **MiCha branding** with blue theme (#1E4D7B)
-- Logo with 3D effect and white shadow
-- Color-coded suggestions:
-  - Yellow: Generic questions (4 hardcoded per language)
-  - Blue: Page-specific questions (4 AI-generated)
+3. **Edge Cases**:
+   - No API key configured
+   - Network failures
+   - Large page content (>2MB)
+   - Rapid language switching
 
-### Performance Optimizations
-- Jina responses cached for 1 hour
-- AI suggestions cached per page URL
-- Session persistence across minimize/maximize
-- Automatic cleanup of old sessions (24hr)
+### Common Debugging
 
-### Session Management
-- Chat history persists when minimizing widget
-- Suggestions don't regenerate on same page
-- Language change clears cache and regenerates content
-- Loading messages filtered out from history
+1. **Console Debugging**: Look for `[MiCha DEBUG]` prefixed logs
+2. **Storage Inspection**: chrome.storage.local.get() in extension console
+3. **Message Passing**: Monitor chrome.runtime.onMessage in service worker
+4. **Cache Validation**: Check uwa_cache_* keys in local storage
 
-## Testing Considerations
+### Recent Feature Additions
 
-- Test on diverse websites (SPA, static, different CSP policies)
-- Verify keyboard shortcuts work across different sites
-- Ensure widget doesn't interfere with site functionality
-- Test language detection and multi-language responses
-- Verify chat persistence when minimizing/maximizing
-- Test suggestion caching behavior
-- Verify logo displays correctly
+- **Logo Integration**: 3D effect with white shadow on blue gradient
+- **Color-Coded Suggestions**: Yellow (generic) vs Blue (page-specific)
+- **Session Persistence**: Full chat history across minimize/maximize
+- **Loading Message Filtering**: Prevents "Je réfléchis..." from persisting
+- **Multi-Provider Support**: Seamless switching between AI models
+- **OpenRouter Integration**: Automatic free model selection
 
-## Common Issues & Solutions
+### File-Specific Notes
 
-1. **Widget not appearing**: Check if domain is blacklisted in Chrome storage
-2. **No responses**: Verify API key is configured in extension options
-3. **CSP blocks**: Some sites with strict Content Security Policy may block the widget
-4. **Chat persistence**: Sessions saved per URL, cleared after 24 hours
-5. **Double questions**: AI generates exactly 4 specific questions, no duplicates
-6. **Loading messages stuck**: Filtered out from chat history restoration
+- **crypto-utils.js**: Handles all encryption/decryption operations
+- **supabase-utils.js**: Optional Supabase integration with hash-based caching
+- **default-config.js**: Contains encrypted default API key (if configured)
+- **options-new.js**: Settings page with model configuration UI
 
-## Recent Updates
+## Important Constraints
 
-- Renamed from "Universal Web Assistant" to "MiCha - Minimalist Chatbot"
-- Added logo with 3D effect in chat header
-- Fixed chat persistence issues
-- Implemented suggestion caching to prevent duplicates
-- Added color coding for generic vs specific questions
-- Fixed loading message persistence bug
-- Support for multiple AI providers
+- **Manifest V3**: No inline scripts, service worker instead of background page
+- **CSP Restrictions**: Some sites may block extension functionality
+- **Storage Limits**: Chrome sync storage limited to 100KB total
+- **API Rate Limits**: Varies by provider (Albert unlimited, others have limits)
