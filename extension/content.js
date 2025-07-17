@@ -317,6 +317,22 @@
             let lastAIMessageWithSuggestions = null;
             
             chatHistory.forEach((msg, index) => {
+              // Skip loading messages that were accidentally saved (in all languages)
+              const loadingPhrases = [
+                'Je réfléchis', 'Conversion de la page', // French
+                'thinking', 'Converting the page', // English
+                'Pensando', 'Convirtiendo la página', // Spanish
+                'Denke nach', 'Konvertiere die Seite', // German
+                'Sto pensando', 'Conversione della pagina', // Italian
+                'Pensando', 'Convertendo a página', // Portuguese
+                'Ik denk na', 'Pagina converteren' // Dutch
+              ];
+              
+              if (msg.text && loadingPhrases.some(phrase => msg.text.includes(phrase))) {
+                console.log('[MiCha DEBUG] Skipping saved loading message:', msg.text);
+                return;
+              }
+              
               const messageEl = document.createElement('div');
               messageEl.className = `uwa-message ${msg.type === 'ai' ? 'assistant' : 'user'}`;
               messageEl.id = msg.id || `msg-restored-${index}`;
@@ -551,6 +567,12 @@
         let lastAIMessageWithSuggestions = null;
         
         chatHistory.forEach((msg, index) => {
+          // Skip loading messages that were accidentally saved
+          if (msg.text && (msg.text.includes('Je réfléchis') || msg.text.includes('Conversion de la page'))) {
+            console.log('[MiCha DEBUG] Skipping saved loading message:', msg.text);
+            return;
+          }
+          
           const messageEl = document.createElement('div');
           messageEl.className = `uwa-message ${msg.type === 'ai' ? 'assistant' : 'user'}`;
           messageEl.id = msg.id || `msg-restored-${index}`;
@@ -838,6 +860,11 @@
     
     messageEl.id = messageId;
     messageEl.className = `uwa-message ${sender}${isLoading ? ' loading' : ''}`;
+    
+    // Debug log for loading messages
+    if (isLoading || text.includes('réfléchis')) {
+      console.log('[MiCha DEBUG] Adding message:', { text, sender, isLoading, messageId });
+    }
     
     // Format message content
     if (sender === 'assistant' && !isLoading) {
