@@ -15,6 +15,7 @@
   let suggestionsLoading = false;
   let initialSuggestionsShown = false;
   let widgetInitialized = false; // Prevent re-initialization
+  let currentPageSuggestions = null; // Cache AI suggestions for current page
   let settings = {
     enabled: true,
     position: 'bottom-right',
@@ -221,11 +222,13 @@
     sessionData.messages = chatHistory;
     sessionData.lastUpdated = Date.now();
     sessionData.suggestionsShown = initialSuggestionsShown;
+    sessionData.cachedSuggestions = currentPageSuggestions;
     
     console.log('[MiCha DEBUG] Saving chat session:', {
       pageUrl: pageUrl,
       messagesCount: chatHistory.length,
-      suggestionsShown: initialSuggestionsShown
+      suggestionsShown: initialSuggestionsShown,
+      cachedSuggestions: currentPageSuggestions
     });
     
     try {
@@ -304,6 +307,7 @@
             sessionData = result.chatSessions[pageUrl];
             chatHistory = sessionData.messages || [];
             initialSuggestionsShown = sessionData.suggestionsShown || false;
+            currentPageSuggestions = sessionData.cachedSuggestions || null;
             
             console.log('[MiCha DEBUG] Restoring messages count:', chatHistory.length);
             console.log('[MiCha DEBUG] Initial suggestions shown:', initialSuggestionsShown);
@@ -1017,6 +1021,13 @@
     const currentGenericQuestions = genericQuestions[settings.language] || genericQuestions.en;
     addSuggestions(currentGenericQuestions, true, true); // skipSave=true, isGeneric=true
     
+    // Check if we have cached AI suggestions for this page
+    if (currentPageSuggestions && currentPageSuggestions.length > 0) {
+      console.log('[MiCha DEBUG] Using cached AI suggestions:', currentPageSuggestions);
+      addSuggestions(currentPageSuggestions, true); // Use cached suggestions
+      return; // Exit early, no need to fetch again
+    }
+    
     // Show loading state for page-specific suggestions
     const loadingEl = document.createElement('div');
     loadingEl.className = 'uwa-suggestions-loading';
@@ -1059,6 +1070,9 @@
       loadingEl.remove();
       
       if (response.success && response.suggestions && response.suggestions.length > 0) {
+        // Cache the AI suggestions
+        currentPageSuggestions = response.suggestions;
+        
         // Update the welcome message with suggestions before adding them to UI
         if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].type === 'ai') {
           chatHistory[chatHistory.length - 1].suggestions = response.suggestions;
@@ -1130,6 +1144,7 @@
               sessionData = sessionResult.chatSessions[pageUrl];
               chatHistory = sessionData.messages || [];
               initialSuggestionsShown = sessionData.suggestionsShown || false;
+              currentPageSuggestions = sessionData.cachedSuggestions || null;
             }
             resolve();
           });
