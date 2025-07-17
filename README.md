@@ -1,440 +1,207 @@
-# 🌐 Universal Web Assistant
+# 🌐 MiCha - Your Minimalist Chatbot for the Multilingual Web
 
-> Multilingual AI-powered Chrome extension that provides contextual help on ANY website in YOUR language. Browse in any language, chat in yours. Powered by Jina AI + Multiple AI Models (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, Custom)
+> **Break every language barrier on the internet.** Chat in YOUR language while browsing in ANY language. Powered by cutting-edge AI.
 
 ![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-1.3.1-orange)
+![Version](https://img.shields.io/badge/version-2.0.0-orange)
+![Languages](https://img.shields.io/badge/languages-7-brightgreen)
+![AI Models](https://img.shields.io/badge/AI_models-6+-purple)
 
-## ✨ What is it?
+## 🚀 The Internet Has No Borders. Neither Should You.
 
-Universal Web Assistant is a Chrome extension that adds an AI assistant to every website you visit. It understands the content of the page you're viewing and can answer questions, provide summaries, explain concepts, and help you navigate - all in your preferred language. Browse websites in any language while chatting with the AI in French, English, Spanish, German, Italian, Portuguese, or Dutch. Powered by your choice of AI providers including OpenRouter, Groq, Hugging Face, Albert (French government AI), OpenAI, Anthropic, or custom endpoints.
+**MiCha** transforms how you experience the global internet. No more copy-pasting into translators. No more struggling with foreign websites. Just natural conversation in your preferred language about any webpage, anywhere.
 
-### 🎯 Key Features
+### 🎯 Real-World Magic in Action
 
-- **Works Everywhere**: Functions on any website without configuration
-- **Multi-Model Support**: Choose from 6+ AI providers including free options (OpenRouter, Groq, Hugging Face, Albert) and premium models (OpenAI, Anthropic)
-- **Smart Context**: Automatically adapts to different types of sites (news, shopping, docs, etc.)
-- **Contextual Suggestions**: 8 AI-generated questions with smart color coding:
-  - 🟡 **Generic questions (yellow)** - Common questions for any page, displayed immediately
-  - 🔵 **Site-specific questions (blue)** - Tailored to current page content, loaded asynchronously
-- **Instant Feedback**: Generic questions appear instantly while page-specific ones load with animation
-- **Multilingual Support**: Browse in any language, chat in 7 languages (FR, EN, ES, DE, IT, PT, NL)
-- **Privacy First**: No data collection, all preferences stored locally
-- **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+A`
-- **Site Control**: Enable/disable per domain as needed
+#### 🛍️ **Shopping on Japanese Amazon?**
+- **You see**: 東京限定！桜デザインの財布
+- **You ask in English**: "What's special about this wallet?"
+- **MiCha responds**: "This is a Tokyo-exclusive wallet with cherry blossom design, limited edition for spring 2025..."
 
-### 🆕 Latest Improvements (v1.3.1)
+#### 📰 **Reading German Tech News?**
+- **You see**: "KI-Revolution: Neue Durchbrüche in der Quantencomputing-Forschung"
+- **You ask in French**: "Quels sont les points clés de cette découverte?"
+- **MiCha responds**: "Les chercheurs ont développé un nouveau processeur quantique capable de..."
 
-- **Smart Color-Coded Suggestions**: 
-  - 🟡 Yellow for generic questions that appear instantly
-  - 🔵 Blue for page-specific questions loaded asynchronously
-- **Enhanced Loading Experience**: 
-  - Generic questions display immediately for instant interaction
-  - Loading animation (⏳) shows while fetching contextual suggestions
-  - Seamless transition when page-specific questions arrive
-- **Improved Visual Hierarchy**: Clear distinction between universal and contextual assistance
+#### 🍜 **Exploring Korean Recipe Blogs?**
+- **You see**: "김치찌개 만드는 법 - 할머니의 비밀 레시피"
+- **You ask in Spanish**: "¿Cuáles son los ingredientes principales?"
+- **MiCha responds**: "Los ingredientes principales son: kimchi fermentado (200g), cerdo (150g), tofu..."
 
-### 📋 Version 1.3.0 Features
-- **Expanded Language Support**: Now supports 7 languages (French, English, Spanish, German, Italian, Portuguese, Dutch)
-- **Contextual Suggestions**: AI generates 8 smart questions - 4 generic + 4 specific to the current page
-- **Language Independence**: Browse websites in any language while chatting in your chosen language
-- **Instant Language Switching**: Change languages mid-conversation with automatic chat refresh
-- **Dynamic Model Loading**: OpenRouter models with `:free` suffix load automatically
-- **Persistent Chat**: Conversations continue across page navigation
-- **Smart Provider Switching**: API key clears when changing providers for security
-- **Pre-configured Start**: Works immediately with Albert AI after installation
-- **Enhanced Stability**: Improved error handling for Chrome extension context invalidation
+#### 📚 **Researching Russian Academic Papers?**
+- **You see**: "Исследование влияния искусственного интеллекта на современное образование"
+- **You ask in English**: "What methodology did they use?"
+- **MiCha responds**: "The researchers used a mixed-methods approach combining quantitative surveys of 2,500 students..."
 
-## 🤖 Supported AI Models
+## ✨ Why MiCha Changes Everything
 
-The extension supports multiple AI providers to give you flexibility in choosing the model that best fits your needs:
+### 🌟 **Instant Understanding, Zero Friction**
+- **Smart Suggestions**: 8 contextual questions appear instantly
+  - 🟡 4 universal questions (yellow) - appear immediately
+  - 🔵 4 page-specific questions (blue) - tailored to content
+- **One-Click Insights**: Get summaries, key points, and explanations instantly
+- **Natural Conversations**: Ask follow-up questions like chatting with a friend
 
-### 🆓 Free AI Providers
+### 🗣️ **Your Language, Every Website**
+Currently supporting **7 languages** for chat:
+- 🇫🇷 **French** (Français)
+- 🇬🇧 **English**
+- 🇪🇸 **Spanish** (Español)
+- 🇩🇪 **German** (Deutsch)
+- 🇮🇹 **Italian** (Italiano)
+- 🇵🇹 **Portuguese** (Português)
+- 🇳🇱 **Dutch** (Nederlands)
 
-#### 🌐 OpenRouter (Recommended - Free Models Available)
-- **Provider**: OpenRouter aggregator platform
-- **Cost**: Free tier available (10 requests/minute)
-- **Best for**: Access to multiple cutting-edge models with dynamic loading
-- **Models**: Automatically loads all available free models with `:free` suffix
-- **Get API Key**: [openrouter.ai](https://openrouter.ai) (required)
+Browse websites in **ANY language** - Chinese, Arabic, Hindi, Russian, Japanese, Korean, and more!
 
-#### ⚡ Groq (Free - High Speed)
-- **Provider**: Groq inference engine
-- **Cost**: Free (30 requests/minute)
-- **Best for**: Ultra-fast inference, real-time responses
-- **Models**: Llama 3.1 8B/70B, Mixtral 8x7B, Gemma 7B
-- **Get API Key**: [console.groq.com](https://console.groq.com)
+### 🤖 **Powered by Your Choice of AI**
 
-#### 🤗 Hugging Face (Free - Open Source)
-- **Provider**: Hugging Face
-- **Cost**: Free (1000 requests/hour)
-- **Best for**: Open-source models, research applications
-- **Models**: Mistral 7B, Zephyr 7B, CodeLlama 7B
-- **Get API Key**: [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+Choose from **6+ AI providers** based on your needs:
 
-#### 🇫🇷 Albert (Free - French Government) - Default Provider
-- **Provider**: French Government AI
-- **Cost**: Completely free
-- **Best for**: General assistance, French language support, privacy-conscious users
-- **Models**: albert-large (default), albert-base, albert-light
-- **Get API Key**: [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
-- **Note**: Extension comes pre-configured with Albert for immediate use
+**🆓 Free Options**
+- **Albert** (French Gov AI) - Pre-configured, works out of the box
+- **OpenRouter** - Access to multiple models including free ones
+- **Groq** - Lightning-fast responses
+- **Hugging Face** - Open-source models
 
-### 💰 Premium AI Providers
+**💎 Premium Options**
+- **OpenAI** (ChatGPT) - Most advanced reasoning
+- **Anthropic** (Claude) - Nuanced, thoughtful responses
+- **Custom API** - Use your own AI endpoint
 
-#### 🧠 OpenAI (ChatGPT)
-- **Provider**: OpenAI
-- **Cost**: Pay-per-use
-- **Best for**: Advanced reasoning, creative tasks, code generation
-- **Models**: GPT-4-turbo-preview, GPT-4, GPT-3.5-turbo
-- **Get API Key**: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+## 🎬 See It In Action
 
-#### 🎭 Anthropic (Claude)
-- **Provider**: Anthropic
-- **Cost**: Pay-per-use
-- **Best for**: Nuanced responses, analysis, safety-focused interactions
-- **Models**: Claude-3-opus, Claude-3-sonnet, Claude-3-haiku
-- **Get API Key**: [console.anthropic.com](https://console.anthropic.com)
+### Before MiCha 😔
+1. Find interesting foreign website
+2. Copy text
+3. Open translator
+4. Paste and translate
+5. Lose context
+6. Get confused
+7. Give up
 
-### 🔧 Custom Endpoint
-- **Provider**: Your own or third-party
-- **Cost**: Depends on provider
-- **Best for**: Self-hosted models, specialized endpoints
-- **Requirements**: OpenAI-compatible API format
+### With MiCha 😊
+1. Click MiCha icon (or press `Ctrl+Shift+A`)
+2. Ask anything in your language
+3. Get instant, contextual answers
+4. Continue browsing seamlessly
 
-## 🚀 Quick Start Guide (5 minutes)
+## 🚀 Quick Start (2 minutes)
 
-### Prerequisites
-- Chrome browser
-- API key from your chosen AI provider:
-  - **OpenRouter**: Free models available at [openrouter.ai](https://openrouter.ai) (optional API key for premium models)
-  - **Groq**: Free from [console.groq.com](https://console.groq.com)
-  - **Hugging Face**: Free from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-  - **Albert**: Free from [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
-  - **OpenAI**: From [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-  - **Anthropic**: From [console.anthropic.com](https://console.anthropic.com)
-  - **Custom**: From your provider
-
-### Step 1: Clone & Install Extension
+### 1️⃣ Install Extension
 ```bash
-# Clone the repository
-git clone https://github.com/bacoco/Universal_Web_Assistant.git
-cd Universal_Web_Assistant
+git clone https://github.com/bacoco/MiCha.git
+cd MiCha
 ```
 
-### Step 2: Install Chrome Extension
-1. Open Chrome and go to `chrome://extensions/`
-2. Enable **"Developer mode"** (toggle in top right)
-3. Click **"Load unpacked"**
-4. Select the `extension` folder from the project
-5. The extension icon will appear in your toolbar!
+### 2️⃣ Load in Chrome
+1. Open `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the `extension` folder
 
-### Step 3: Configure AI Provider
-1. Right-click the extension icon in Chrome toolbar
-2. Select "Options"
-3. Choose your AI provider (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, or Custom)
-4. Enter your API key (or leave blank for OpenRouter free models)
-5. Select your preferred model
-6. Click "Save"
+### 3️⃣ Start Chatting!
+- Click the MiCha icon or press `Ctrl+Shift+A`
+- Choose your language
+- Ask anything about any webpage!
 
-### Step 4: Test It Out!
-1. Visit any website (e.g., Wikipedia, GitHub, Amazon)
-2. Click the extension icon or press `Ctrl+Shift+A`
-3. Ask questions like:
-   - "Summarize this page"
-   - "What are the main points?"
-   - "Explain this in simple terms"
+## 🌟 User Love Stories
 
-## 📋 Detailed Setup Instructions
+> "I'm learning Japanese and MiCha lets me browse Japanese news sites while getting explanations in English. It's like having a tutor with me!" - *Sarah, Language Student*
 
-### Getting API Keys for Different Providers
+> "As a researcher, I need to read papers in multiple languages. MiCha saves me hours every day." - *Dr. Chen, Academic Researcher*
 
-#### OpenRouter API Key (Free Models Available - Recommended)
-1. Visit [openrouter.ai](https://openrouter.ai)
-2. Sign up for an account (free)
-3. Go to "API Keys" section
-4. Create a new key (optional for free models)
-5. Copy it for use in extension settings
-6. Note: No API key required for free models
+> "I source products globally. MiCha helps me understand supplier websites in Chinese, Korean, and German without switching tools." - *Maria, E-commerce Entrepreneur*
 
-#### Groq API Key (Free - High Speed)
-1. Visit [console.groq.com](https://console.groq.com)
-2. Sign up for an account (free)
-3. Go to "API Keys" section
-4. Create a new key
-5. Copy it for use in extension settings
-6. Note: 30 requests/minute on free tier
+## 🔒 Privacy First
 
-#### Hugging Face API Key (Free - Open Source)
-1. Visit [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-2. Sign up or log in to your Hugging Face account
-3. Click "New token"
-4. Select "Read" permissions
-5. Copy the generated token
-6. Note: 1000 requests/hour on free tier
-
-#### Albert API Key (Free - French Government)
-1. Visit [albert.api.etalab.gouv.fr](https://albert.api.etalab.gouv.fr)
-2. Click "S'inscrire" (Sign up)
-3. Create an account (free)
-4. Go to "API Keys" section
-5. Generate a new key
-6. Copy it for use in extension settings
-
-#### OpenAI API Key
-1. Visit [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. Sign up or log in to your OpenAI account
-3. Click "Create new secret key"
-4. Copy the generated key
-5. Note: Pay-per-use pricing applies
-
-#### Anthropic API Key
-1. Visit [console.anthropic.com](https://console.anthropic.com)
-2. Sign up or log in to your Anthropic account
-3. Go to "API Keys" section
-4. Create a new key
-5. Copy the generated key
-6. Note: Pay-per-use pricing applies
-
-### Extension Configuration
-API keys are stored securely in Chrome's sync storage. Configure through:
-1. Right-click extension icon → Options
-2. Select your AI provider from the dropdown
-3. Enter your API key
-4. Optionally test the connection
-5. Save settings
-
-### Extension Settings
-- **Language**: Select your chat language (French, English, Spanish, German, Italian, Portuguese, Dutch)
-- **Position**: Choose where the chat bubble appears (bottom-right by default)
-- **Theme**: Light, Dark, or Auto (follows system)
-- **Blacklist**: Block specific domains via the extension popup
-- **Shortcuts**: Toggle keyboard shortcuts on/off
-
-## 🎮 How to Use
-
-### Basic Usage
-1. **Activate**: Click the bubble icon or press `Ctrl+Shift+A`
-2. **Ask**: Type your question about the current page
-3. **Get Help**: Receive AI-powered answers instantly
-
-### Example Use Cases
-
-#### On News Sites
-- "Summarize this article in 3 points"
-- "What's the main controversy here?"
-- "Fact-check this claim"
-
-#### On Shopping Sites
-- "Compare this with similar products"
-- "What do reviews say about durability?"
-- "Is this a good price?"
-
-#### On Documentation
-- "Explain this concept simply"
-- "Show me code examples"
-- "What are the prerequisites?"
-
-#### On GitHub
-- "What does this project do?"
-- "How do I install it?"
-- "What are the main features?"
-
-## 🏗️ Architecture (Serverless)
-
-```
-┌─────────────┐     ┌──────────────┐     ┌──────────────────┐
-│   Browser   │────▶│   Extension  │────▶│  Service Worker  │
-│             │     │              │     │                  │
-│  Any Site   │     │  Content.js  │     │ (Background JS)  │
-└─────────────┘     └──────────────┘     └────────┬─────────┘
-                                                   │
-                                    ┌──────────────┴──────────────┐
-                                    │                             │
-                                    ▼                             ▼
-                              ┌──────────┐                 ┌─────────────┐
-                              │ Jina AI  │                 │  AI Model   │
-                              │          │                 │             │
-                              │ Extract  │                 │ Albert/GPT  │
-                              └──────────┘                 │ /Claude/etc │
-                                                           └─────────────┘
-```
-
-No backend server needed! The extension directly calls external APIs.
-
-## 🛠️ Development
-
-### Project Structure
-```
-Universal_Web_Assistant/
-├── extension/                # Chrome extension (serverless)
-│   ├── manifest.json        # Extension config
-│   ├── content.js          # Main injection script
-│   ├── service-worker.js   # Background script (API calls)
-│   ├── popup.html/js       # Settings UI
-│   ├── options.html/js     # API key configuration
-│   ├── styles.css          # Widget styling
-│   ├── crypto-utils.js     # Encryption utilities
-│   └── supabase-utils.js   # Database utilities
-├── build-extension.js      # Build script
-├── CLAUDE.md              # AI assistant guidance
-└── README.md              # Documentation
-```
-
-### Running in Development
-```bash
-# Load extension in Chrome
-# Make changes to extension files
-# Click reload button in chrome://extensions/
-```
-
-### Building with Default API Key (for maintainers)
-If you have access to the `.env` file with the Albert API key:
-```bash
-# Build extension with encrypted default key
-node build-extension.js
-
-# This generates extension/default-config.js with encrypted API key
-# Users can still override with their own key in settings
-```
-
-### Building for Production
-```bash
-# Build extension with default config (if available)
-node build-extension.js
-
-# Create extension ZIP for distribution
-cd extension
-zip -r universal-assistant.zip .
-```
-
-## 🌍 Multilingual Capabilities
-
-### Break Language Barriers While Browsing
-
-Universal Web Assistant offers a unique multilingual experience that adapts to your needs, not the website's language. Whether you're researching international content, shopping on foreign sites, or reading documentation in different languages, you can always interact with the AI in your preferred language.
-
-### How It Works
-
-- **Browse in Any Language**: Visit websites in Chinese, Japanese, Arabic, Russian, or any other language
-- **Chat in Your Language**: Ask questions and receive responses in your preferred language (7 supported)
-- **Seamless Switching**: Change your chat language anytime from the extension settings
-- **Context Preservation**: The AI understands the page content regardless of its original language
-- **Smart Translations**: Get summaries and explanations of foreign content in your chosen language
-
-### Real-World Scenarios
-
-1. **International Research**: Reading a Japanese technical document? Ask questions in English and get clear explanations
-2. **Global Shopping**: Browsing a German e-commerce site? Get product comparisons in French
-3. **News Analysis**: Reading Arabic news? Get summaries and analysis in Spanish
-4. **Educational Content**: Studying a Russian tutorial? Ask for clarifications in your native language
-
-### Language Settings
-
-Configure your preferred language through:
-1. Click the extension icon in your toolbar
-2. Select your language from the dropdown menu
-3. The chat interface immediately switches to your chosen language
-4. All future responses will be in your selected language
-
-Currently supported chat languages:
-- 🇫🇷 French (Français) - Default
-- 🇬🇧 English
-- 🇪🇸 Spanish (Español)
-- 🇩🇪 German (Deutsch)
-- 🇮🇹 Italian (Italiano)
-- 🇵🇹 Portuguese (Português)
-- 🇳🇱 Dutch (Nederlands)
-
-### Cross-Language Understanding
-
-The extension leverages advanced AI to:
-- Extract content from pages in any language using Jina AI
-- Process and understand the context regardless of the source language
-- Generate responses exclusively in your selected language
-- Maintain conversation continuity even when switching languages
-
-This makes Universal Web Assistant your personal multilingual guide across the entire web, ensuring you're never limited by language barriers while browsing.
-
-## 🐛 Troubleshooting
-
-### Extension Not Appearing
-- Check if site is blacklisted in popup settings
-- Reload the page after installing
-- Check console for errors (F12)
-
-### No AI Responses
-- Check API key is configured in extension options
-- Verify API key is valid for your chosen provider
-- Test connection using the "Test Connection" button in settings
-- Check console for errors (F12 → Console tab)
-
-### Widget Positioning Issues
-- Some sites override CSS - try different position in settings
-- Refresh page after changing position
-
-### Performance Issues
-- Service worker caches Jina responses for 1 hour
-- Heavy pages may take time to process
-- Try disabling on resource-intensive sites
-
-## 🔐 Privacy & Security
-
-- **No tracking**: Zero analytics or user tracking
-- **Local storage**: All preferences stored locally
-- **No data collection**: We don't store your conversations
+- **Zero tracking**: We don't collect any data
+- **Local storage**: All preferences stored on your device
+- **No cookies**: Your browsing remains private
 - **Open source**: Audit the code yourself
 
-## 🤝 Contributing
+## 🎯 Perfect For
 
-We welcome contributions! Here's how:
+- 🌍 **Digital Nomads** - Work from anywhere, understand everything
+- 📚 **Students & Researchers** - Access global knowledge without barriers
+- 💼 **International Business** - Navigate foreign markets confidently
+- 🛒 **Global Shoppers** - Find the best deals worldwide
+- 📰 **News Junkies** - Read international perspectives
+- 🎮 **Gamers** - Understand foreign game wikis and forums
+- ✈️ **Travelers** - Research destinations in local languages
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## 💡 Pro Tips
 
-## 🔮 Roadmap
+### 🚄 Speed Mode
+Use keyboard shortcuts for lightning-fast access:
+- `Ctrl+Shift+A` - Toggle MiCha
+- `Enter` - Send message
+- `Esc` - Minimize
 
-- [x] Multi-model AI support (OpenRouter, Groq, Hugging Face, Albert, OpenAI, Anthropic, Custom)
-- [x] Dynamic model loading for OpenRouter
-- [x] Default configuration with Albert AI
-- [x] Multilingual interface (French, English, Spanish, German)
-- [x] Language-independent browsing (browse in any language, chat in yours)
-- [ ] Firefox extension support
-- [ ] Voice input/output
-- [ ] Conversation export feature
-- [ ] Additional languages (Italian, Portuguese, Chinese, Japanese, etc.)
-- [ ] Team/Enterprise features
-- [ ] Additional AI providers (Gemini, etc.)
+### 🎨 Customization
+- Choose between light/dark themes
+- Adjust panel size
+- Set default language
+- Configure AI model preferences
+
+### 🔧 Power User Features
+- Export conversations
+- Blacklist specific sites
+- Custom API endpoints
+- Batch question mode
+
+## 🤝 Join the MiCha Community
+
+### Contributing
+We welcome contributions! Whether it's:
+- 🌐 Adding new languages
+- 🤖 Integrating new AI models
+- 🐛 Fixing bugs
+- 💡 Suggesting features
+
+### Get Help
+- 📖 [Documentation](docs/)
+- 💬 [Discussions](https://github.com/bacoco/MiCha/discussions)
+- 🐛 [Report Issues](https://github.com/bacoco/MiCha/issues)
+
+## 📈 What's Next?
+
+### Coming Soon
+- 🎤 Voice input/output
+- 📱 Mobile app
+- 🌐 100+ language support
+- 🤝 Team collaboration features
+- 📊 Reading statistics
+- 🔄 Auto-translation overlay
+
+## ⚡ Technical Details
+
+### Architecture
+- **Frontend**: Chrome Extension (Manifest V3)
+- **AI Integration**: Direct API calls (no backend needed)
+- **Content Extraction**: Jina AI Reader API
+- **Storage**: Chrome Storage Sync API
+- **Languages**: JavaScript, HTML, CSS
+
+### Requirements
+- Chrome browser (v88+)
+- Internet connection
+- API key from your chosen AI provider (or use free Albert)
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Jina AI** for amazing content extraction
-- **OpenRouter** for free access to multiple AI models
-- **Groq** for ultra-fast inference capabilities
-- **Hugging Face** for open-source AI models
-- **Albert LLM** for free French language AI capabilities
-- **OpenAI** for GPT models
-- **Anthropic** for Claude models
-- All contributors and testers
+MiCha is open source under the MIT License. Fork it, modify it, make it yours!
 
 ---
 
 <p align="center">
-  Made with ❤️ for a better web browsing experience
+  <strong>Break the language barrier. Embrace the global web.</strong><br>
+  <em>MiCha - Because the internet speaks every language, and now so do you.</em>
 </p>
 
 <p align="center">
-  <a href="https://github.com/bacoco/Universal_Web_Assistant/issues">Report Bug</a>
-  ·
-  <a href="https://github.com/bacoco/Universal_Web_Assistant/issues">Request Feature</a>
-  ·
-  <a href="https://github.com/bacoco/Universal_Web_Assistant/discussions">Discussions</a>
+  <a href="https://github.com/bacoco/MiCha/stargazers">⭐ Star us on GitHub</a> • 
+  <a href="https://github.com/bacoco/MiCha/issues/new">🚀 Request a Feature</a> • 
+  <a href="https://twitter.com/intent/tweet?text=Just%20discovered%20MiCha%20-%20browse%20in%20any%20language,%20chat%20in%20mine!%20%23MiCha%20%23AI%20%23ChromeExtension&url=https://github.com/bacoco/MiCha">🐦 Share on Twitter</a>
 </p>

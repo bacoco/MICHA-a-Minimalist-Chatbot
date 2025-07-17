@@ -1,4 +1,4 @@
-// Universal Web Assistant - Content Script
+// MiCha - Minimalist Chatbot Content Script
 (() => {
   // Constants
   const WIDGET_ID = 'universal-assistant-widget';
@@ -214,7 +214,7 @@
   function saveChatSession() {
     // Check if chrome runtime is still valid
     if (!chrome.runtime?.id) {
-      console.warn('[UWA DEBUG] Extension context invalidated, cannot save session');
+      console.warn('[MiCha DEBUG] Extension context invalidated, cannot save session');
       return;
     }
     
@@ -222,7 +222,7 @@
     sessionData.lastUpdated = Date.now();
     sessionData.suggestionsShown = initialSuggestionsShown;
     
-    console.log('[UWA DEBUG] Saving chat session:', {
+    console.log('[MiCha DEBUG] Saving chat session:', {
       pageUrl: pageUrl,
       messagesCount: chatHistory.length,
       suggestionsShown: initialSuggestionsShown
@@ -232,12 +232,12 @@
       chrome.storage.local.get(['chatSessions'], (result) => {
         // Double-check runtime is still valid after async call
         if (!chrome.runtime?.id) {
-          console.warn('[UWA DEBUG] Extension context invalidated during save');
+          console.warn('[MiCha DEBUG] Extension context invalidated during save');
           return;
         }
         
         if (chrome.runtime.lastError) {
-          console.error('[UWA DEBUG] Storage error:', chrome.runtime.lastError);
+          console.error('[MiCha DEBUG] Storage error:', chrome.runtime.lastError);
           return;
         }
         
@@ -254,14 +254,14 @@
         
         chrome.storage.local.set({ chatSessions: sessions }, () => {
           if (chrome.runtime.lastError) {
-            console.error('[UWA DEBUG] Failed to save session:', chrome.runtime.lastError);
+            console.error('[MiCha DEBUG] Failed to save session:', chrome.runtime.lastError);
           } else {
-            console.log('[UWA DEBUG] Chat session saved successfully');
+            console.log('[MiCha DEBUG] Chat session saved successfully');
           }
         });
       });
     } catch (error) {
-      console.error('[UWA DEBUG] Error saving session:', error);
+      console.error('[MiCha DEBUG] Error saving session:', error);
     }
   }
   
@@ -269,17 +269,17 @@
     return new Promise((resolve) => {
       // Check if chrome runtime is still valid
       if (!chrome.runtime?.id) {
-        console.warn('[UWA DEBUG] Extension context invalidated, cannot restore session');
+        console.warn('[MiCha DEBUG] Extension context invalidated, cannot restore session');
         resolve(false);
         return;
       }
       
-      console.log('[UWA DEBUG] Restoring chat session for:', pageUrl);
-      console.log('[UWA DEBUG] Current chatHistory length before restore:', chatHistory.length);
+      console.log('[MiCha DEBUG] Restoring chat session for:', pageUrl);
+      console.log('[MiCha DEBUG] Current chatHistory length before restore:', chatHistory.length);
       
       // If we already have chat history in memory, don't overwrite it
       if (chatHistory.length > 0) {
-        console.log('[UWA DEBUG] Chat history already in memory, skipping storage load');
+        console.log('[MiCha DEBUG] Chat history already in memory, skipping storage load');
         resolve(true);
         return;
       }
@@ -288,25 +288,25 @@
         chrome.storage.local.get(['chatSessions'], (result) => {
           // Double-check runtime is still valid after async call
           if (!chrome.runtime?.id) {
-            console.warn('[UWA DEBUG] Extension context invalidated during restore');
+            console.warn('[MiCha DEBUG] Extension context invalidated during restore');
             resolve(false);
             return;
           }
           
           if (chrome.runtime.lastError) {
-            console.error('[UWA DEBUG] Storage error:', chrome.runtime.lastError);
+            console.error('[MiCha DEBUG] Storage error:', chrome.runtime.lastError);
             resolve(false);
             return;
           }
           
           if (result.chatSessions && result.chatSessions[pageUrl]) {
-            console.log('[UWA DEBUG] Found saved session:', result.chatSessions[pageUrl]);
+            console.log('[MiCha DEBUG] Found saved session:', result.chatSessions[pageUrl]);
             sessionData = result.chatSessions[pageUrl];
             chatHistory = sessionData.messages || [];
             initialSuggestionsShown = sessionData.suggestionsShown || false;
             
-            console.log('[UWA DEBUG] Restoring messages count:', chatHistory.length);
-            console.log('[UWA DEBUG] Initial suggestions shown:', initialSuggestionsShown);
+            console.log('[MiCha DEBUG] Restoring messages count:', chatHistory.length);
+            console.log('[MiCha DEBUG] Initial suggestions shown:', initialSuggestionsShown);
             
             // Restore messages to UI
             messagesContainer.innerHTML = '';
@@ -339,12 +339,12 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
             resolve(true); // Session restored
           } else {
-            console.log('[UWA DEBUG] No saved session found for:', pageUrl);
+            console.log('[MiCha DEBUG] No saved session found for:', pageUrl);
             resolve(false); // No session found
           }
         });
       } catch (error) {
-        console.error('[UWA DEBUG] Error restoring session:', error);
+        console.error('[MiCha DEBUG] Error restoring session:', error);
         resolve(false);
       }
     });
@@ -363,7 +363,7 @@
         </button>
         <div class="uwa-panel" style="display: none; width: ${settings.panelWidth}px;">
           <div class="uwa-header">
-            <h3>Universal Assistant</h3>
+            <h3>MiCha</h3>
             <div class="uwa-header-controls">
               <button class="uwa-minimize" aria-label="Minimize assistant">_</button>
               <button class="uwa-settings" aria-label="Open settings">
@@ -418,7 +418,7 @@
       
       // Check if we already have messages from initial load
       if (chatHistory.length > 0) {
-        console.log('[UWA DEBUG] Using pre-loaded chat history');
+        console.log('[MiCha DEBUG] Using pre-loaded chat history');
         messages.innerHTML = '';
         let lastAIMessageWithSuggestions = null;
         
@@ -446,7 +446,7 @@
         messages.scrollTop = messages.scrollHeight;
       } else if (!initialSuggestionsShown) {
         // Only show initial suggestions if no history and not already shown
-        console.log('[UWA DEBUG] No chat history, showing initial suggestions');
+        console.log('[MiCha DEBUG] No chat history, showing initial suggestions');
         showInitialSuggestions();
       }
     } else {
@@ -504,11 +504,11 @@
     const panelTab = widget.querySelector('.uwa-panel-tab');
     const messages = widget.querySelector('.uwa-messages');
     
-    console.log('[UWA DEBUG] toggleWidget - messages before toggle:', messages.children.length);
-    console.log('[UWA DEBUG] toggleWidget - isExpanded:', isExpanded);
-    console.log('[UWA DEBUG] toggleWidget - initialSuggestionsShown:', initialSuggestionsShown);
-    console.log('[UWA DEBUG] toggleWidget - pageUrl:', pageUrl);
-    console.log('[UWA DEBUG] toggleWidget - chatHistory length:', chatHistory.length);
+    console.log('[MiCha DEBUG] toggleWidget - messages before toggle:', messages.children.length);
+    console.log('[MiCha DEBUG] toggleWidget - isExpanded:', isExpanded);
+    console.log('[MiCha DEBUG] toggleWidget - initialSuggestionsShown:', initialSuggestionsShown);
+    console.log('[MiCha DEBUG] toggleWidget - pageUrl:', pageUrl);
+    console.log('[MiCha DEBUG] toggleWidget - chatHistory length:', chatHistory.length);
     
     
     isExpanded = !isExpanded;
@@ -518,11 +518,11 @@
     if (chrome.runtime?.id) {
       chrome.storage.sync.set({ [STORAGE_KEY]: settings }, () => {
         if (chrome.runtime.lastError) {
-          console.error('[UWA DEBUG] Failed to save expanded state:', chrome.runtime.lastError);
+          console.error('[MiCha DEBUG] Failed to save expanded state:', chrome.runtime.lastError);
         }
       });
     } else {
-      console.warn('[UWA DEBUG] Cannot save expanded state - context invalidated');
+      console.warn('[MiCha DEBUG] Cannot save expanded state - context invalidated');
     }
     
     if (isExpanded) {
@@ -538,8 +538,8 @@
       
       // Check if we already have messages in memory
       if (chatHistory.length > 0) {
-        console.log('[UWA DEBUG] Restoring from in-memory chat history');
-        console.log('[UWA DEBUG] chatHistory contents:', JSON.stringify(chatHistory));
+        console.log('[MiCha DEBUG] Restoring from in-memory chat history');
+        console.log('[MiCha DEBUG] chatHistory contents:', JSON.stringify(chatHistory));
         // Clear and restore messages
         messages.innerHTML = '';
         let lastAIMessageWithSuggestions = null;
@@ -569,11 +569,11 @@
       } else {
         // Try to restore from storage
         restoreChatSession(messages).then((sessionRestored) => {
-          console.log('[UWA DEBUG] Session restored from storage:', sessionRestored);
+          console.log('[MiCha DEBUG] Session restored from storage:', sessionRestored);
           
           // Only show initial suggestions if no session was restored
           if (!sessionRestored && !initialSuggestionsShown) {
-            console.log('[UWA DEBUG] No session found, showing initial suggestions');
+            console.log('[MiCha DEBUG] No session found, showing initial suggestions');
             showInitialSuggestions();
           }
         });
@@ -598,8 +598,8 @@
     const messages = widget.querySelector('.uwa-messages');
     
     // Save current chat state before minimizing
-    console.log('[UWA DEBUG] Minimizing widget - saving current state');
-    console.log('[UWA DEBUG] Current chatHistory length before minimize:', chatHistory.length);
+    console.log('[MiCha DEBUG] Minimizing widget - saving current state');
+    console.log('[MiCha DEBUG] Current chatHistory length before minimize:', chatHistory.length);
     saveChatSession();
     
     panel.style.display = 'none';
@@ -611,11 +611,11 @@
     if (chrome.runtime?.id) {
       chrome.storage.sync.set({ [STORAGE_KEY]: settings }, () => {
         if (chrome.runtime.lastError) {
-          console.error('[UWA DEBUG] Failed to save minimized state:', chrome.runtime.lastError);
+          console.error('[MiCha DEBUG] Failed to save minimized state:', chrome.runtime.lastError);
         }
       });
     } else {
-      console.warn('[UWA DEBUG] Cannot save minimized state - context invalidated');
+      console.warn('[MiCha DEBUG] Cannot save minimized state - context invalidated');
     }
     
     // Remove webpage offset when minimizing
@@ -629,7 +629,7 @@
   function openSettings() {
     // Check if runtime is still valid
     if (!chrome.runtime?.id) {
-      console.warn('[UWA DEBUG] Cannot open settings - context invalidated');
+      console.warn('[MiCha DEBUG] Cannot open settings - context invalidated');
       return;
     }
     
@@ -637,11 +637,11 @@
     try {
       chrome.runtime.sendMessage({ action: 'openOptions' }, (response) => {
         if (chrome.runtime.lastError) {
-          console.error('[UWA DEBUG] Failed to open settings:', chrome.runtime.lastError);
+          console.error('[MiCha DEBUG] Failed to open settings:', chrome.runtime.lastError);
         }
       });
     } catch (error) {
-      console.error('[UWA DEBUG] Error opening settings:', error);
+      console.error('[MiCha DEBUG] Error opening settings:', error);
     }
   }
   
@@ -706,24 +706,24 @@
       try {
         chrome.storage.sync.get(STORAGE_KEY, (result) => {
           if (!chrome.runtime?.id) {
-            console.warn('[UWA DEBUG] Context invalidated during dimension save');
+            console.warn('[MiCha DEBUG] Context invalidated during dimension save');
             return;
           }
           
           if (chrome.runtime.lastError) {
-            console.error('[UWA DEBUG] Error getting settings for dimension save:', chrome.runtime.lastError);
+            console.error('[MiCha DEBUG] Error getting settings for dimension save:', chrome.runtime.lastError);
             return;
           }
           
           const updatedSettings = { ...result[STORAGE_KEY], ...settings };
           chrome.storage.sync.set({ [STORAGE_KEY]: updatedSettings }, () => {
             if (chrome.runtime.lastError) {
-              console.error('[UWA DEBUG] Failed to save dimensions:', chrome.runtime.lastError);
+              console.error('[MiCha DEBUG] Failed to save dimensions:', chrome.runtime.lastError);
             }
           });
         });
       } catch (error) {
-        console.error('[UWA DEBUG] Error saving dimensions:', error);
+        console.error('[MiCha DEBUG] Error saving dimensions:', error);
       }
     }
   }
@@ -857,7 +857,7 @@
       }
       
       chatHistory.push(messageData);
-      console.log('[UWA DEBUG] Added message to chatHistory. New length:', chatHistory.length);
+      console.log('[MiCha DEBUG] Added message to chatHistory. New length:', chatHistory.length);
       saveChatSession();
     }
     
@@ -872,7 +872,7 @@
   
   // Add suggestions
   function addSuggestions(suggestions, skipSave = false, isGeneric = false) {
-    console.log('[UWA DEBUG] Adding suggestions:', suggestions, 'isGeneric:', isGeneric);
+    console.log('[MiCha DEBUG] Adding suggestions:', suggestions, 'isGeneric:', isGeneric);
     const messages = widget.querySelector('.uwa-messages');
     
     // Check if we're adding to existing suggestions or creating new
@@ -897,7 +897,7 @@
       button.className = isGeneric ? 'uwa-suggestion generic' : 'uwa-suggestion site-specific';
       button.textContent = suggestion;
       button.addEventListener('click', () => {
-        console.log('[UWA DEBUG] Suggestion clicked:', suggestion);
+        console.log('[MiCha DEBUG] Suggestion clicked:', suggestion);
         widget.querySelector('.uwa-input').value = suggestion;
         sendMessage();
       });
@@ -925,36 +925,36 @@
   
   // Show initial suggestions based on site type
   async function showInitialSuggestions() {
-    console.log('[UWA DEBUG] showInitialSuggestions called');
+    console.log('[MiCha DEBUG] showInitialSuggestions called');
     console.trace(); // This will show us where it's being called from
     
     // Prevent if already shown
     if (initialSuggestionsShown) {
-      console.log('[UWA DEBUG] Already shown, returning');
+      console.log('[MiCha DEBUG] Already shown, returning');
       return;
     }
     
     // Prevent duplicate calls
     if (suggestionsLoading) {
-      console.log('[UWA DEBUG] Already loading, returning');
+      console.log('[MiCha DEBUG] Already loading, returning');
       return;
     }
     
     const messages = widget.querySelector('.uwa-messages');
-    console.log('[UWA DEBUG] Messages count:', messages.children.length);
-    console.log('[UWA DEBUG] Messages innerHTML:', messages.innerHTML);
-    console.log('[UWA DEBUG] chatHistory length:', chatHistory.length);
+    console.log('[MiCha DEBUG] Messages count:', messages.children.length);
+    console.log('[MiCha DEBUG] Messages innerHTML:', messages.innerHTML);
+    console.log('[MiCha DEBUG] chatHistory length:', chatHistory.length);
     
     // Check if suggestions already exist
     const existingSuggestions = widget.querySelector('.uwa-suggestions');
     if (existingSuggestions) {
-      console.log('[UWA DEBUG] Suggestions exist, returning');
+      console.log('[MiCha DEBUG] Suggestions exist, returning');
       return;
     }
     
     // Check chatHistory instead of DOM to avoid issues when widget is minimized
     if (chatHistory.length > 0) {
-      console.log('[UWA DEBUG] Chat history exists, not showing initial suggestions');
+      console.log('[MiCha DEBUG] Chat history exists, not showing initial suggestions');
       return;
     }
     
@@ -1068,7 +1068,7 @@
       }
       // No fallback - just let user type if it fails
     } catch (error) {
-      console.error('[UWA] Failed to get initial suggestions:', error);
+      console.error('[MiCha] Failed to get initial suggestions:', error);
       // Remove loading state
       loadingEl.remove();
       // No fallback suggestions - user can just type
@@ -1090,13 +1090,13 @@
       try {
         chrome.storage.sync.get(STORAGE_KEY, (result) => {
           if (!chrome.runtime?.id) {
-            console.warn('[UWA DEBUG] Context invalidated during settings load');
+            console.warn('[MiCha DEBUG] Context invalidated during settings load');
             resolve();
             return;
           }
           
           if (chrome.runtime.lastError) {
-            console.error('[UWA DEBUG] Error loading settings:', chrome.runtime.lastError);
+            console.error('[MiCha DEBUG] Error loading settings:', chrome.runtime.lastError);
             resolve();
             return;
           }
@@ -1114,19 +1114,19 @@
           // Also load chat sessions for current page
           chrome.storage.local.get(['chatSessions'], (sessionResult) => {
             if (!chrome.runtime?.id) {
-              console.warn('[UWA DEBUG] Context invalidated during session load');
+              console.warn('[MiCha DEBUG] Context invalidated during session load');
               resolve();
               return;
             }
             
             if (chrome.runtime.lastError) {
-              console.error('[UWA DEBUG] Error loading sessions:', chrome.runtime.lastError);
+              console.error('[MiCha DEBUG] Error loading sessions:', chrome.runtime.lastError);
               resolve();
               return;
             }
             
             if (sessionResult.chatSessions && sessionResult.chatSessions[pageUrl]) {
-              console.log('[UWA DEBUG] Found saved session during settings load:', sessionResult.chatSessions[pageUrl]);
+              console.log('[MiCha DEBUG] Found saved session during settings load:', sessionResult.chatSessions[pageUrl]);
               sessionData = sessionResult.chatSessions[pageUrl];
               chatHistory = sessionData.messages || [];
               initialSuggestionsShown = sessionData.suggestionsShown || false;
@@ -1135,7 +1135,7 @@
           });
         });
       } catch (error) {
-        console.error('[UWA DEBUG] Error in loadSettings:', error);
+        console.error('[MiCha DEBUG] Error in loadSettings:', error);
         resolve();
       }
     });
@@ -1151,11 +1151,11 @@
     try {
       chrome.storage.sync.set({ [STORAGE_KEY]: settings }, () => {
         if (chrome.runtime.lastError) {
-          console.error('[UWA DEBUG] Failed to save settings:', chrome.runtime.lastError);
+          console.error('[MiCha DEBUG] Failed to save settings:', chrome.runtime.lastError);
         }
       });
     } catch (error) {
-      console.error('[UWA DEBUG] Error saving settings:', error);
+      console.error('[MiCha DEBUG] Error saving settings:', error);
     }
   }
   
@@ -1169,13 +1169,13 @@
       try {
         chrome.storage.sync.get('blacklist', (result) => {
           if (!chrome.runtime?.id) {
-            console.warn('[UWA DEBUG] Context invalidated during blacklist check');
+            console.warn('[MiCha DEBUG] Context invalidated during blacklist check');
             resolve(false);
             return;
           }
           
           if (chrome.runtime.lastError) {
-            console.error('[UWA DEBUG] Error checking blacklist:', chrome.runtime.lastError);
+            console.error('[MiCha DEBUG] Error checking blacklist:', chrome.runtime.lastError);
             resolve(false);
             return;
           }
@@ -1185,7 +1185,7 @@
           resolve(blacklist.includes(domain));
         });
       } catch (error) {
-        console.error('[UWA DEBUG] Error in isBlacklisted:', error);
+        console.error('[MiCha DEBUG] Error in isBlacklisted:', error);
         resolve(false);
       }
     });
@@ -1246,21 +1246,21 @@
     // Skip if already initialized
     if (widget) return;
     
-    console.log('Universal Assistant: Initializing...');
+    console.log('MiCha: Initializing...');
     
     // Load settings
     await loadSettings();
     
-    console.log('Universal Assistant: Settings loaded', settings);
+    console.log('MiCha: Settings loaded', settings);
     
     // Check if enabled and not blacklisted
     const blacklisted = await isBlacklisted();
     
-    console.log('Universal Assistant: Enabled:', settings.enabled, 'Blacklisted:', blacklisted);
+    console.log('MiCha: Enabled:', settings.enabled, 'Blacklisted:', blacklisted);
     
     if (settings.enabled && !blacklisted) {
       injectWidget();
-      console.log('Universal Assistant: Widget injected');
+      console.log('MiCha: Widget injected');
       
       // Send init message with context
       if (chrome.runtime) {
@@ -1290,7 +1290,7 @@
     chrome.storage.onChanged.addListener((changes) => {
       // Check if context is still valid
       if (!chrome.runtime?.id) {
-        console.warn('[UWA DEBUG] Context invalidated in storage change listener');
+        console.warn('[MiCha DEBUG] Context invalidated in storage change listener');
         return;
       }
       
