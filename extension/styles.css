@@ -176,14 +176,14 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
 .uwa-logo img {
   height: 100%;
   width: auto;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.5));
   transform: rotateY(-10deg);
   transition: transform 0.3s ease, filter 0.3s ease;
 }
 
 .uwa-logo:hover img {
   transform: rotateY(0deg) scale(1.05);
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 6px 12px rgba(255, 255, 255, 0.7));
 }
 
 .uwa-header-controls {
