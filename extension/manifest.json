@@ -50,7 +50,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/micha-logo.png"],
+      "resources": ["icons/Micha-logo.png"],
       "matches": ["<all_urls>"]
     }
   ]
