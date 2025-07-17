@@ -569,16 +569,17 @@ try {
     };
     const targetLanguage = languageMap[language] || languageMap['fr'];
     
-    let prompt = `You are a helpful AI assistant. Generate exactly 8 questions for this webpage.
+    let prompt = `You are a helpful AI assistant. Generate exactly 4 specific questions about the actual content of this webpage.
 
 Page Title: ${title}
 Page Type: ${siteType}
 
 Requirements:
-- Generate EXACTLY 8 questions total
-- First 4 questions: Generic helpful questions (summarize, bullet points, main topics, explain simply)
-- Next 4 questions: Specific to this page's content
-- Each question should be 5-7 words maximum
+- Generate EXACTLY 4 questions that are SPECIFIC to this page's content
+- DO NOT generate generic questions (the user already has those)
+- Focus on the actual topic/content of the page
+- DO NOT ask about cookies, website features, navigation, or technical aspects
+- Each question should be 5-10 words maximum
 - Questions must be in ${targetLanguage}
 - Format: One question per line, no numbering, no bullets
 
@@ -602,8 +603,8 @@ Requirements:
       .filter(line => line.length > 0)
       .filter(line => !line.match(/^\d+[.)]/) && !line.startsWith('-') && !line.startsWith('*')); // Remove numbered/bulleted items
     
-    // Take up to 8 suggestions
-    const suggestions = lines.slice(0, 8);
+    // Take up to 4 suggestions (AI now generates exactly 4 specific questions)
+    const suggestions = lines.slice(0, 4);
     
     // Ensure questions end with question mark
     return suggestions.map(suggestion => {
