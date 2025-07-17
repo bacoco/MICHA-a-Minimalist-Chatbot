@@ -1,12 +1,21 @@
-# 🌐 MiCha - Your Minimalist Chatbot for the Multilingual Web
+<p align="center">
+  <img src="extension/icons/micha-logo.png" alt="MiCha Logo" width="400">
+</p>
 
-> **Break every language barrier on the internet.** Chat in YOUR language while browsing in ANY language. Powered by cutting-edge AI.
+<h1 align="center">MiCha - Your Minimalist Chatbot for the Multilingual Web</h1>
 
-![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-green)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-2.0.0-orange)
-![Languages](https://img.shields.io/badge/languages-7-brightgreen)
-![AI Models](https://img.shields.io/badge/AI_models-6+-purple)
+<p align="center">
+  <strong>Break every language barrier on the internet.</strong><br>
+  Chat in YOUR language while browsing in ANY language. Powered by cutting-edge AI.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Chrome-Extension-green" alt="Chrome Web Store">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
+  <img src="https://img.shields.io/badge/version-2.0.0-orange" alt="Version">
+  <img src="https://img.shields.io/badge/languages-7-brightgreen" alt="Languages">
+  <img src="https://img.shields.io/badge/AI_models-6+-purple" alt="AI Models">
+</p>
 
 ## 🚀 The Internet Has No Borders. Neither Should You.
 
