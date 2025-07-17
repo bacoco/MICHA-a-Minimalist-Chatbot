@@ -367,7 +367,9 @@
         </button>
         <div class="uwa-panel" style="display: none; width: ${settings.panelWidth}px;">
           <div class="uwa-header">
-            <h3>MiCha</h3>
+            <div class="uwa-logo">
+              <img src="${chrome.runtime.getURL('icons/micha-logo.png')}" alt="MiCha" />
+            </div>
             <div class="uwa-header-controls">
               <button class="uwa-minimize" aria-label="Minimize assistant">_</button>
               <button class="uwa-settings" aria-label="Open settings">

@@ -166,6 +166,17 @@ html.uwa-panel-active [class*="navbar"][style*="position: fixed"] {
   letter-spacing: -0.02em;
 }
 
+.uwa-logo {
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.uwa-logo img {
+  height: 100%;
+  width: auto;
+}
+
 .uwa-header-controls {
   display: flex;
   gap: 8px;
