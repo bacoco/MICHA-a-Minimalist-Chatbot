@@ -40,7 +40,9 @@ const MODEL_CONFIGS = {
   openai: {
     endpoint: 'https://api.openai.com/v1',
     models: [
-      { value: 'gpt-4-turbo-preview', text: 'GPT-4 Turbo' },
+      { value: 'gpt-4o', text: 'GPT-4o (Latest)' },
+      { value: 'gpt-4o-mini', text: 'GPT-4o Mini' },
+      { value: 'gpt-4-turbo', text: 'GPT-4 Turbo' },
       { value: 'gpt-4', text: 'GPT-4' },
       { value: 'gpt-3.5-turbo', text: 'GPT-3.5 Turbo' }
     ],
@@ -51,6 +53,8 @@ const MODEL_CONFIGS = {
   anthropic: {
     endpoint: 'https://api.anthropic.com/v1',
     models: [
+      { value: 'claude-3-5-sonnet-20241022', text: 'Claude 3.5 Sonnet (Latest)' },
+      { value: 'claude-3-5-haiku-20241022', text: 'Claude 3.5 Haiku (Latest)' },
       { value: 'claude-3-opus', text: 'Claude 3 Opus (Most capable)' },
       { value: 'claude-3-sonnet', text: 'Claude 3 Sonnet (Balanced)' },
       { value: 'claude-3-haiku', text: 'Claude 3 Haiku (Fastest)' }
@@ -78,13 +82,13 @@ const FREE_MODEL_CONFIGS = {
       { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B (Free)', provider: 'Groq' },
       { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B (Free)', provider: 'Groq' },
       { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Free)', provider: 'Groq' },
-      { id: 'gemma-7b-it', name: 'Gemma 7B (Free)', provider: 'Groq' }
+      { id: 'gemma2-9b-it', name: 'Gemma 2 9B (Free)', provider: 'Groq' }
     ]
   },
   huggingface: {
     freeModels: [
-      { id: 'mistralai/Mistral-7B-Instruct-v0.1', name: 'Mistral 7B (Free)', provider: 'Hugging Face' },
-      { id: 'HuggingFaceH4/zephyr-7b-beta', name: 'Zephyr 7B (Free)', provider: 'Hugging Face' },
+      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (Free)', provider: 'Hugging Face' },
+      { id: 'HuggingFaceH4/zephyr-7b-alpha', name: 'Zephyr 7B Alpha (Free)', provider: 'Hugging Face' },
       { id: 'codellama/CodeLlama-7b-Instruct-hf', name: 'CodeLlama 7B (Free)', provider: 'Hugging Face' }
     ]
   }
@@ -1005,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Anthropic API test with minimal completion
         testUrl = `${endpoint}/messages`;
         headers['x-api-key'] = apiKey;
-        headers['anthropic-version'] = '2023-06-01';
+        headers['anthropic-version'] = '2023-10-22';
         headers['anthropic-dangerous-direct-browser-access'] = 'true';
         headers['Content-Type'] = 'application/json';
         break;
