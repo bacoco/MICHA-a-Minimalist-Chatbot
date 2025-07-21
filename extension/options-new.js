@@ -1006,6 +1006,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         testUrl = `${endpoint}/messages`;
         headers['x-api-key'] = apiKey;
         headers['anthropic-version'] = '2023-06-01';
+        headers['anthropic-dangerous-direct-browser-access'] = 'true';
         headers['Content-Type'] = 'application/json';
         break;
         
