@@ -1002,8 +1002,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return true; // For now, assume it's valid
         
       case 'anthropic':
-        // Anthropic doesn't have a simple test endpoint, so we'll do a minimal completion
-        return true; // For now, assume it's valid
+        // Anthropic API test with minimal completion
+        testUrl = `${endpoint}/messages`;
+        headers['x-api-key'] = apiKey;
+        headers['anthropic-version'] = '2023-06-01';
+        headers['Content-Type'] = 'application/json';
+        break;
         
       case 'custom':
         // Try OpenAI-compatible endpoint
@@ -1035,11 +1039,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         signal: controller.signal
       };
       
-      // For Albert, use POST with minimal chat completion body
+      // For Albert and Anthropic, use POST with minimal chat completion body
       if (provider === 'albert') {
         fetchOptions.method = 'POST';
         fetchOptions.body = JSON.stringify({
           model: elements.model.value || 'albert-large',
+          messages: [
+            {
+              role: 'user',
+              content: 'Hello'
+            }
+          ],
+          max_tokens: 1
+        });
+      } else if (provider === 'anthropic') {
+        fetchOptions.method = 'POST';
+        fetchOptions.body = JSON.stringify({
+          model: elements.model.value || 'claude-3-haiku-20240307',
           messages: [
             {
               role: 'user',
