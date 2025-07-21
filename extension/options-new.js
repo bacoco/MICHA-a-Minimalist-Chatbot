@@ -974,8 +974,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     switch (provider) {
       case 'albert':
-        testUrl = `${endpoint}/models`;
+        // Albert API doesn't have a reliable /models endpoint, so test with minimal chat completion
+        testUrl = `${endpoint}/chat/completions`;
         headers['Authorization'] = `Bearer ${apiKey}`;
+        headers['Content-Type'] = 'application/json';
         break;
         
       case 'openai':
@@ -1028,10 +1030,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('API test timed out after 10 seconds');
       }, 10000); // 10 second timeout
       
-      const response = await fetch(testUrl, { 
+      let fetchOptions = { 
         headers,
         signal: controller.signal
-      });
+      };
+      
+      // For Albert, use POST with minimal chat completion body
+      if (provider === 'albert') {
+        fetchOptions.method = 'POST';
+        fetchOptions.body = JSON.stringify({
+          model: elements.model.value || 'albert-large',
+          messages: [
+            {
+              role: 'user',
+              content: 'Hello'
+            }
+          ],
+          max_tokens: 1
+        });
+      }
+      
+      const response = await fetch(testUrl, fetchOptions);
       
       clearTimeout(timeoutId);
       
