@@ -329,8 +329,8 @@ try {
           const originalKey = config.apiKey;
           config.apiKey = decrypt(config.apiKey);
           console.log('Successfully decrypted user API key');
-          // Validate decrypted key format
-          if (!config.apiKey || !config.apiKey.startsWith('sk-')) {
+          // Validate decrypted key format - check it's not empty and has reasonable length
+          if (!config.apiKey || config.apiKey.length < 10) {
             console.warn('Decrypted API key has invalid format, clearing it');
             config.apiKey = null;
           }
@@ -506,7 +506,7 @@ try {
       if (config.apiKey && config.apiKey !== '') {
         try {
           config.apiKey = decrypt(config.apiKey);
-          if (!config.apiKey || !config.apiKey.startsWith('sk-')) {
+          if (!config.apiKey || config.apiKey.length < 10) {
             config.apiKey = null;
           }
         } catch (error) {
