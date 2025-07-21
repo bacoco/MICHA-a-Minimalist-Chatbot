@@ -1056,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (provider === 'anthropic') {
         fetchOptions.method = 'POST';
         fetchOptions.body = JSON.stringify({
-          model: elements.model.value || 'claude-3-haiku-20240307',
+          model: elements.model.value || 'claude-3-haiku',
           messages: [
             {
               role: 'user',
