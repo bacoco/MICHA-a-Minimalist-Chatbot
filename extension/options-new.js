@@ -88,7 +88,7 @@ const FREE_MODEL_CONFIGS = {
   huggingface: {
     freeModels: [
       { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (Free)', provider: 'Hugging Face' },
-      { id: 'HuggingFaceH4/zephyr-7b-alpha', name: 'Zephyr 7B Alpha (Free)', provider: 'Hugging Face' },
+      { id: 'HuggingFaceH4/zephyr-7b-beta', name: 'Zephyr 7B Beta (Free)', provider: 'Hugging Face' },
       { id: 'codellama/CodeLlama-7b-Instruct-hf', name: 'CodeLlama 7B (Free)', provider: 'Hugging Face' }
     ]
   }
