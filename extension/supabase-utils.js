@@ -549,8 +549,16 @@ class SupabaseCacheManager {
   }
 }
 
-// Export functions for use in service worker
-if (typeof window !== 'undefined') {
+// Export functions for use in service worker and content scripts
+if (typeof self !== 'undefined') {
+  // Service worker context
+  self.SupabaseClient = SupabaseClient;
+  self.HashGenerator = HashGenerator;
+  self.SupabaseCacheManager = SupabaseCacheManager;
+  self.SupabaseError = SupabaseError;
+  self.InputValidator = InputValidator;
+} else if (typeof window !== 'undefined') {
+  // Window context (content scripts)
   window.SupabaseClient = SupabaseClient;
   window.HashGenerator = HashGenerator;
   window.SupabaseCacheManager = SupabaseCacheManager;
