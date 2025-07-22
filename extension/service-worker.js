@@ -2,7 +2,18 @@
 // Fixed version with proper error handling
 
 // Import crypto utils and supabase utils
-importScripts('crypto-utils.js', 'supabase-utils.js');
+try {
+  importScripts('crypto-utils.js', 'supabase-utils.js');
+  console.log('Successfully loaded crypto-utils.js and supabase-utils.js');
+} catch (error) {
+  console.error('Failed to load crypto-utils.js or supabase-utils.js:', error);
+  // Define fallback implementations to prevent complete failure
+  self.encrypt = (text) => { console.warn('Crypto not available'); return text; };
+  self.decrypt = (text) => { console.warn('Crypto not available'); return text; };
+  self.SupabaseClient = class { constructor() { console.warn('Supabase not available'); } };
+  self.HashGenerator = class { static generate() { return 'fallback-hash'; } };
+  self.SupabaseCacheManager = class { constructor() { console.warn('Supabase cache not available'); } };
+}
 
 // Initialize DEFAULT_CONFIG
 let DEFAULT_CONFIG;
