@@ -43,3 +43,12 @@ function decrypt(encryptedText) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { encrypt, decrypt };
 }
+
+// Make available globally in service worker context
+if (typeof self !== 'undefined') {
+  self.encrypt = encrypt;
+  self.decrypt = decrypt;
+} else if (typeof window !== 'undefined') {
+  window.encrypt = encrypt;
+  window.decrypt = decrypt;
+}
