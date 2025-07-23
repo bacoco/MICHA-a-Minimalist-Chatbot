@@ -18,29 +18,23 @@ try {
 // Initialize DEFAULT_CONFIG
 let DEFAULT_CONFIG;
 
-// Try to import default config if it exists
-try {
-  importScripts('default-config.js');
-  console.log('Successfully loaded default-config.js');
-} catch (error) {
-  console.log('No default-config.js found, using fallback configuration');
-  // Define fallback configuration
-  DEFAULT_CONFIG = {
-    provider: 'albert',
-    endpoint: 'https://albert.api.etalab.gouv.fr/v1',
-    model: 'albert-large',
-    encryptedApiKey: null,
-    enabledByDefault: true,
-    cacheEnabled: true,
-    cacheTTL: 3600000, // 1 hour in milliseconds
-    features: {
-      supabaseCache: true,
-      chatHistory: true,
-      contextualHelp: true,
-      keyboardShortcuts: true
-    }
-  };
-}
+// Use built-in configuration (removed problematic importScripts)
+console.log('Using built-in configuration');
+DEFAULT_CONFIG = {
+  provider: 'albert',
+  endpoint: 'https://albert.api.etalab.gouv.fr/v1',
+  model: 'albert-large',
+  encryptedApiKey: null,
+  enabledByDefault: true,
+  cacheEnabled: true,
+  cacheTTL: 3600000, // 1 hour in milliseconds
+  features: {
+    supabaseCache: true,
+    chatHistory: true,
+    contextualHelp: true,
+    keyboardShortcuts: true
+  }
+};
 
 // Wrap everything in try-catch to prevent registration failures
 try {
@@ -71,42 +65,43 @@ try {
   };
 
   // Initialize extension on install
-  chrome.runtime.onInstalled.addListener(async (details) => {
+  chrome.runtime.onInstalled.addListener((details) => {
     console.log('Extension installed:', details.reason);
     
-    try {
-      // Set default settings
-      const settings = await chrome.storage.sync.get('universalAssistantSettings');
-      if (!settings.universalAssistantSettings) {
-        await chrome.storage.sync.set({
-          universalAssistantSettings: DEFAULT_SETTINGS.preferences,
-          blacklist: DEFAULT_SETTINGS.blacklist
-        });
-        console.log('Default settings saved');
-      }
-      
-      // Create context menu after a delay to ensure APIs are ready
-      setTimeout(() => {
-        if (chrome.contextMenus && chrome.contextMenus.create) {
-          chrome.contextMenus.removeAll(() => {
-            chrome.contextMenus.create({
-              id: 'toggleAssistant',
-              title: 'Toggle Universal Assistant',
-              contexts: ['all']
-            }, () => {
-              if (chrome.runtime.lastError) {
-                console.warn('Context menu creation warning:', chrome.runtime.lastError.message);
-              } else {
-                console.log('Context menu created successfully');
-              }
-            });
+    // Convert to Promise-based approach instead of async/await (fix service worker timing)
+    chrome.storage.sync.get('universalAssistantSettings')
+      .then((settings) => {
+        if (!settings.universalAssistantSettings) {
+          return chrome.storage.sync.set({
+            universalAssistantSettings: DEFAULT_SETTINGS.preferences,
+            blacklist: DEFAULT_SETTINGS.blacklist
           });
         }
-      }, 100);
-      
-    } catch (error) {
-      console.error('Installation setup error:', error);
-    }
+      })
+      .then(() => {
+        console.log('Default settings saved');
+        // Create context menu with delay to ensure APIs are ready
+        setTimeout(() => {
+          if (chrome.contextMenus && chrome.contextMenus.create) {
+            chrome.contextMenus.removeAll(() => {
+              chrome.contextMenus.create({
+                id: 'toggleAssistant',
+                title: 'Toggle Universal Assistant',
+                contexts: ['all']
+              }, () => {
+                if (chrome.runtime.lastError) {
+                  console.warn('Context menu creation warning:', chrome.runtime.lastError.message);
+                } else {
+                  console.log('Context menu created successfully');
+                }
+              });
+            });
+          }
+        }, 100);
+      })
+      .catch((error) => {
+        console.error('Installation setup error:', error);
+      });
   });
 
   // Handle context menu clicks

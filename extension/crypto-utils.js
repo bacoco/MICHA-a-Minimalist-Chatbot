@@ -39,16 +39,16 @@ function decrypt(encryptedText) {
   }
 }
 
-// Export for use in extension
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { encrypt, decrypt };
-}
-
-// Make available globally in service worker context
-if (typeof self !== 'undefined') {
+// Simplified export for service worker context (fix circular dependencies)
+if (typeof self !== 'undefined' && typeof importScripts === 'function') {
+  // Service worker context - direct assignment
   self.encrypt = encrypt;
   self.decrypt = decrypt;
 } else if (typeof window !== 'undefined') {
+  // Window context
   window.encrypt = encrypt;
   window.decrypt = decrypt;
+} else if (typeof module !== 'undefined' && module.exports) {
+  // Node.js context
+  module.exports = { encrypt, decrypt };
 }

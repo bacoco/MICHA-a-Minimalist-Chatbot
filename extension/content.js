@@ -4,6 +4,37 @@
   const WIDGET_ID = 'universal-assistant-widget';
   const STORAGE_KEY = 'universalAssistantSettings';
   
+  // Centralized extension context validation (fix race conditions)
+  function isExtensionContextValid() {
+    return new Promise((resolve) => {
+      if (typeof chrome === 'undefined' || !chrome.runtime) {
+        resolve(false);
+        return;
+      }
+      
+      // Test if runtime is actually available
+      try {
+        chrome.runtime.getPlatformInfo(() => {
+          if (chrome.runtime.lastError) {
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      } catch (error) {
+        resolve(false);
+      }
+    });
+  }
+  
+  // Synchronous version for immediate checks (fallback)
+  function isExtensionContextValidSync() {
+    return typeof chrome !== 'undefined' && 
+           chrome.runtime && 
+           chrome.runtime.id && 
+           !chrome.runtime.lastError;
+  }
+  
   // State
   let widget = null;
   let isExpanded = false;
@@ -214,7 +245,7 @@
   // Session management functions
   function saveChatSession() {
     // Check if chrome runtime is still valid
-    if (!chrome.runtime?.id) {
+    if (!isExtensionContextValidSync()) {
       console.warn('[MiCha DEBUG] Extension context invalidated, cannot save session');
       return;
     }
