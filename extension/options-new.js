@@ -499,18 +499,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Error details:', error.stack);
       
       let errorMsg = 'Test failed: ';
+      
+      // Check for specific error conditions
       if (error.message.includes('Failed to fetch')) {
         errorMsg = `❌ Network error - Could not reach ${provider} API. Check your internet connection.`;
-      } else if (error.message.includes('401')) {
-        errorMsg = `❌ Authentication failed - Invalid ${provider} API key.`;
-      } else if (error.message.includes('timeout')) {
+      } else if (error.message.includes('timeout') || error.name === 'AbortError') {
         errorMsg = `❌ Connection timeout - ${provider} API is not responding.`;
-      } else if (error.message.includes('404')) {
+      } else if (error.status === 401 || error.message.includes('401')) {
+        errorMsg = `❌ Authentication failed - Invalid ${provider} API key.`;
+      } else if (error.status === 404 || error.message.includes('404')) {
         errorMsg = `❌ API endpoint not found - Check if ${provider} API is available.`;
-      } else if (error.message.includes('500')) {
-        errorMsg = `❌ Server error - ${provider} API is experiencing issues.`;
+      } else if (error.status === 500 || error.message.includes('500')) {
+        // For server errors, show the detailed message from the API
+        let serverErrorMsg = `❌ Server error - ${provider} API is experiencing issues.`;
+        if (error.message && !error.message.includes('500 Internal Server Error')) {
+          // If we have a detailed error message from the API, use it
+          serverErrorMsg = `❌ Server error: ${error.message}`;
+        }
+        
+        // Add request ID for support if available (especially for OpenAI)
+        if (error.details && error.details.requestId) {
+          serverErrorMsg += `\n\nRequest ID: ${error.details.requestId} (include this when contacting support)`;
+        }
+        
+        errorMsg = serverErrorMsg;
       } else {
-        errorMsg += error.message;
+        // For other errors, use the detailed message if available
+        errorMsg = `❌ ${error.message}`;
       }
       
       // Show error with details
@@ -1082,9 +1097,52 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       
       if (!response.ok) {
-        const errorText = await response.text().catch(() => 'No error details');
-        console.error('API test failed:', errorText);
-        throw new Error(`${response.status} ${response.statusText}`);
+        let errorMessage = `${response.status} ${response.statusText}`;
+        let errorDetails = {};
+        
+        try {
+          const errorText = await response.text();
+          console.error('API test failed:', errorText);
+          
+          // Try to parse JSON error response (especially for OpenAI, Anthropic, etc.)
+          try {
+            const errorJson = JSON.parse(errorText);
+            
+            // Handle OpenAI-style error responses
+            if (errorJson.error && errorJson.error.message) {
+              errorMessage = errorJson.error.message;
+              if (errorJson.error.type) {
+                errorDetails.type = errorJson.error.type;
+              }
+              // Include request ID if available for support purposes
+              if (response.headers.get('x-request-id')) {
+                errorDetails.requestId = response.headers.get('x-request-id');
+              }
+            }
+            // Handle other provider error formats
+            else if (errorJson.message) {
+              errorMessage = errorJson.message;
+            }
+            else if (errorJson.detail) {
+              errorMessage = errorJson.detail;
+            }
+          } catch (parseError) {
+            // If JSON parsing fails, use the raw error text if it's informative
+            if (errorText && errorText.length < 200 && !errorText.includes('<!DOCTYPE')) {
+              errorMessage = errorText;
+            }
+          }
+        } catch (textError) {
+          console.error('Failed to read error response:', textError);
+        }
+        
+        // Create enhanced error with details
+        const error = new Error(errorMessage);
+        if (Object.keys(errorDetails).length > 0) {
+          error.details = errorDetails;
+        }
+        error.status = response.status;
+        throw error;
       }
       
       return true;
