@@ -953,7 +953,7 @@ Requirements:
       case 'anthropic':
         // Anthropic API format
         headers['x-api-key'] = apiKey;
-        headers['anthropic-version'] = '2023-10-22';
+        headers['anthropic-version'] = '2023-06-01';
         headers['anthropic-dangerous-direct-browser-access'] = 'true';
         apiUrl = `${endpoint}/messages`;
         requestBody = {
